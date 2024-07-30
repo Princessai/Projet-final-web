@@ -14,10 +14,14 @@ class RoleFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    
+    
     public function definition(): array
     {
+        $roles = require(base_path('data/roles.php'));
+
         return [
-            //
+            'label' =>  fake()->unique()->randomelement($roles),
         ];
     }
 }

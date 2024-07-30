@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Salle;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
 
 class SalleSeeder extends Seeder
 {
@@ -12,6 +14,15 @@ class SalleSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        // $salles=[];
+        // for ($i=1; $i <= 10  ; $i++) { 
+        //     $salles[]= ["label"=>"Salle".$i];
+        // }
+        // $salles[]= ["label"=>"Amphi"];
+       
+
+        // Salle::insert($salles);
+
+      
     }
 }

@@ -32,9 +32,9 @@ class Seance extends Model
         return $this->belongsTo(Salle::class);
     }
 
-    public function enseignant(): HasOne
+    public function enseignant(): BelongsTo
     {
-        return $this->hasOne(User::class);
+        return $this->BelongsTo(User::class); // user de type enseignant
     }
 
     public function module(): BelongsTo

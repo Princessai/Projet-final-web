@@ -11,8 +11,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class EtudiantParent extends Model
 {
     use HasFactory;
+    public $timestamps = false;
 
-    public function etudiantParent(): BelongsTo
+
+    public function etudiantInfo(): BelongsTo // on récupère la table avec les relations
     {
         return $this->belongsTo(User::class);
     }

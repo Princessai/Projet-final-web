@@ -17,6 +17,9 @@ class Classe extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
+
     public function etudiants(): HasMany // les étudiants de la classe
     {
         return $this->hasMany(ClasseEtudiant::class);
@@ -28,7 +31,7 @@ class Classe extends Model
 
     public function enseignants(): BelongsToMany // les enseignants de la classe 
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'classe_enseignant'); 
     }
     public function modules(): BelongsToMany // les modules de la classe 
     {
@@ -39,4 +42,10 @@ class Classe extends Model
     {
         return $this->hasMany(Timetable::class);
     }
+
+    public function coordinateur(): BelongsTo
+    {
+        return $this->belongsTo(User::class); // user de type coordinateur
+    }
+
 }

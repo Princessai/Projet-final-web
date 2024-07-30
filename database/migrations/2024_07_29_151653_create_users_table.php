@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('lastname');
-            $table->string('picture');
-            $table->integer('phone_number')->unsigned();
+            $table->string('picture')->nullable();
+            $table->string('phone_number');
             $table->string('email')->unique();
             $table->foreignId('role_id')->constrained();
             $table->timestamp('email_verified_at')->nullable();

@@ -12,9 +12,9 @@ class Presence extends Model
 {
     use HasFactory;
 
-    public function etudiant(): BelongsTo
+    public function etudiant(): BelongsTo 
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class); // user de type étudiant
     }
     
     public function seance(): BelongsTo

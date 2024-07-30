@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Role extends Model
 {
     use HasFactory;
-
-    public function roleUsers(): HasMany
+    public $timestamps = false;
+    public function roleUsers(): HasMany // les utilisateurs du role
     {
         return $this->hasMany(User::class);
     }

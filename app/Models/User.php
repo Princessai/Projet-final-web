@@ -62,7 +62,7 @@ class User extends Authenticatable
     }
 
     
-    public function etudiantClasse(): HasOne 
+    public function etudiantClasse(): HasOne  // un etudiant n'a qu'une seule classe
     {
         return $this->hasOne(ClasseEtudiant::class);
     }
@@ -74,7 +74,7 @@ class User extends Authenticatable
 
     public function enseignantClasses(): BelongsToMany
     {
-        return $this->belongsToMany(Classe::class);
+        return $this->belongsToMany(Classe::class, 'classe_enseignant');
     }
 
 
@@ -83,9 +83,9 @@ class User extends Authenticatable
         return $this->hasMany(Absence::class);
     }
 
-    public function droppedUsers(): HasMany // les étudiants droppés
+    public function droppedStudentsModules(): BelongsToMany // les étudiants droppés
     {
-        return $this->hasMany(Droppe::class);
+        return $this->belongsToMany(Module::class, 'droppes');
     }
 
     public function enseignantModules(): BelongsToMany
@@ -93,13 +93,13 @@ class User extends Authenticatable
         return $this->belongsToMany(Module::class);
     }
 
-    public function childInfo(): HasOne
+    public function etudiantParent(): HasOne
     {
         return $this->hasOne(EtudiantParent::class, 'etudiant_id');
     }
 
 
-    public function parentChildren(): HasMany
+    public function parentEtudiants(): HasMany
     {
         return $this->hasMany(EtudiantParent::class, 'parent_id');
     }
@@ -109,14 +109,20 @@ class User extends Authenticatable
         return $this->hasMany(Presence::class);
     }
 
-    public function role(): BelongsTo
+    public function role(): BelongsTo // le rolee de l'utilisateur
     {
         return $this->belongsTo(Role::class);
     }
 
-    public function seance(): BelongsTo
+    public function enseignantSeances(): HasMany
     {
-        return $this->belongsTo(Seance::class);
+        return $this->hasMany(Seance::class);
+    }
+
+
+    public function coordinateurClasses(): HasMany
+    {
+        return $this->hasMany(Classe::class);
     }
 
 }

@@ -14,10 +14,15 @@ class SalleFactory extends Factory
      *
      * @return array<string, mixed>
      */
+
     public function definition(): array
     {
+        dump("deifintionnn________");
+        $salles = require(base_path('data/salles.php'));
+
+        
         return [
-            //
+            'label' =>   fake()->unique()->randomelement($salles),
         ];
     }
 }

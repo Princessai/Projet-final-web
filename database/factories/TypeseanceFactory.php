@@ -14,10 +14,14 @@ class TypeseanceFactory extends Factory
      *
      * @return array<string, mixed>
      */
+   
     public function definition(): array
     {
+  
+        $typeseances = require(base_path('data/typeseances.php'));
+
         return [
-            //
+            'label' => fake()->unique()->randomelement($typeseances),
         ];
     }
 }

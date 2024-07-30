@@ -16,8 +16,12 @@ class ClasseFactory extends Factory
      */
     public function definition(): array
     {
+
+        $classes = require(base_path('data/classes.php'));
+
         return [
-            //
+            'label' =>  fake()->unique()->randomelement($classes),
+
         ];
     }
 }

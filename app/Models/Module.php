@@ -14,15 +14,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Module extends Model
 {
     use HasFactory;
-
+    public $timestamps = false;
     public function classes(): BelongsToMany
     {
         return $this->belongsToMany(Classe::class);
     }
 
-    public function droppedStudentsModules(): HasMany // les étudiants droppés d'un module
+    public function droppedStudents(): BelongsToMany // les étudiants droppés d'un module
     {
-        return $this->hasMany(Droppe::class);
+        return $this->belongsToMany(User::class, 'droppes');
     }
 
     public function enseignants(): BelongsToMany
