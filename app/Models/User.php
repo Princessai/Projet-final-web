@@ -93,15 +93,15 @@ class User extends Authenticatable
         return $this->belongsToMany(Module::class);
     }
 
-    public function etudiantParent(): HasOne
+    public function etudiantParent(): BelongsTo
     {
-        return $this->hasOne(EtudiantParent::class, 'etudiant_id');
+        return $this->belongsTo(User::class, 'parent_id',);
     }
 
 
     public function parentEtudiants(): HasMany
     {
-        return $this->hasMany(EtudiantParent::class, 'parent_id');
+        return $this->hasMany(User::class, 'parent_id');
     }
 
     public function etudiantPresences(): HasMany

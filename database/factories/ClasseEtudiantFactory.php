@@ -17,7 +17,19 @@ class ClasseEtudiantFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+           
         ];
+        
     }
+
+
+    public function linkEtudiantClasse($etudiantId)
+{
+    return $this->state(function (array $attributes) use($etudiantId){
+        dump($etudiantId);
+        return [
+            'user_id' => $etudiantId,
+        ];
+    });
+}
 }

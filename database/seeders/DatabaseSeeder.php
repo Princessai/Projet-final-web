@@ -21,101 +21,122 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $modules = require(base_path('data/modules.php'));
-        $roles = require(base_path('data/roles.php'));
-        $salles = require(base_path('data/salles.php'));
-        $typeseances = require(base_path('data/typeseances.php'));
-        $classes =  require(base_path('data/classes.php'));
+       
+        
+    
+        $this->call([
+            ModuleSeeder::class,
+            RoleSeeder::class,
+            TypeseanceSeeder::class,
+            SalleSeeder::class,
+            ClasseSeeder::class,
+        ]);
+        
 
+            
+        // $classes_count = count($classes);
 
+        // Classe::factory()
+        // ->count($classes_count)     
+        // ->create();
 
-        // User::factory(10)->create();
-        $salle_count = count($salles);
-        Salle::factory()->count($salle_count)
-            ->create();
+      
+        // $rolesId = $roles->pluck('id');
+        // $roleEtudiantId = $roles->where('label', 'etudiant')->first()->id;
+        // $roleSequences = [];
+        // foreach ($roles as $role) {       
+        //     if($role->label!="coordinateur"){
+        //         $roleSequences[] = ["role_id" => $role->id];
+        //     }  
+               
+        // }
 
-
-        $role_count = count($roles);
-        $roles = Role::factory()->count($role_count)
-            ->create();
-
-        $module_count = count($modules);
-        Module::factory()->count($module_count)
-            ->create();
-
-        $typeseance_count = count($typeseances);
-        Typeseance::factory()->count($typeseance_count)
-            ->create();
-
-        // dump($roles);
-
-        $rolesId = $roles->pluck('id');
-        $roleSequences = [];
-        foreach ($rolesId as $key => $value) {
-            $roleSequences[] = ["role_id" => $value];
-        }
-
-        dump($roleSequences);
-        // new Sequence(
-        //     ['admin' => 'Y'],
-        //     ['admin' => 'N'],
-        // )
-
-
-        $users = User::factory()
-            ->count(10)
-            // ->state(function (array $attributes) use ($rolesId) {
-            //     return ['role_id' => $rolesId->random()];
-            // })
-            ->state(new Sequence(
-                ...$roleSequences
-
-            ))
-            ->create();
+       
+    
+        // $users = User::factory()
+        //     ->count(100)
+        //     ->state(new Sequence(
+        //         ...$roleSequences
+        //     ))
+        //     ->create();
+        $roles= Role::all();
 
         $roleEtudiantId = $roles->where('label', 'etudiant')->first()->id;
-        $userEtudiant = $users->where('role_id', $roleEtudiantId);
+        // $userEtudiant = $users->where('role_id', $roleEtudiantId);
+        // $userEtudiantId = $userEtudiant->pluck('id');
 
         $roleParentId = $roles->where('label', 'parent')->first()->id;
-        $userParent = $users->where('role_id', $roleParentId);
 
-        $roleCoordinateurId = $roles->where('label', 'coordinateur')->first()->id;
-        $userCoordinateurs = $users->where('role_id', $roleCoordinateurId);
-
-
-        // dump($roleEtudiantId);
-
-        $userEtudiantId = $userEtudiant->pluck('id');
-        $userParentId = $userParent->pluck('id');
-        $userCoordinateursId = $userCoordinateurs->pluck('id');
-
-
-        $etudiantParent = EtudiantParent::factory()->count(rand(1, $userEtudiant->count()))
-            ->state(function (array $attributes) use ($userEtudiantId, $userParentId) {
-                dump($userEtudiantId->toArray());
-
-
-
-                return [
-                    'etudiant_id' => fake()->unique()->randomelement($userEtudiantId->toArray()),
-                    'parent_id' => $userParentId->random(),
-                ];
-            })
+        // $userParent = $users->where('role_id', $roleParentId);
+        $randomParentCount = rand(1, 10);
+        $randomParentChildrenCount = rand(1, 4);
+        $usersParent = User::factory()
+            ->userRole($roleParentId)
+            ->count($randomParentCount)
             ->create();
 
-        $classe_count = count($classes);
-        $classes = Classe::factory()->count($classe_count)
-            ->state(function (array $attributes) use ($userCoordinateursId) {
+            // $usersParent = User::factory()
+            // ->userRole($roleParentId)
+            // ->count($randomParentCount)
+            // ->create();
+ 
 
-                return [
-                    'coordinateur_id' => fake()->randomelement($userCoordinateursId->toArray()),
-                ];
-            })
-            ->create();
+            // ->each(function ($usersParent) use($roleEtudiantId,$randomParentChildrenCount) {
+            //     EtudiantParent::factory()
+            //     ->parentChild($usersParent->id,$roleEtudiantId)
+            //     ->count($randomParentChildrenCount)->create();
+            //     });
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+            // EtudiantParent::factory()
+            // ->state(
+            //     function (array $attributes) use($roleEtudiantId){
+            //         $child=User::factory()
+            //         ->state([
+            //             'role_id' => $roleEtudiantId
+            //         ])->create();
+
+            //         return [
+            //             'etudiant_id' => $child->id,
+            //         ];
+            //     }
+            // )->count(rand(1,10)),
+        // $roleCoordinateurId = $roles->where('label', 'coordinateur')->first()->id;
+        // $userCoordinateurs = $users->where('role_id', $roleCoordinateurId);
+
+
+        // // dump($roleEtudiantId);
+
+
+        // $userParentId = $userParent->pluck('id');
+        // $userCoordinateursId = $userCoordinateurs->pluck('id');
+
+
+        // $etudiantParent = EtudiantParent::factory()->count(rand(1, $userEtudiant->count()))
+        //     ->state(function (array $attributes) use ($userEtudiantId, $userParentId) {
+        //         dump($userEtudiantId->toArray());
+
+
+
+        //         return [
+        //             'etudiant_id' => fake()->unique()->randomelement($userEtudiantId->toArray()),
+        //             'parent_id' => $userParentId->random(),
+        //         ];
+        //     })
+        //     ->create();
+
+        // $classe_count = count($classes);
+        // $classes = Classe::factory()->count($classe_count)
+        //     ->state(function (array $attributes) use ($userCoordinateursId) {
+
+        //         return [
+        //             'coordinateur_id' => fake()->randomelement($userCoordinateursId->toArray()),
+        //         ];
+        //     })
+        //     ->create();
+
+        // // User::factory()->create([
+        // //     'name' => 'Test User',
+        // //     'email' => 'test@example.com',
+        // // ]);
     }
 }

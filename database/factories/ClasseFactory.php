@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
+use App\Models\User;
+use App\Models\Classe;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,8 +23,22 @@ class ClasseFactory extends Factory
         $classes = require(base_path('data/classes.php'));
 
         return [
-            'label' =>  fake()->unique()->randomelement($classes),
+          
 
         ];
+    }
+
+    public function configure(): static
+    {
+
+      
+        return $this->afterMaking(function (Classe $classe) {
+            
+            $roleCoordinateurId= Role::where("label","coordinateur")->first()->id;
+            $coordinateur=User::factory()->userRole($roleCoordinateurId,true)->create();
+            $classe->coordinateur_id=$coordinateur->id;
+            
+            
+        });
     }
 }

@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
+use App\Models\User;
+use App\Models\EtudiantParent;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +20,22 @@ class EtudiantParentFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            
         ];
     }
+
+    public function parentChild($parentId): Factory
+{
+    $roleEtudiantId=Role::where('label','etudiant' )->first()->id;
+    return $this->state(function (array $attributes) use($parentId,$roleEtudiantId) {
+        $child=User::factory()->userRole($roleEtudiantId)->create();
+       
+        return [
+            'parent_id' => $parentId,
+            "etudiant_id"=>$child->id
+            
+        ];
+    });
+}
+
 }

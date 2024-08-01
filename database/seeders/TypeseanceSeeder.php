@@ -13,13 +13,9 @@ class TypeseanceSeeder extends Seeder
      */
     public function run(): void
     {
-        // $typeseance=[];
-        // $typeseance[]= ["label"=>"presentiel"];
-        // $typeseance[]= ["label"=>"workshop"];
-        // $typeseance[]= ["label"=>"e-learning"];
- 
-       
-
-        // Typeseance::insert($typeseance);
+        $typeseances = require(base_path('data/typeseances.php'));
+        foreach ($typeseances as $typeseance) {
+          Typeseance::factory()->create(['label'=>$typeseance]);
+        }
     }
 }

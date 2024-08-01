@@ -2,7 +2,7 @@
 
 return  [
 "Prepa 1",
-"Prepa 2", 
+"Prepa 2",
 "Prepa communication",
 "Prepa developpement",
 "Prepa création",

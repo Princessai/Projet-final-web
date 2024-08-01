@@ -19,11 +19,11 @@ class ModuleFactory extends Factory
      
     public function definition(): array
     {
-        $modules = require(base_path('data/modules.php'));
+        // $modules = require(base_path('data/modules.php'));
 
         
         return [
-            'label' =>  fake()->unique()->randomelement($modules),
+            // 'label' =>  fake()->unique()->randomelement($modules),
         ];
     }
 }

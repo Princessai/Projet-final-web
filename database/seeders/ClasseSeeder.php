@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
+use App\Models\Classe;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class ClasseSeeder extends Seeder
 {
@@ -12,6 +14,11 @@ class ClasseSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $classes =  require(base_path('data/classes.php'));
+        foreach( $classes as $classe){
+            $classe=Classe::factory()->create(['label'=>$classe]);
+            // User::factory()->userRole();
+
+        }
     }
 }

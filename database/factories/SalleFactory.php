@@ -17,7 +17,6 @@ class SalleFactory extends Factory
 
     public function definition(): array
     {
-        dump("deifintionnn________");
         $salles = require(base_path('data/salles.php'));
 
         

@@ -16,11 +16,11 @@ class EtudiantParent extends Model
 
     public function etudiantInfo(): BelongsTo // on récupère la table avec les relations
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'etudiant_id');
     }
 
     public function parentInfo(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'parent_id');
     }
 }

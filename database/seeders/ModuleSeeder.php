@@ -11,17 +11,13 @@ class ModuleSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
+    public function run() : void
     {
-        // $modules=[];
-        // $modules[]= ["label"=>"javascript"];
-        // $modules[]= ["label"=>"petchkucha"];
-        // $modules[]= ["label"=>"electron"];
-        // $modules[]= ["label"=>"photoshop"];
-        // $modules[]= ["label"=>"illustrator"];
-        // $modules[]= ["label"=>"wordpress"];
-       
+        $modules = require(base_path('data/modules.php'));
+        
+        foreach ($modules as $module) {
+            Module::factory()->create(['label'=>$module]);
+        }
 
-        // Module::insert($modules);
     }
 }

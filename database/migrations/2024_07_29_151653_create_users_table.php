@@ -18,6 +18,13 @@ return new class extends Migration
             $table->string('picture')->nullable();
             $table->string('phone_number');
             $table->string('email')->unique();
+
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->foreign('parent_id')->references('id')->on('users');
+
+            $table->unsignedBigInteger('classe_id')->nullable();
+            // $table->foreign('classe_id')->references('id')->on('classes');
+
             $table->foreignId('role_id')->constrained();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

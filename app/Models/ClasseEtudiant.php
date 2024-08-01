@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class ClasseEtudiant extends Model
 {
     use HasFactory;
+    public $timestamps = false;
 
     public function etudiant(): BelongsTo // un étudiant de la classe 
     {

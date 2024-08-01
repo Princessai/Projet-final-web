@@ -14,14 +14,11 @@ class SalleSeeder extends Seeder
      */
     public function run(): void
     {
-        // $salles=[];
-        // for ($i=1; $i <= 10  ; $i++) { 
-        //     $salles[]= ["label"=>"Salle".$i];
-        // }
-        // $salles[]= ["label"=>"Amphi"];
-       
-
-        // Salle::insert($salles);
+        $salles = require(base_path('data/salles.php'));
+        
+        foreach ($salles as $salle) {
+          Salle::factory()->create(['label'=>$salle]);
+        }
 
       
     }

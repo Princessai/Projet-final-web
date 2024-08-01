@@ -13,15 +13,9 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // $roles=[];
-        // $roles[]= ["label"=>"etudiant"];
-        // $roles[]= ["label"=>"parent"];
-        // $roles[]= ["label"=>"enseignant"];
-        // $roles[]= ["label"=>"coordinateur"];
-        // $roles[]= ["label"=>"admin"];
-       
-       
-
-        // Role::insert($roles);
+        $roles = require(base_path('data/roles.php'));
+        foreach ($roles as $role) {
+          Role::factory()->create(['label'=>$role]);
+        }
     }
 }
