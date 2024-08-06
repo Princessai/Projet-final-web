@@ -12,6 +12,8 @@ use App\Models\Typeseance;
 use Illuminate\Support\Arr;
 use App\Models\EtudiantParent;
 use Illuminate\Database\Seeder;
+use Database\Seeders\EnseignantSeeder;
+use Database\Seeders\TypeseanceSeeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 
 class DatabaseSeeder extends Seeder
@@ -25,13 +27,25 @@ class DatabaseSeeder extends Seeder
         
     
         $this->call([
-            ModuleSeeder::class,
+            AnneeSeeder::class,
             RoleSeeder::class,
+            ModuleSeeder::class,
             TypeseanceSeeder::class,
-            SalleSeeder::class,
             ClasseSeeder::class,
+            SalleSeeder::class,
+            ClasseModuleSeeder::class,
+            EnseignantSeeder::class,
+            ClasseEnseignantSeeder::class,
+            TimetableSeeder::class,
+            EtudiantSeeder::class,
         ]);
         
+        // $user = User::where('role_id', 3)->first();
+        //     $modules = Module::whereDoesntHave('enseignants', function ($query) use ( $user) {
+        //             $query->where('users.id' ,$user->id);
+        //         })->get();
+        // dump('databaseseeder',$modules);
+      
 
             
         // $classes_count = count($classes);
@@ -70,10 +84,10 @@ class DatabaseSeeder extends Seeder
         // $userParent = $users->where('role_id', $roleParentId);
         $randomParentCount = rand(1, 10);
         $randomParentChildrenCount = rand(1, 4);
-        $usersParent = User::factory()
-            ->userRole($roleParentId)
-            ->count($randomParentCount)
-            ->create();
+        // $usersParent = User::factory()
+        //     ->userRole($roleParentId)
+        //     ->count($randomParentCount)
+        //     ->create();
 
             // $usersParent = User::factory()
             // ->userRole($roleParentId)

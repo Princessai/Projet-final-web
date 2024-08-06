@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('classe_id')->constrained();
             $table->foreignId('module_id')->constrained();
+            $table->integer('nbre_heure_total')->nullable();
+            $table->boolean('statut_cours')->default(false);
+
+
         });
     }
 

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('seances', function (Blueprint $table) {
             $table->id();
             $table->string('etat');
-            $table->integer('jour');
+            $table->timestamp('date');
             $table->timestamp('heure_debut')->nullable();
             $table->timestamp('heure_fin')->nullable();
             $table->foreignId('salle_id')->constrained();

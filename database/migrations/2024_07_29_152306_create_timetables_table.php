@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('timetables', function (Blueprint $table) {
             $table->id();
-            $table->string('commentaire');
+            $table->string('commentaire')->nullable();
             $table->timestamp('date_debut')->nullable();
             $table->timestamp('date_fin')->nullable();
             $table->foreignId('classe_id')->constrained();
-            
+            $table->foreignId('annee_id')->constrained();
+
+            $table->timestamps();
         });
     }
 

@@ -35,7 +35,7 @@ class Classe extends Model
     }
     public function modules(): BelongsToMany // les modules de la classe 
     {
-        return $this->belongsToMany(Module::class);
+        return $this->belongsToMany(Module::class)->withPivot('id','nbre_heure_total','statut_cours');
     }
 
     public function timetables(): HasMany // tous les emplois du temps de la classe

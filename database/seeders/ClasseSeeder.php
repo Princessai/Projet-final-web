@@ -17,8 +17,7 @@ class ClasseSeeder extends Seeder
         $classes =  require(base_path('data/classes.php'));
         foreach( $classes as $classe){
             $classe=Classe::factory()->create(['label'=>$classe]);
-            // User::factory()->userRole();
-
+            
         }
     }
 }

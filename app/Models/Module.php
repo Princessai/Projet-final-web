@@ -17,7 +17,7 @@ class Module extends Model
     public $timestamps = false;
     public function classes(): BelongsToMany
     {
-        return $this->belongsToMany(Classe::class);
+        return $this->belongsToMany(Classe::class)->withPivot('id','nbre_heure_total','statut_cours');
     }
 
     public function droppedStudents(): BelongsToMany // les étudiants droppés d'un module
@@ -27,7 +27,7 @@ class Module extends Model
 
     public function enseignants(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'enseignant_module');
     }
 
     public function seances(): HasMany

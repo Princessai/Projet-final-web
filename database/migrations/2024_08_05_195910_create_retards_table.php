@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('absences', function (Blueprint $table) {
+        Schema::create('retards', function (Blueprint $table) {
             $table->id();
-            $table->string('etat');
             $table->foreignId('user_id')->constrained();
             $table->foreignId('seance_id')->constrained();
             $table->foreignId('annee_id')->constrained();
-
         });
     }
 
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('absences');
+        Schema::dropIfExists('retards');
     }
 };

@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Annee;
+use App\Models\Classe;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class ClasseEnseignantSeeder extends Seeder
 {
@@ -12,6 +14,21 @@ class ClasseEnseignantSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+
+        // dump()
+        $classes = Classe::with([
+            'modules' => [
+                'enseignants', // relation entre module et enseignant
+            ],
+        ])->get();
+
+        foreach ($classes as $classe) {
+            $classeModules= $classe->modules;
+            foreach ($classeModules as $classeModule) {
+                $classeModuleEnseignants = $classeModule->enseignants->random();
+                $classe->enseignants()->attach($classeModuleEnseignants);
+            }
+            
+        }
     }
 }

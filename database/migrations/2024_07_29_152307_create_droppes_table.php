@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('module_id')->constrained();
             $table->foreignId('user_id')->constrained();
+            $table->foreignId('annee_id')->constrained();
+
         });
     }
 

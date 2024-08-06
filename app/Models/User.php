@@ -90,7 +90,7 @@ class User extends Authenticatable
 
     public function enseignantModules(): BelongsToMany
     {
-        return $this->belongsToMany(Module::class);
+        return $this->belongsToMany(Module::class, 'enseignant_module');
     }
 
     public function etudiantParent(): BelongsTo
