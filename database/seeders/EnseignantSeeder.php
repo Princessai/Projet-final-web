@@ -21,6 +21,7 @@ class EnseignantSeeder extends Seeder
             $randomModuleNumber = rand(1, 3);
             $relatedModules=$module;
             
+            // a modifier !!
             if ($randomModuleNumber> 1) {
                 while (true) {
                     $randomModules = $modules->random($randomModuleNumber - 1);

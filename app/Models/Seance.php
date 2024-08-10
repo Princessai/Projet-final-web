@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Seance extends Model
 {
     use HasFactory;
+    public $timestamps = false;
     public function absences(): HasMany
     {
         return $this->hasMany(Absence::class);

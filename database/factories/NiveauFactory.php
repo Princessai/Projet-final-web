@@ -2,13 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\Salle;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Seance>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Niveau>
  */
-class SeanceFactory extends Factory
+class NiveauFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -16,10 +15,9 @@ class SeanceFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition(): array
-    { 
-      
+    {
         return [
-            // "salle_id"=>$salle_id,
+            //
         ];
     }
 }

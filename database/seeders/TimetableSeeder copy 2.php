@@ -49,14 +49,9 @@ class TimetableSeeder extends Seeder
 
 
         $pauses = [
-            ["name" => "aprem", "debut" => "15:45", "fin" => 16, "isIncluded" => true],
             ["name" => "midi", "debut" => 12, "fin" => 14, "isIncluded" => false],
             ["name" => "recreation", "debut" => "10:45", "fin" => 11, "isIncluded" => true],
-            ["name" => "essai", "debut" => "14:45", "fin" => 15, "isIncluded" => true],
-            ["name" => "essai2", "debut" => 15, "fin" => "15:15", "isIncluded" => true],
-            ["name" => "essai3", "debut" => 9, "fin" => "9:15", "isIncluded" => true],
-            ["name" => "essai3", "debut" => "16:30", "fin" => "16:45", "isIncluded" => false],
-            
+            ["name" => "aprem", "debut" => "15:45", "fin" => 16, "isIncluded" => true],
         ];
 
 
@@ -109,8 +104,7 @@ class TimetableSeeder extends Seeder
                     $dayAvailableHours = $dayDuration;
                     $currentDay = $timetableStart->addDays($timetableDayCount);
                     $timetableDayStart = $currentDay->addHours($dayStart);
-                    $seanceCount = rand(1, 3);
-                    // $seanceCount = 4;
+                    $seanceCount = rand(2, 4);
                     dump("random seance num_of_the day:{$timetableDayCount} seancecount:{$seanceCount}");
                     // $seanceRandomHours=[];
                     $prevSeanceEnd = $timetableDayStart->copy();
@@ -126,18 +120,11 @@ class TimetableSeeder extends Seeder
 
                             if ($seanceCount != 1 && $i == $seanceCount) {
                                 $seanceRandomHoursCount = $dayAvailableHours;
-                                // $seanceRandomHoursCount = 2;
-                           
-
+                                
                                 dump("__last__seance_ number {$i} duration:{$seanceRandomHoursCount}");
                             } else {
                                 $seanceRandomHoursCount = rand($dayStep, $dayAvailableHours - (($seanceCount - $i) * $dayStep));
-                                // /*just pour debug */
                                
-                                // $seanceRandomHoursCount = 4;
-                                // if($i == 1||$i == 3) $seanceRandomHoursCount=1;
-                                // if($i == 2) $seanceRandomHoursCount=2;
-
                                 $dayAvailableHours -= $seanceRandomHoursCount;
                                 dump("seance number  {$i} duration:{$seanceRandomHoursCount}");
                                 // $seanceRandomHours[]=$seanceRandomHoursCount;
@@ -168,10 +155,15 @@ class TimetableSeeder extends Seeder
                         $currentSeanceStart = $prevSeanceEnd->copy();
                         dump("previous seance start at " . $currentSeanceStart->toTimeString());
 
-                      
+                        // if($seanceCount==$i){
+                        //     $currentSeanceEnd = $currentDay->addHours($dayEnd);
+                        // }else{
+
+                        // }
 
                         $currentSeanceEnd = $currentSeanceStart->addHours($seanceRandomHoursCount);
 
+                        // dump(" before__ split seance:{$i}   start_at  ".$currentSeanceStart->toString());
                         dump(" before__ split  seance:{$i}   enddd_at  " . $currentSeanceEnd->toTimeString());
 
                         $newSeanceStart = $currentSeanceStart->copy();
@@ -180,8 +172,7 @@ class TimetableSeeder extends Seeder
                         $count = 1;
                         dump('pauses loop_start_____');
                         $intersectPause = false;
-                        $lastIntersectingPauseEnd=null;
-                        $lastIntersectingPauseStart=null;
+
                         foreach ($pauses as  $pause) {
 
                             $pauseDebut = $pause['debut'];
@@ -190,6 +181,7 @@ class TimetableSeeder extends Seeder
                             $pauseDebutHours = $parsedTime->hour;
 
                             $pauseDebutMinutes = $parsedTime->minute;
+
 
                             $pauseEnd = $pause['fin'];
 
@@ -207,130 +199,16 @@ class TimetableSeeder extends Seeder
 
 
                             if ($newSeanceStart->lessThan($pauseEnd) && $newSeanceEnd->greaterThanOrEqualTo($pauseEnd)) {
-                                
-                                dump("pauses name: " . $pause['name']);
                                 dump('comdition1');
-                                dump($newSeanceStart->toTimeString());
-                                dump($newSeanceEnd->toTimeString());
-                                $intersectPause = true;
-                                $lastIntersectingPauseEnd= $pauseEnd;
-                                $lastIntersectingPauseStart= $pauseDebut;
-                                if ($newSeanceStart->lessThan($pauseDebut)) {
-                                   
-                                    dump("seance avant la pause"."debut: ".$newSeanceStart->toTimeString()." fin: ".$pauseDebut->toTimeString());
-                                    if($pauseDebut->diffInHours($newSeanceStart,absolute:true)!=0){
-                                        $seance = Seance::factory()->create([
-                                            'salle_id' => $salle_id,
-                                            'etat' => $randomSeanceState,
-                                            "date" => $currentDay,
-                                            "heure_debut" => $newSeanceStart,
-                                            "heure_fin" => $pauseDebut,
-                                            "module_id" => $classeModuleRandom->id,
-                                            "classe_id" => $classe->id,
-                                            "annee_id" => $annee_scolaire_id,
-                                            "user_id" => $seanceManager->id,
-                                            "timetable_id" => $timetable->id,
-                                            "typeseance_id" => $randomTypeseances->id
-                                        ]);
-                                    }
-                                }
-
-
-
-                                if (!$isIncluded) {
-                                    // si la seance commence avant la fin de la pause mais ne commence pas avant sont de debut(la seance commence en plein milieux de la pause)
-                                    if ($newSeanceStart->greaterThanOrEqualTo($pauseDebut)) {
-                                        $deltaThours = $pauseEnd->diffInHours($newSeanceStart, absolute: true);
-                                    } else if ($newSeanceStart->lessThan($pauseDebut)) {
-                                        $deltaThours = $pauseEnd->diffInHours($pauseDebut, absolute: true);
-                                    }
-
-                                    $deltaHours2 = $newSeanceEnd->diffInHours($pauseEnd, absolute: true);
-
-                                    $afterBreakSeanceEnd = $pauseEnd->addHours($deltaThours)->addHours($deltaHours2);
-                                    dump($pause['name']);
-                                    dump($count);
-                                    dump($pauseEnd->toTimeString());
-                                        //     if ($count  == count($pauses)) {
-                                        //         dump('end___***',$afterBreakSeanceEnd->toTimeString());
-                                        //         $seance = Seance::factory()->create([
-                                        //             'salle_id' => $salle_id,
-                                        //             'etat' => $randomSeanceState,
-                                        //             "date" => $currentDay,
-                                        //             "heure_debut" => $pauseEnd,
-                                        //             "heure_fin" => $afterBreakSeanceEnd,
-                                        //             "module_id" => $classeModuleRandom->id,
-                                        //             "classe_id" => $classe->id,
-                                        //             "annee_id" => $annee_scolaire_id,
-                                        //             "user_id" => $seanceManager->id,
-                                        //             "timetable_id" => $timetable->id,
-                                        //             "typeseance_id" => $randomTypeseances->id
-                                        //         ]);
-                                        // }
-                                        
-                                        if ($count  != count($pauses)){
-                                            /*au prochain tour  de la boucle des pauses la fin de la seance sera
-                                             egale a la portion de la seance courente en intersection avec
-                                             la pause courante + la portion de la seance apres la pause pour le cas d'une pause non inclusive */
-                                            $newSeanceEnd= $afterBreakSeanceEnd->copy();
-                                              /*au prochain tour  de la boucle des pauses le debut de la seance sera
-                                             egale a la fin de la pause courente(devenu pause predente au prochain tour) */
-                                            $afterBreakSeanceEnd=$pauseEnd->copy();
-
-                                        }
-
-                                    // dump('delta___hours',$deltaThours);
-                                    // dump($pauseEnd->toString(),$newSeanceStart->toString());
-                                    // $deltaTminutes=$pauseEnd->diffInHours($newSeanceStart);
-
-                                } else if ($isIncluded) {
-
-                                    if( $count  != count($pauses)){
-                                        $afterBreakSeanceEnd = $pauseEnd->copy();
-                                    }
-                                     if($count  == count($pauses)){
-                                        /* au dernier tour de la boucle des pauses $afterBreakSeanceEnd sera utilisé pour determiner la fin de la seance courante  */
-                                        $afterBreakSeanceEnd = $newSeanceEnd->copy();
-                                    }
-
-                                
-                               
-                                }
-
-
-                                /*creation d'une nouvelle seance  avec comme debut le debut initial et comme fin la fin de la pause*/
-
-                                // $diff=$currentSeanceEnd->diff($pauseEnd);
-                                /*si seance commence avant la fin de pause et finis apres le fin de la pause*/
-
-
-
-
-
-
-                             
-                                $pausename = $pause['name'];
-                                // dump( "difference between  the original end and the end of the pause $pausename { $diff }",);
-
-                                /* creation*** pas vraiment creer d"une seance ayant comme debut le debut de la pause et comme fin la fin initiale */
-
-                                // $newSeanceStart = $pauseEnd->copy();
-                                /*fin initiale de la seance*/
-                                $newSeanceStart = $afterBreakSeanceEnd->copy();
-                            }
-
-                            
-                            
-                            if ($newSeanceEnd->greaterThanOrEqualTo($pauseDebut) && $newSeanceEnd->lessThan($pauseEnd)) {
                                 dump("pauses name: " . $pause['name']);
-                                dump('comdition2');
                                 dump($newSeanceStart->toTimeString());
                                 dump($newSeanceEnd->toTimeString());
                                 $intersectPause = true;
-                                $lastIntersectingPauseEnd=$pauseEnd;
-                                $lastIntersectingPauseStart= $pauseDebut;
-                                dump("seance avant la pause"."debut: ".$newSeanceStart->toTimeString()." fin: ".$pauseDebut->toTimeString());
-                                if($pauseDebut->diffInHours($newSeanceStart,absolute:true)!=0){
+                                if ($newSeanceStart->lessThan($pauseDebut)) {
+                                    // $newSeanceEnd = $pauseDebut->copy();
+
+                                    // $newSeanceStart
+
                                     $seance = Seance::factory()->create([
                                         'salle_id' => $salle_id,
                                         'etat' => $randomSeanceState,
@@ -344,89 +222,108 @@ class TimetableSeeder extends Seeder
                                         "timetable_id" => $timetable->id,
                                         "typeseance_id" => $randomTypeseances->id
                                     ]);
-    
                                 }
-                              
+
+
+
+                                if (!$isIncluded) {
+                                    // si la seance commence avant la fin de la pause mais ne commence pas avant sont de debut(la seance commence en plein milieux de la pause)
+                                    if ($newSeanceStart->greaterThanOrEqualTo($pauseDebut)) {
+                                        $deltaThours = $pauseEnd->diffInHours($newSeanceStart, absolute: true);
+                                    } else if ($newSeanceStart->lessThan($pauseDebut)) {
+                                        $deltaThours = $pauseEnd->diffInHours($pauseDebut, absolute: true);
+                                    }
+
+                                    $deltaHours2 = $newSeanceEnd->diffInHours($pauseEnd, absolute: true);
+                                    $afterBreakSeanceEnd = $pauseEnd->addHours($deltaThours)->addHours($deltaHours2);
+
+                                    $seance = Seance::factory()->create([
+                                        'salle_id' => $salle_id,
+                                        'etat' => $randomSeanceState,
+                                        "date" => $currentDay,
+                                        "heure_debut" => $pauseEnd,
+                                        "heure_fin" => $afterBreakSeanceEnd,
+                                        "module_id" => $classeModuleRandom->id,
+                                        "classe_id" => $classe->id,
+                                        "annee_id" => $annee_scolaire_id,
+                                        "user_id" => $seanceManager->id,
+                                        "timetable_id" => $timetable->id,
+                                        "typeseance_id" => $randomTypeseances->id
+                                    ]);
+
+                                    // dump('delta___hours',$deltaThours);
+                                    // dump($pauseEnd->toString(),$newSeanceStart->toString());
+                                    // $deltaTminutes=$pauseEnd->diffInHours($newSeanceStart);
+
+                                } else if ($isIncluded) {
+
+                                    $afterBreakSeanceEnd = $pauseEnd->copy();
+                                }
+
+
+                                /*creation d'une nouvelle seance  avec comme debut le debut initial et comme fin la fin de la pause*/
+
+                                // $diff=$currentSeanceEnd->diff($pauseEnd);
+                                /*si seance commence avant la fin de pause et finis apres le fin de la pause*/
+
+
+
+
+
+
+                                // $diff=$currentSeanceEnd->timestamp - $pauseEnd->timestamp;
+                                // if( $diff==0){
+                                //     $noDiff=true;
+                                // }
+                                $pausename = $pause['name'];
+                                // dump( "difference between  the original end and the end of the pause $pausename { $diff }",);
+
+                                /* creation*** pas vraiment creer d"une seance ayant comme debut le debut de la pause et comme fin la fin initiale */
+
+                                // $newSeanceStart = $pauseEnd->copy();
+                                /*fin initiale de la seance*/
+                                $newSeanceStart = $afterBreakSeanceEnd->copy();
+                            }
+
+                            if ($newSeanceEnd->greaterThanOrEqualTo($pauseDebut) && $newSeanceEnd->lessThan($pauseEnd)) {
+                                dump('comdition2');
+                                dump("pauses name: " . $pause['name']);
+                                dump($newSeanceStart->toTimeString());
+                                dump($newSeanceEnd->toTimeString());
+                                $intersectPause = true;
+
+                                $seance = Seance::factory()->create([
+                                    'salle_id' => $salle_id,
+                                    'etat' => $randomSeanceState,
+                                    "date" => $currentDay,
+                                    "heure_debut" => $newSeanceStart,
+                                    "heure_fin" => $pauseDebut,
+                                    "module_id" => $classeModuleRandom->id,
+                                    "classe_id" => $classe->id,
+                                    "annee_id" => $annee_scolaire_id,
+                                    "user_id" => $seanceManager->id,
+                                    "timetable_id" => $timetable->id,
+                                    "typeseance_id" => $randomTypeseances->id
+                                ]);
+
 
 
 
                                 if (!$isIncluded) {
                                     dump('condition 2 pause non inclut');
                                     $deltaThours = $newSeanceEnd->diffInHours($pauseDebut, absolute: true);
-                                    dump($deltaThours);
+                                    // dump($deltaThours);
 
-                                                $afterBreakSeanceEnd = $pauseEnd->copy();
-                                                if ($deltaThours != 0) {
+                                    $afterBreakSeanceEnd = $pauseEnd->copy();
+                                    if ($deltaThours != 0) {
 
-                                                    /*modif suspecte */
-                                                    $afterBreakSeanceEnd = $afterBreakSeanceEnd->addHours($deltaThours);
-                                                    dump($afterBreakSeanceEnd->toTimeString());
-
-                                                    if ($count  != count($pauses)){
-                                                        /*au prochain tour  de la boucle des pauses la fin de la seance sera
-                                                         egale a la portion de la seance courente en intersection avec
-                                                         la pause courante  */
-                                                        $newSeanceEnd= $afterBreakSeanceEnd->copy();
-                                                          /*au prochain tour  de la boucle des pauses le debut de la seance sera
-                                                         egale a la fin de la pause courente(devenu pause predente au prochain tour) */
-                                                        $afterBreakSeanceEnd=$pauseEnd->copy();
-                                                      
-
-                                                    }
-
-
-
-                                                    // $afterBreakSeanceEnd = $afterBreakSeanceEnd->addHours($deltaThours);
-                                                    // $seance = Seance::factory()->create([
-                                                    //     'salle_id' => $salle_id,
-                                                    //     'etat' => $randomSeanceState,
-                                                    //     "date" => $currentDay,
-                                                    //     "heure_debut" => $pauseEnd,
-                                                    //     "heure_fin" => $afterBreakSeanceEnd,
-                                                    //     "module_id" => $classeModuleRandom->id,
-                                                    //     "classe_id" => $classe->id,
-                                                    //     "annee_id" => $annee_scolaire_id,
-                                                    //     "user_id" => $seanceManager->id,
-                                                    //     "timetable_id" => $timetable->id,
-                                                    //     "typeseance_id" => $randomTypeseances->id
-                                                    // ]);
-                                                }
-                                  } else {
-
-                                        /*modif suspecte*/
-                                        if( $count  != count($pauses)){
-                                            $afterBreakSeanceEnd = $pauseEnd->copy();
-                                        }
-                                        if($count  == count($pauses)){
-                                            /* au dernier tour de la boucle des pauses $afterBreakSeanceEnd sera utilisé pour determiner la fin de la seance courante  */
-                                            $afterBreakSeanceEnd = $newSeanceEnd->copy();
-                                        }
-                                    //   $afterBreakSeanceEnd = $pauseEnd->copy();
-                                  }
-
-
-                                /*indique le debut de la seance pour le prochain tour dans la boucle des pauses */
-                                $newSeanceStart = $afterBreakSeanceEnd->copy();
-                            }
-
-                         
-
-                            if ($count == count($pauses)) {
-
-                                if ($intersectPause) {
-                                    dump("last seance apres la pause"." debut: ".$lastIntersectingPauseEnd->toTimeString()." fin: ".$newSeanceEnd->toTimeString());
-                                    if($lastIntersectingPauseEnd->diffInHours($newSeanceEnd,absolute:true ) !=0 && $lastIntersectingPauseStart->diffInHours($newSeanceEnd,absolute:true)!=0 ){
-                                                /*
-                                    si  on est  la fin de la boucle des pauses (a  la derniere pause ) creer 
-                                    la seance partant de la fin de la derniere pause avec laquelle la  seance courente 
-                                    est entré en intersection et  finissant à  la fin  definis par $newseanceEnd
-                                        */
+                                        $afterBreakSeanceEnd = $afterBreakSeanceEnd->addHours($deltaThours);
                                         $seance = Seance::factory()->create([
                                             'salle_id' => $salle_id,
                                             'etat' => $randomSeanceState,
                                             "date" => $currentDay,
-                                            "heure_debut" => $lastIntersectingPauseEnd,
-                                            "heure_fin" => $newSeanceEnd,
+                                            "heure_debut" => $pauseEnd,
+                                            "heure_fin" => $afterBreakSeanceEnd,
                                             "module_id" => $classeModuleRandom->id,
                                             "classe_id" => $classe->id,
                                             "annee_id" => $annee_scolaire_id,
@@ -435,19 +332,49 @@ class TimetableSeeder extends Seeder
                                             "typeseance_id" => $randomTypeseances->id
                                         ]);
                                     }
-                                    dump('',$afterBreakSeanceEnd->copy()->toTimeString());
-                                    // dump($currentSeanceEnd->toTimeString());
-                                    $currentSeanceEnd = $newSeanceEnd->copy();
+                                } else {
+                                    $afterBreakSeanceEnd = $pauseEnd->copy();
+                                }
+
+
+
+                                $newSeanceStart = $afterBreakSeanceEnd->copy();
+                            }
+
+                            // if($newSeanceStart->greaterThanOrEqualTo($pauseDebut)&&$newSeanceStart->greaterThanOrEqualTo($pauseDebut)){
+
+                            // }
+
+                            if ($intersectPause) {
+                                dump('next seance  start at ' . $newSeanceStart->toTimeString());
+                            }
+
+
+
+
+
+
+
+
+
+
+
+                            if ($count == count($pauses)) {
+
+                                // dump("countttttttttt",$count); 
+                                // dump('end________',$count == count($pauses),$count,count($pauses));
+
+                                // $currentSeanceStart = $newSeanceStart->copy();
+                                if ($intersectPause) {
+                                    $currentSeanceEnd = $afterBreakSeanceEnd->copy();
                                 }
                             }
                             $count++;
-                            /* fin de la boucle  des pauses*/
                         }
 
 
 
                         if (!$intersectPause) {
-                            dump("seance sans intersection"."debut: ".$newSeanceStart->toTimeString()." fin: ".$newSeanceEnd->toTimeString());
 
                             $seance = Seance::factory()->create([
                                 'salle_id' => $salle_id,
@@ -468,11 +395,11 @@ class TimetableSeeder extends Seeder
 
 
 
-                        $prevSeanceEnd = $currentSeanceEnd->copy();
 
 
 
-                        /* fin de la boucle des seances */
+
+
 
 
 
@@ -510,7 +437,7 @@ class TimetableSeeder extends Seeder
 
 
 
-                     
+                        $prevSeanceEnd = $currentSeanceEnd->copy();
                     }
 
 
@@ -528,23 +455,23 @@ class TimetableSeeder extends Seeder
 
 
 
-////  $timetable = Timetable::factory()->create([
-////                 'classe_id' => $classe->id,
-////                 'annee_id' => $annee_scolaire_id,
-////                 'date_debut' => $date_debut,
-////                 'date_fin' =>  $date_fin,
-////             ]);
-////         Create a Carbon instance for the desired date
+//  $timetable = Timetable::factory()->create([
+//                 'classe_id' => $classe->id,
+//                 'annee_id' => $annee_scolaire_id,
+//                 'date_debut' => $date_debut,
+//                 'date_fin' =>  $date_fin,
+//             ]);
+//         Create a Carbon instance for the desired date
 
-////         dump($date_fin->toDateTimeString());
-////         dump($dayName);
-////         $nowWeek = $now->week();
+//         dump($date_fin->toDateTimeString());
+//         dump($dayName);
+//         $nowWeek = $now->week();
 
-////         return [
-////             'annee_id' => $annee_scolaire_id,
-////             'date_debut' => $date_debut,
-////             'date_fin' =>  $date_fin,
-////         ];
+//         return [
+//             'annee_id' => $annee_scolaire_id,
+//             'date_debut' => $date_debut,
+//             'date_fin' =>  $date_fin,
+//         ];
     //         // function intersectWithPause($interval1, $interval2, $pauses, $index = 0,)
                 //         // {
                 //         //     if (count($pauses) == $index) return;

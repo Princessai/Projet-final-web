@@ -1,7 +1,7 @@
 <?php
 
 return [
-    "presentiel",
+    "annule",
     "workshop",
     "e-learning",
     "rendu",

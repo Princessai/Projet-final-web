@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Classe;
+use App\Models\Niveau;
+use App\Models\Filiere;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -15,8 +17,18 @@ class ClasseSeeder extends Seeder
     public function run(): void
     {
         $classes =  require(base_path('data/classes.php'));
+
+        $niveaux = Niveau::all();
+        $filieres = Filiere::all();
+    
         foreach( $classes as $classe){
-            $classe=Classe::factory()->create(['label'=>$classe]);
+            $niveau = $niveaux->where('label', $classe['level']['label'])->first();
+            $filiere = $filieres->where('label', $classe['section']['label'])->first();
+            // dump($classe['level']['label']);
+            // dump($classe['section']['label']);
+            dump($niveau->label);
+            dump($filiere->label);
+            $classe=Classe::factory()->create(['label'=>$classe['label'], 'niveau_id' => $niveau->id, 'filiere_id' => $filiere->id ]);
             
         }
     }
