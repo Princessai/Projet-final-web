@@ -12,6 +12,7 @@ use App\Models\Typeseance;
 use Illuminate\Support\Arr;
 use App\Models\EtudiantParent;
 use Illuminate\Database\Seeder;
+use Database\Seeders\DroppeSeeder;
 use Database\Seeders\EnseignantSeeder;
 use Database\Seeders\TypeseanceSeeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
@@ -38,8 +39,10 @@ class DatabaseSeeder extends Seeder
             ClasseModuleSeeder::class,
             EnseignantSeeder::class,
             ClasseEnseignantSeeder::class,
-            TimetableSeeder::class,
             EtudiantSeeder::class,
+            TimetableSeeder::class,
+            DroppeSeeder::class,
+          
         ]);
         
         // $user = User::where('role_id', 3)->first();

@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Classe;
 use App\Models\Droppe;
 use App\Models\Module;
+use App\Models\Retard;
 use App\Models\Seance;
 use App\Models\Absence;
 use App\Models\Presence;
@@ -20,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Laravel\Sanctum\HasApiTokens;
+
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use   HasApiTokens,HasFactory, Notifiable;
 
 
 
@@ -61,11 +64,19 @@ class User extends Authenticatable
         ];
     }
 
-    
-    public function etudiantClasse(): HasOne  // un etudiant n'a qu'une seule classe
+    public function etudiantsClasses()  
     {
-        return $this->hasOne(ClasseEtudiant::class);
+        return $this->belongsToMany(Classe::class,'classe_etudiants')->withPivot('annee_id', 'niveau_id');
     }
+    
+    function etudiantsNiveaux() {
+        return $this->belongsToMany(Niveau::class,'classe_etudiants');
+        
+    }
+    // public function etudiantClasse(): HasOne  // un etudiant n'a qu'une seule classe
+    // {
+    //     return $this->hasOne(ClasseEtudiant::class);
+    // }
 
     // public function classeEnseignant(): HasMany
     // {
@@ -123,6 +134,10 @@ class User extends Authenticatable
     public function coordinateurClasses(): HasMany
     {
         return $this->hasMany(Classe::class);
+    }
+    public function retardEtudiants(): HasMany
+    {
+        return $this->hasMany(Retard::class);
     }
 
 }

@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained();
             $table->foreignId('seance_id')->constrained();
             $table->foreignId('annee_id')->constrained();
+            $table->timestamps();
+
         });
     }
 

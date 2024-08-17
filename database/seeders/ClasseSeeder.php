@@ -24,10 +24,8 @@ class ClasseSeeder extends Seeder
         foreach( $classes as $classe){
             $niveau = $niveaux->where('label', $classe['level']['label'])->first();
             $filiere = $filieres->where('label', $classe['section']['label'])->first();
-            // dump($classe['level']['label']);
-            // dump($classe['section']['label']);
-            dump($niveau->label);
-            dump($filiere->label);
+            
+          
             $classe=Classe::factory()->create(['label'=>$classe['label'], 'niveau_id' => $niveau->id, 'filiere_id' => $filiere->id ]);
             
         }

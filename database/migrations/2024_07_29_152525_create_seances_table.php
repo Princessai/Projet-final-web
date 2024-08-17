@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->integer('etat');
             $table->timestamp('date');
+            $table->boolean('attendance')->default(false);
             $table->timestamp('heure_debut')->nullable();
             $table->timestamp('heure_fin')->nullable();
+            $table->integer('duree')->nullable();
             $table->foreignId('salle_id')->constrained();
             $table->foreignId('module_id')->constrained();
             $table->foreignId('user_id')->constrained()->nullable();

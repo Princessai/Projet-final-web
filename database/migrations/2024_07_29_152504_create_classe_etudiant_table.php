@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('classe_id')->constrained();
             $table->foreignId('user_id')->constrained();
             $table->foreignId('annee_id')->constrained();
+            $table->foreignId('niveau_id')->constrained();
 
 
         });

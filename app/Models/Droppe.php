@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Droppe extends Model
 {
     use HasFactory;
+    public $timestamps = false;
     public function module(): BelongsTo // les modules desquels les etudiants ont été droppés
     {
         return $this->belongsTo(Module::class);

@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Annee;
 use App\Models\Classe;
 use App\Models\Module;
 use App\Models\CourseHour;
-use App\Models\Typeseance;
 
+use App\Models\Typeseance;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
@@ -20,39 +21,29 @@ class ClasseModuleSeeder extends Seeder
     {
         $modules = Module::all();
         $classes = Classe::all();
-        $typeseances = Typeseance::all();
+        $annee = Annee::latest()->first();;
+   
+        foreach ($modules as $module) {
 
-        $typeseancesSequence = [];
-        foreach ($typeseances as  $typeseance) {
-            $typeseancesSequence[] = ['typeseance_id' => $typeseance->id];
+            $randomClasseNumber =  rand(1,  2);
+
+            $randomClasses = $classes->random($randomClasseNumber);
+
+            $module->classes()->attach($randomClasses,['annee_id'=>$annee->id]);
+
         }
 
-        foreach ($classes as $classe) {
-            $randomModuleNumber = rand(1, $modules->count());
 
-            $randomModules = $modules->random($randomModuleNumber);
 
-            foreach ($randomModules as $randomModule) {
-                $nbre_heure_total = 0;
-                $course_hours = CourseHour::factory()->count($typeseances->count())->state(function (array $attributes) use (&$nbre_heure_total) {
-                    $randhours = rand(8, 30);
-                    // dump('$randhours', $randhours);
+        $classesWithoutModules = Classe::doesntHave('modules')->get();
+        // dump('classes sans modulesss', $classesWithoutModules);
 
-                    $nbre_heure_total += $randhours;
-                    // dump( 'acc value' ,$nbre_heure_total);
+        foreach ($classesWithoutModules as $classesWithoutModule) {
+            $randomModules = $modules->random(rand(1, $modules->count()));
 
-                    return ['nbre_heure_total' => $randhours];
-                })->sequence(...$typeseancesSequence)->make();
-                // dump("nombretotal",$nbre_heure_total);
-                $classe->modules()->attach($randomModule, ['nbre_heure_total' => $nbre_heure_total]);
-                $classe_module_id =$classe->modules->first()->pivot->id;
-                foreach ($course_hours as $course_hour) {
-                    $course_hour->classe_module_id =$classe_module_id;
-                    $course_hour->save();
-                }
-              
-              
-            }
+            $classesWithoutModule->modules()->attach($randomModules,['annee_id'=>$annee->id]);
         }
+
+    
     }
 }

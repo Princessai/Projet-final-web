@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('course_hours', function (Blueprint $table) {
             $table->id();
          
-            $table->integer('nbre_heure_total');
+            // $table->integer('nbre_heure_total');
             $table->integer('nbre_heure_effectue')->default(0);
-            $table->boolean('statut')->default(false);
+            // $table->boolean('statut')->default(false); // terminé ou non 
             $table->unsignedBigInteger('classe_module_id');
             $table->foreign('classe_module_id')->references('id')->on('classe_module');
             $table->foreignId('typeseance_id')->constrained();

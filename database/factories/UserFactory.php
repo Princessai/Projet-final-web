@@ -76,29 +76,23 @@ class UserFactory extends Factory
             $roleParentId = $roles->where("label", "parent")->first()->id;
             $roleEtudiantId = $roles->where("label", "etudiant")->first()->id;
             $roleEnseignantId = $roles->where("label", "enseignant")->first()->id;
-            // $roleCoordinateurId = $roles->where("label", "coordinateur")->first()->id;
             if ($disableDefaultConfig) return;
-            if ($user->role_id == $roleParentId) {
+            
+            // if ($user->role_id == $roleParentId) {
 
-                $randomParentChildrenCount = rand(1, 4);
-                //     EtudiantParent::factory()
-                //    ->parentChild($user->id)
-                //    ->count($randomParentChildrenCount)
-                //    ->create();              
+            //     $randomParentChildrenCount = rand(1, 4);
+            //     //     EtudiantParent::factory()
+            //     //    ->parentChild($user->id)
+            //     //    ->count($randomParentChildrenCount)
+            //     //    ->create();              
 
-                User::factory()
-                    ->userRole($roleEtudiantId, true)
-                    ->count($randomParentChildrenCount)
-                    ->for($user, 'etudiantParent')
-                    ->create();
-            }
-            if ($user->role_id == $roleEnseignantId) {
-                // $modules= Module::all();
-           
-            // $user = User::where('id', $user->id)->first()->enseignantModules;
-           
-            //     dump($user);
-            }
+            //     User::factory()
+            //         ->userRole($roleEtudiantId, true)
+            //         ->count($randomParentChildrenCount)
+            //         ->for($user, 'etudiantParent')
+            //         ->create();
+            // }
+        
         });
     }
 

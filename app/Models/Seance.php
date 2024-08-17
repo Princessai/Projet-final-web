@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\Salle;
 use App\Models\Module;
+use App\Models\Retard;
 use App\Models\Absence;
 use App\Models\Presence;
 use App\Models\Timetable;
@@ -50,6 +51,10 @@ class Seance extends Model
     public function typeSeance(): BelongsTo
     {
         return $this->belongsTo(Typeseance::class);
+    }
+    public function retardsSeance(): HasMany
+    {
+        return $this->hasMany(Retard::class);
     }
 
 }

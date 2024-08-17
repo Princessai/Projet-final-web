@@ -13,10 +13,14 @@ return new class extends Migration
     {
         Schema::create('absences', function (Blueprint $table) {
             $table->id();
-            $table->string('etat');
-            $table->foreignId('user_id')->constrained();
+            $table->integer('etat');
+            $table->foreignId('user_id')->constrained(); // l'étudiant
             $table->foreignId('seance_id')->constrained();
             $table->foreignId('annee_id')->constrained();
+            $table->unsignedBigInteger('coordinateur_id')->nullable();
+            $table->foreign('coordinateur_id')->references('id')->on('users');
+
+            $table->timestamps();
 
         });
     }
