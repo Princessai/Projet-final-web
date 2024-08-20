@@ -25,7 +25,7 @@ class ClasseModuleSeeder extends Seeder
    
         foreach ($modules as $module) {
 
-            $randomClasseNumber =  rand(1,  2);
+            $randomClasseNumber =  rand(1,  ceil($classes->count()/2));
 
             $randomClasses = $classes->random($randomClasseNumber);
 
@@ -39,7 +39,7 @@ class ClasseModuleSeeder extends Seeder
         // dump('classes sans modulesss', $classesWithoutModules);
 
         foreach ($classesWithoutModules as $classesWithoutModule) {
-            $randomModules = $modules->random(rand(1, $modules->count()));
+            $randomModules = $modules->random(rand(3, $modules->count()));
 
             $classesWithoutModule->modules()->attach($randomModules,['annee_id'=>$annee->id]);
         }

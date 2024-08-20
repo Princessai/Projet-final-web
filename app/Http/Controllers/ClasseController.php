@@ -17,14 +17,33 @@ class ClasseController extends Controller
 
     public function getAllClasseStudents(Request $request, $classe_id)
     {
-        $classe = Classe::findOrFail($classe_id);
+        $classe = new Classe;  
+        $classe= apiFindOrFail($classe,$classe_id,"no such class");
         $response = UserResource::collection($classe->etudiants);
         return apiSuccess(data: $response);
     }
-    public function getAllClasseTeachers(Request $request, $classe_id)
+    public function getClasseTeachers(Request $request, $classe_id)
     {
-        $classe = Classe::findOrFail($classe_id);
+
+        // $seanceManager = $classeModuleRandom->enseignants()->whereHas('enseignantClasses', function ($query) use ($classe) {
+        //     $query->where('classes.id', $classe->id);
+        // })->first();
+        $classe = Classe::with([
+
+            'enseignants'=> ['enseignantModules'=> 
+                        function ( $query) use($classe_id) {
+                            $query->whereHas('classes', function ($query) use ($classe_id) {
+                                $query->where('classes.id', $classe_id);
+                            });
+                        } 
+                    ]
+        
+        ]);
+
+        $classe= apiFindOrFail($classe,$classe_id,"no such class");
+
         $response = UserResource::collection($classe->enseignants);
         return apiSuccess(data: $response);
     }
+
 }

@@ -7,6 +7,7 @@ use App\Enums\seanceStateEnum;
 use App\Enums\absenceStateEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Factories\Factory;
+// include (base_path('utilities\seeder\seanceDuration.php'));
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Seance>
@@ -41,12 +42,21 @@ class SeanceFactory extends Factory
 
         return $this->afterCreating(function ($seance) use ($classe, $annee_scolaire_id) {
 
-            dump('after creating in seance factory');
-            dump($seance->etat);
-            dump(seanceStateEnum::Done->value);
+            dump('+++++after creating in seance factory+++++++');
+            dump("classe_id".$classe->id,"classe_label".$classe->label);
+            // dump($seance->etat);
+            // dump(seanceStateEnum::Done->value);
+            // $duration =   ceil($seance->heure_debut->diffInHours($seance->heure_fin));
 
+            $duration =seanceDuration($seance->heure_fin,$seance->heure_debut);
+            dump(' seance duration caculated '.$duration,'property duree '.$seance->duree);
+            // $classe->modules()->syncWithoutDetaching([
+            //     $seance->module_id =>['annee_id' => true]
+            // ]);
+
+            $test=true;
             if ($seance->etat == seanceStateEnum::Done->value) {
-
+                $test=false;
                     $etudiants = $classe->etudiants()->wherePivot('annee_id', $annee_scolaire_id)->distinct()->get();
                     // self::$staticProp++;
                     // dump('static',self::$staticProp);
@@ -61,12 +71,15 @@ class SeanceFactory extends Factory
                     $absenceStateCases = absenceStateEnum::cases();
 
                     $randomAbsenceState = fake()->randomElement($absenceStateCases);
+
                     $coordinateur_id = null;
 
                     if ($randomAbsenceState->value == absenceStateEnum::justified->value) {
                         $coordinateur_id = $classe->coordinateur->id;
                     }
+
                     foreach ($randomAbsentStudents as $randomAbsentStudent) {
+
                         $randomAbsentStudent->etudiantAbsences()->create([
                             'etat' => $randomAbsenceState->value,
                             'seance_id' => $seance->id,
@@ -75,9 +88,11 @@ class SeanceFactory extends Factory
                             'coordinateur_id' => $coordinateur_id,
 
                         ]);
+                        
                     }
 
                     $randomAbsentStudentsIds = $randomAbsentStudents->pluck('id');
+
                     $filteredStudents = $etudiants->filter(function ($etudiant) use ($randomAbsentStudentsIds) {
                         return !$randomAbsentStudentsIds->contains($etudiant->id);
                     });
@@ -92,39 +107,54 @@ class SeanceFactory extends Factory
                         ]);
                     }
                 
-                $seanceHours = ceil($seance->heure_debut->diffInHours($seance->heure_fin));
-                //    dump('test',$classe->modules()->where('module_id',$seance->module_id)->first()) ;
+               
 
 
-                $classe->modules()->syncWithoutDetaching([
-                    $seance->module_id
-                ]);
-
+              
+                dump( 'nbre_heure_total before increment in loop',$classe->modules()->wherePivot('annee_id',$annee_scolaire_id)->wherePivot("module_id",$seance->module_id)->first()->pivot->nbre_heure_total) ;
 
 
                 $classe->modules()->wherePivot('annee_id', $annee_scolaire_id)->updateExistingPivot($seance->module_id, [
-                    'nbre_heure_total' => DB::raw("nbre_heure_total + $seanceHours"),
-                    'nbre_heure_effectue' => DB::raw("nbre_heure_effectue + $seanceHours"),
+                    'nbre_heure_total' => DB::raw("nbre_heure_total + $duration"),
+                    'nbre_heure_effectue' => DB::raw("nbre_heure_effectue + $duration"),
                 ]);
-
+         
+                dump( 'nbre_heure_total after increment in loop',$classe->modules()->wherePivot('annee_id',$annee_scolaire_id)->wherePivot("module_id",$seance->module_id)->first()->pivot->nbre_heure_total) ;
                 $baseQuery = $classe->modules()->wherePivot('annee_id', $annee_scolaire_id)->wherePivot('module_id', $seance->module_id)->first()->pivot;
                 $isThereModuleCourseHours = $baseQuery->courseHours()->where('typeseance_id', $seance->typeseance_id)->exists();
 
 
 
 
-                if (!$isThereModuleCourseHours) {
-                    $baseQuery->courseHours()->create([
-                        'typeseance_id' => $seance->typeseance_id,
-                        'nbre_heure_effectue' => $seanceHours,
-                    ]);
-                } else {
-                    $baseQuery->courseHours()->where('typeseance_id', $seance->typeseance_id)->incrementEach([
-                        'nbre_heure_effectue' => $seanceHours,
-                    ]);
-                }
+                    if (!$isThereModuleCourseHours) {
+                        $baseQuery->courseHours()->create([
+                            'typeseance_id' => $seance->typeseance_id,
+                            'nbre_heure_effectue' => $duration,
+                        ]);
+                    } else {
+                        $baseQuery->courseHours()->where('typeseance_id', $seance->typeseance_id)->incrementEach([
+                            'nbre_heure_effectue' => $duration,
+                        ]);
+                    }
+
                 dump('modules de la classe', $isThereModuleCourseHours);
-        }
+            }else if($seance->etat == seanceStateEnum::Defer->value||$seance->etat == seanceStateEnum::ComingSoon->value){
+                $test=false;
+                dump( 'nbre_heure_total before increment in loop',$classe->modules()->wherePivot('annee_id',$annee_scolaire_id)->wherePivot("module_id",$seance->module_id)->first()->pivot->nbre_heure_total) ;
+                $classe->modules()->wherePivot('annee_id', $annee_scolaire_id)->updateExistingPivot($seance->module_id, [
+                    'nbre_heure_total' => DB::raw("nbre_heure_total + $duration"),
+                 
+                ]);
+                dump( 'nbre_heure_total after increment in loop',$classe->modules()->wherePivot('annee_id',$annee_scolaire_id)->wherePivot("module_id",$seance->module_id)->first()->pivot->nbre_heure_total) ;
+
+            }
+
+
+            if($test==true){
+                dump('test true');
+            }
+        
+
            
         });
     }

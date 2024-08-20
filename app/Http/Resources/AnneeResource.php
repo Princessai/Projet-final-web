@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ModuleResource extends JsonResource
+class AnneeResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,7 +16,7 @@ class ModuleResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'label' => $this->label,
+            'annee' => $this->annee_scolaire,
         ];
     }
 }

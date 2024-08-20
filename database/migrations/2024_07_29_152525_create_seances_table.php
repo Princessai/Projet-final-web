@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\seanceStateEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('seances', function (Blueprint $table) {
             $table->id();
-            $table->integer('etat');
+            $table->integer('etat')->default(seanceStateEnum::ComingSoon->value);
             $table->timestamp('date');
             $table->boolean('attendance')->default(false);
             $table->timestamp('heure_debut')->nullable();

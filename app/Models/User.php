@@ -26,7 +26,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use   HasApiTokens,HasFactory, Notifiable;
+    use   HasApiTokens, HasFactory, Notifiable;
 
 
 
@@ -64,14 +64,14 @@ class User extends Authenticatable
         ];
     }
 
-    public function etudiantsClasses()  
+    public function etudiantsClasses(): BelongsToMany
     {
-        return $this->belongsToMany(Classe::class,'classe_etudiants')->withPivot('annee_id', 'niveau_id');
+        return $this->belongsToMany(Classe::class, 'classe_etudiants')->withPivot('annee_id', 'niveau_id');
     }
-    
-    function etudiantsNiveaux() {
-        return $this->belongsToMany(Niveau::class,'classe_etudiants');
-        
+
+    function etudiantsNiveaux()
+    {
+        return $this->belongsToMany(Niveau::class, 'classe_etudiants');
     }
     // public function etudiantClasse(): HasOne  // un etudiant n'a qu'une seule classe
     // {
@@ -139,5 +139,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Retard::class);
     }
-
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\Module;
 use App\Models\Niveau;
+use App\Models\Seance;
 use App\Models\Timetable;
 use App\Models\ClasseModule;
 use App\Models\ClasseEtudiant;
@@ -64,5 +65,10 @@ class Classe extends Model
     {
         return $this->belongsTo(Niveau::class); // user de type coordinateur
     }
+    public function seances(): HasMany
+    {
+        return $this->hasMany(Seance::class); 
+    }
+
 
 }

@@ -57,6 +57,7 @@ class DroppeSeeder extends Seeder
 
                         if ($nbr_total_effectue != 0) {
                             $absencePercentage = round(($moduleMissingHours * 100) / $nbr_total_effectue, 2);
+                            
                             $presencePercentage = 100 - $absencePercentage;
 
                             if ($presencePercentage <= 30) {

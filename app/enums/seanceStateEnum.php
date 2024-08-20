@@ -6,4 +6,5 @@ namespace App\Enums;
     case Defer =1;
     case Stop =2;
     case Done = 3;
+    case ComingSoon = 4;
 }
