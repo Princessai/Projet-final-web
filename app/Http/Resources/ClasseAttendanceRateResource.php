@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\ClasseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +15,16 @@ class ClasseAttendanceRateResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        $classeService = new ClasseService;
+        $timestamp1 =  $request->route('timestamp1');
+        $timestamp2 =  $request->route('timestamp2');
+
+        ['classeAttendanceRate' => $classeAttendanceRate] = $classeService->getClasseAttendanceRates($this, $timestamp1, $timestamp2);
+
+        return [
+            'id' => $this->id,
+            'label' => $this->label,
+            'classeAttendanceRate' => $classeAttendanceRate,
+        ];
     }
 }

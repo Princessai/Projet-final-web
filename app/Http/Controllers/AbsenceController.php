@@ -9,6 +9,7 @@ use App\Models\Classe;
 use App\Models\Absence;
 use Illuminate\Http\Request;
 use App\Enums\seanceStateEnum;
+use App\Http\Resources\ClasseAttendanceRateResource;
 use App\Services\ClasseService;
 use App\Http\Resources\ClasseStudentsAbsencesResource;
 use App\Services\StudentService;
@@ -208,6 +209,7 @@ class AbsenceController extends Controller
     public function getClasssesAttendanceRate()
     {
         $classes = Classe::all();
-        
+        $response =  ClasseAttendanceRateResource::collection($classes);
+        return apiSuccess(data: $response);
     }
 }
