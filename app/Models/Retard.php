@@ -11,6 +11,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Retard extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'user_id',
+        'seance_id',
+        "annee_id",
+        
+    ];
+
+
 
     public function etudiant(): BelongsTo
     {

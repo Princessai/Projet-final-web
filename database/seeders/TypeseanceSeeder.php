@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Typeseance;
+use App\Models\TypeSeance;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,7 +15,7 @@ class TypeseanceSeeder extends Seeder
     {
         $typeseances = require(base_path('data/typeseances.php'));
         foreach ($typeseances as $typeseance) {
-          Typeseance::factory()->create(['label'=>$typeseance]);
+          TypeSeance::factory()->create(['label'=>$typeseance]);
         }
     }
 }

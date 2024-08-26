@@ -100,7 +100,7 @@ class SeanceFactory extends Factory
                     $randomLateStudents = $filteredStudents->random(rand(1, ceil($filteredStudents->count() / 3)));
 
                     foreach ($randomLateStudents as $randomLateStudent) {
-                        $randomLateStudent->retardEtudiants()->create([
+                        $randomLateStudent->etudiantRetards()->create([
                             'seance_id' => $seance->id,
                             'created_at' => $seance->date,
                             'annee_id' => $annee_scolaire_id,
@@ -121,18 +121,18 @@ class SeanceFactory extends Factory
          
                 dump( 'nbre_heure_total after increment in loop',$classe->modules()->wherePivot('annee_id',$annee_scolaire_id)->wherePivot("module_id",$seance->module_id)->first()->pivot->nbre_heure_total) ;
                 $baseQuery = $classe->modules()->wherePivot('annee_id', $annee_scolaire_id)->wherePivot('module_id', $seance->module_id)->first()->pivot;
-                $isThereModuleCourseHours = $baseQuery->courseHours()->where('typeseance_id', $seance->typeseance_id)->exists();
+                $isThereModuleCourseHours = $baseQuery->courseHours()->where('type_seance_id', $seance->type_seance_id)->exists();
 
 
 
 
                     if (!$isThereModuleCourseHours) {
                         $baseQuery->courseHours()->create([
-                            'typeseance_id' => $seance->typeseance_id,
+                            'type_seance_id' => $seance->type_seance_id,
                             'nbre_heure_effectue' => $duration,
                         ]);
                     } else {
-                        $baseQuery->courseHours()->where('typeseance_id', $seance->typeseance_id)->incrementEach([
+                        $baseQuery->courseHours()->where('type_seance_id', $seance->type_seance_id)->incrementEach([
                             'nbre_heure_effectue' => $duration,
                         ]);
                     }

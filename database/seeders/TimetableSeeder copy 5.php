@@ -15,7 +15,7 @@ use App\Enums\seanceStateEnum;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-require(base_path('utilities\seeder\seanceDuration.php'));
+ require(base_path('utilities\seeder\seanceDuration.php'));
 
 class TimetableSeeder extends Seeder
 {
@@ -30,7 +30,7 @@ class TimetableSeeder extends Seeder
         $now = CarbonImmutable::now();
         $typeseances = TypeSeance::all();
         $salles = Salle::all();
-
+        
         $pauses = require(base_path('data/pauses.php'));
         // $startOfDay = $now->startOfDay();
         // $dayOfWeekIndex = $startOfDay->dayOfWeek;
@@ -78,15 +78,14 @@ class TimetableSeeder extends Seeder
         // }
 
 
-
-        function randomState($seance_end, $now)
-        {
-
+     
+        function randomState($seance_end,$now) {
+           
             if ($seance_end->greaterThanOrEqualTo($now)) {
 
                 $randomSeanceState = seanceStateEnum::ComingSoon->value;
             } else {
-
+                
                 $seanceStates = seanceStateEnum::cases();
                 $seanceStates = array_filter($seanceStates, fn($case) => $case !== seanceStateEnum::ComingSoon->value);
 
@@ -97,7 +96,12 @@ class TimetableSeeder extends Seeder
             return $randomSeanceState;
         }
 
-       
+        // function seanceDuration($seance_end,$seance_start) {
+        //    $duration= ceil($seance_end->diffInHours($seance_start ,absolute:true));
+        
+
+        //     return $duration;
+        // }
 
         $date_debut = $now->startOfWeek()->startOfDay();
         dump('initial value of $date_debut ' . $date_debut);
@@ -142,20 +146,17 @@ class TimetableSeeder extends Seeder
 
 
 
-        // foreach ($classes as $classe) {
-        $timetable_offset =  $date_debut->subWeek()->startOfWeek(Carbon::MONDAY);
-        $timetable_offset_timestamp =  $timetable_offset->timestamp;
+        foreach ($classes as $classe) {
+            $timetable_offset =  $date_debut->subWeek()->startOfWeek(Carbon::MONDAY);
+            $timetable_offset_timestamp =  $timetable_offset->timestamp;
+            dump('new_classe***************');
 
+            dump('classlabel', $classe->label);
 
-        while ($timetable_offset_timestamp <= $date_fin->timestamp) {
-            dump('***************************');
-            dump('$timetables_start:', $timetable_offset->toString());
-
-            dump('new_timetable_______________________***');
-            foreach ($classes as $classe) {
-                dump('new_classe***************');
-
-                dump('classlabel', $classe->label);
+            while ($timetable_offset_timestamp <= $date_fin->timestamp) {
+                dump('***************************');
+                dump('$timetables_start:', $timetable_offset->toString());
+                dump('new_timetable_______________________***');
                 $timetableStart = $timetable_offset->copy();
                 $daysPerWeek = 4;
                 $timetableEnd = $timetableStart->addDays($daysPerWeek)->endOfDay();
@@ -301,8 +302,8 @@ class TimetableSeeder extends Seeder
                                     dump("seance avant la pause" . "debut: " . $newSeanceStart->toTimeString() . " fin: " . $pauseDebut->toTimeString());
                                     if ($pauseDebut->diffInHours($newSeanceStart, absolute: true) != 0) {
                                         // $duree = $pauseDebut->diffInHours($newSeanceStart, absolute: true);
-                                        $duree = seanceDuration($pauseDebut, $newSeanceStart);
-                                        $randomSeanceState = randomState($pauseDebut, $now);
+                                        $duree = seanceDuration($pauseDebut,$newSeanceStart);
+                                        $randomSeanceState =randomState($pauseDebut,$now);
                                         $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                             'salle_id' => $salle_id,
                                             'etat' => $randomSeanceState,
@@ -336,7 +337,7 @@ class TimetableSeeder extends Seeder
                                     dump($pause['name']);
                                     dump($count);
                                     dump($pauseEnd->toTimeString());
-
+                                 
 
                                     if ($count  != count($pauses)) {
                                         /*au prochain tour  de la boucle des pauses la fin de la seance sera
@@ -398,9 +399,9 @@ class TimetableSeeder extends Seeder
                                 dump("seance avant la pause" . "debut: " . $newSeanceStart->toTimeString() . " fin: " . $pauseDebut->toTimeString());
                                 if ($pauseDebut->diffInHours($newSeanceStart, absolute: true) != 0) {
                                     // $duree = ceil($seance->heure_debut->diffInHours($seance->heure_fin ,absolute:true)) ;
-                                    $duree = seanceDuration($pauseDebut, $newSeanceStart);
+                                    $duree = seanceDuration($pauseDebut,$newSeanceStart);
                                     // $pauseDebut->diffInHours($newSeanceStart, absolute: true);
-                                    $randomSeanceState = randomState($pauseDebut, $now);
+                                    $randomSeanceState =randomState($pauseDebut,$now);
                                     $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                         'salle_id' => $salle_id,
                                         'etat' => $randomSeanceState,
@@ -441,6 +442,10 @@ class TimetableSeeder extends Seeder
                                                          egale a la fin de la pause courente(devenu pause predente au prochain tour) */
                                             $afterBreakSeanceEnd = $pauseEnd->copy();
                                         }
+
+
+
+                                  
                                     }
                                 } else {
 
@@ -473,8 +478,8 @@ class TimetableSeeder extends Seeder
                                     est entré en intersection et  finissant à  la fin  definis par $newseanceEnd
                                         */
                                         // $duree = $newSeanceEnd->diffInHours($lastIntersectingPauseEnd, absolute: true);
-                                        $duree = seanceDuration($newSeanceEnd, $lastIntersectingPauseEnd);
-                                        $randomSeanceState = randomState($newSeanceEnd, $now);
+                                        $duree = seanceDuration($newSeanceEnd,$lastIntersectingPauseEnd);
+                                        $randomSeanceState =randomState($newSeanceEnd,$now);
                                         $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                             'salle_id' => $salle_id,
                                             'etat' => $randomSeanceState,
@@ -504,9 +509,9 @@ class TimetableSeeder extends Seeder
                         if (!$intersectPause) {
                             dump("seance sans intersection" . "debut: " . $newSeanceStart->toTimeString() . " fin: " . $newSeanceEnd->toTimeString());
                             // $duree = $newSeanceEnd->diffInHours($newSeanceStart, absolute: true);
-                            $duree = seanceDuration($newSeanceEnd, $newSeanceStart);
-
-                            $randomSeanceState = randomState($newSeanceEnd, $now);
+                            $duree = seanceDuration($newSeanceEnd,$newSeanceStart);
+                            
+                            $randomSeanceState =randomState($newSeanceEnd,$now);
                             $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                 'salle_id' => $salle_id,
                                 'etat' => $randomSeanceState,
@@ -578,10 +583,9 @@ class TimetableSeeder extends Seeder
                     // return;
                 }
 
-             
+                $timetable_offset = $timetable_offset->addWeek();
+                $timetable_offset_timestamp = $timetable_offset->timestamp;
             }
-            $timetable_offset = $timetable_offset->addWeek();
-            $timetable_offset_timestamp = $timetable_offset->timestamp;
         }
     }
 }

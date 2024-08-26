@@ -89,10 +89,7 @@ class User extends Authenticatable
     }
 
 
-    public function etudiantAbsences(): HasMany
-    {
-        return $this->hasMany(Absence::class);
-    }
+  
 
     public function droppedStudentsModules(): BelongsToMany // les étudiants droppés
     {
@@ -135,7 +132,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Classe::class);
     }
-    public function retardEtudiants(): HasMany
+    public function etudiantAbsences(): HasMany
+    {
+        return $this->hasMany(Absence::class);
+    }
+    public function etudiantRetards(): HasMany
     {
         return $this->hasMany(Retard::class);
     }

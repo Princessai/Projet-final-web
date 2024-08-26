@@ -7,7 +7,7 @@ use App\Models\Classe;
 use App\Models\Module;
 use App\Models\CourseHour;
 
-use App\Models\Typeseance;
+use App\Models\TypeSeance;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 

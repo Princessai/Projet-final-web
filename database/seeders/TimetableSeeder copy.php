@@ -9,7 +9,7 @@ use App\Models\Classe;
 use App\Models\Module;
 use App\Models\Seance;
 use App\Models\Timetable;
-use App\Models\Typeseance;
+use App\Models\TypeSeance;
 use Carbon\CarbonImmutable;
 use App\Enums\seanceStateEnum;
 use Illuminate\Database\Seeder;
@@ -26,7 +26,7 @@ class TimetableSeeder extends Seeder
         $annee_scolaire_id = Annee::latest()->first()->id;
         $classes = Classe::with(['modules.enseignants.enseignantClasses','coordinateur'])->get();
         $now = CarbonImmutable::now();
-        $typeseances=Typeseance::all();
+        $typeseances=TypeSeance::all();
         $salles=Salle::all();
         // $startOfDay = $now->startOfDay();
         // $dayOfWeekIndex = $startOfDay->dayOfWeek;
@@ -226,7 +226,7 @@ class TimetableSeeder extends Seeder
                                             "annee_id"=>$annee_scolaire_id,
                                             "user_id"=> $seanceManager->id,	
                                             "timetable_id"=>$timetable->id,	
-                                            "typeseance_id"=>$randomTypeseances->id]);
+                                            "type_seance_id"=>$randomTypeseances->id]);
 
                                         // dump('delta___hours',$deltaThours);
                                         // dump($pauseEnd->toString(),$newSeanceStart->toString());
@@ -252,7 +252,7 @@ class TimetableSeeder extends Seeder
                                         "annee_id"=>$annee_scolaire_id,
                                         "user_id"=> $seanceManager->id,	
                                         "timetable_id"=>$timetable->id,	
-                                        "typeseance_id"=>$randomTypeseances->id]);
+                                        "type_seance_id"=>$randomTypeseances->id]);
                                     
                                 }
                               
@@ -301,7 +301,7 @@ class TimetableSeeder extends Seeder
                         
                             /* create a seance */
                             // if(!$noDiff){
-                            //     $seance=Seance::factory()->create(['salle_id'=>$salle_id,'etat'=>$randomSeanceState,"date"=>$currentDay,	"heure_debut"=>$newSeanceStart,	"heure_fin"=>$newSeanceEnd,"module_id"=>$classeModuleRandom->id,"classe_id"=>$classe->id,"annee_id"=>$annee_scolaire_id,"user_id"=> $seanceManager->id,	"timetable_id"=>$timetable->id,	"typeseance_id"=>$randomTypeseances->id]);
+                            //     $seance=Seance::factory()->create(['salle_id'=>$salle_id,'etat'=>$randomSeanceState,"date"=>$currentDay,	"heure_debut"=>$newSeanceStart,	"heure_fin"=>$newSeanceEnd,"module_id"=>$classeModuleRandom->id,"classe_id"=>$classe->id,"annee_id"=>$annee_scolaire_id,"user_id"=> $seanceManager->id,	"timetable_id"=>$timetable->id,	"type_seance_id"=>$randomTypeseances->id]);
                             // }
                             // dump('____________________________________________');
                             // $randomTypeseances= $typeseances->random()->label;

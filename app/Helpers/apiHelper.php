@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 function apiSuccess($data=[], $message='success !', $statusCode = 200)
 {
@@ -30,8 +31,8 @@ function apiFindOrFail($query,$id, $message = 'something went wrong') {
 
         $data = $query->findOrFail($id);
     } catch (\Throwable $th) {
-        apiError(message: $message ,statusCode:404)->send();
-        die();
+        throw new HttpResponseException( apiError(message: $message ,statusCode:404));
+
     }
     return $data;
   

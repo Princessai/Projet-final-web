@@ -11,6 +11,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Absence extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'user_id',
+        'seance_id',
+        'coordinateur_id',
+        'etat',
+        "annee_id",
+        
+    ];
+
 
     public function etudiant(): BelongsTo // on récupère l'étudiant absent 
     {

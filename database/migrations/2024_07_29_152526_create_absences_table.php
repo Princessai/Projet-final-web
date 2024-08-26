@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\absenceStateEnum;
+use App\Models\Absence;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('absences', function (Blueprint $table) {
             $table->id();
-            $table->integer('etat');
+            $table->integer('etat')->default(absenceStateEnum::notJustified->value);
             $table->foreignId('user_id')->constrained(); // l'étudiant
             $table->foreignId('seance_id')->constrained();
             $table->foreignId('annee_id')->constrained();

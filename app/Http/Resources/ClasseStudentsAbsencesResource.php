@@ -12,14 +12,17 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ClasseStudentsAbsencesResource extends JsonResource
 {
     private $nbre_heure_effectue;
+    private $module_id;
 
-    public function __construct($resource, $nbre_heure_effectue)
+    public function __construct($resource, $nbre_heure_effectue, $module_id = null)
     {
         // Ensure you call the parent constructor
         parent::__construct($resource);
         $this->resource = $resource;
 
         $this->nbre_heure_effectue = $nbre_heure_effectue;
+
+        $this->module_id = $module_id;
     }
 
     /**
@@ -32,7 +35,7 @@ class ClasseStudentsAbsencesResource extends JsonResource
     {
         $classeService = new ClasseService;
         $studentService = new StudentService;
-        $annee = Annee::latest()->first();
+        $currentYear = Annee::latest()->first();
         $timestamp1 =  $request->route('timestamp1');
         $timestamp2 =  $request->route('timestamp2');
 
@@ -42,15 +45,31 @@ class ClasseStudentsAbsencesResource extends JsonResource
 
 
         if ($timestamp1 === null && $timestamp2 === null) {
-            $studentAbsences = $this->etudiantAbsences()->where('annee_id', $annee->id)->get();
+            $baseQuery = $this->etudiantAbsences()->where('annee_id', $currentYear->id);
+            if ($this->module_id !== null) {
+                $baseQuery = $baseQuery->whereHas('seance', function ($query) {
+
+                    $query->where('module_id', $this->module_id);
+                });
+            }
+
+            $studentAbsences = $baseQuery->get();
         } else if ($timestamp1 !== null && $timestamp2 !== null) {
 
             $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1, $timestamp2) {
+                if ($this->module_id !== null) {
+                    $query = $query->where('module_id', $this->module_id);
+                }
+
                 $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
             })->get();
         } else if ($timestamp1 !== null && $timestamp2 === null) {
 
             $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1) {
+
+                if ($this->module_id !== null) {
+                    $query = $query->where('module_id', $this->module_id);
+                }
                 $query->where('heure_debut', '>', $timestamp1);
             })->get();
         }
@@ -60,7 +79,7 @@ class ClasseStudentsAbsencesResource extends JsonResource
 
         // $absencePercentage = ($missingHours * 100) / $this->nbre_heure_effectue;
 
-        $presencePercentage = $studentService->percentageCalc($missingHours, $this->nbre_heure_effectue);
+        $presencePercentage = $studentService->AttendancePercentageCalc($missingHours, $this->nbre_heure_effectue);
 
 
 
@@ -71,8 +90,6 @@ class ClasseStudentsAbsencesResource extends JsonResource
             'lastname' => $this->lastname,
             'attendanceRate' => $presencePercentage,
             'picture' => $this->picture,
-            $timestamp1,
-            $timestamp2
         ];
     }
 }

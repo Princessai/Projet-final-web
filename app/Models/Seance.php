@@ -10,7 +10,7 @@ use App\Models\Retard;
 use App\Models\Absence;
 use App\Models\Presence;
 use App\Models\Timetable;
-use App\Models\Typeseance;
+use App\Models\TypeSeance;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,6 +25,13 @@ class Seance extends Model
     {
         return $this->hasMany(Absence::class);
     }
+
+    public function delays(): HasMany
+    {
+        return $this->hasMany(Retard::class);
+    }
+
+   
     public function presences(): HasMany
     {
         return $this->hasMany(Presence::class);
@@ -51,12 +58,9 @@ class Seance extends Model
 
     public function typeSeance(): BelongsTo
     {
-        return $this->belongsTo(Typeseance::class);
+        return $this->belongsTo(TypeSeance::class,);
     }
-    public function retardsSeance(): HasMany
-    {
-        return $this->hasMany(Retard::class);
-    }
+ 
 
     public function classe(): BelongsTo
     {

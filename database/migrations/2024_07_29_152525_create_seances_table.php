@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('module_id')->constrained();
             $table->foreignId('user_id')->constrained()->nullable();
             $table->foreignId('timetable_id')->constrained();
-            $table->foreignId('typeseance_id')->constrained();
+            $table->foreignId('type_seance_id')->constrained();
             $table->foreignId('classe_id')->constrained()->nullable();
             $table->foreignId('annee_id')->constrained()->nullable();
         });

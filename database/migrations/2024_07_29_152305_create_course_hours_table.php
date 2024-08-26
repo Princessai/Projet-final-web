@@ -19,7 +19,7 @@ return new class extends Migration
             // $table->boolean('statut')->default(false); // terminé ou non 
             $table->unsignedBigInteger('classe_module_id');
             $table->foreign('classe_module_id')->references('id')->on('classe_module');
-            $table->foreignId('typeseance_id')->constrained();
+            $table->foreignId('type_seance_id')->constrained();
             
         });
     }

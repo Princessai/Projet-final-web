@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\Salle;
 use App\Models\Classe;
 use App\Models\Module;
-use App\Models\Typeseance;
+use App\Models\TypeSeance;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Arr;
 use App\Models\EtudiantParent;
@@ -15,6 +15,7 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\DroppeSeeder;
 use Database\Seeders\EnseignantSeeder;
 use Database\Seeders\TypeseanceSeeder;
+use Database\Seeders\YearSegmentSeeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 
 class DatabaseSeeder extends Seeder
@@ -42,6 +43,7 @@ class DatabaseSeeder extends Seeder
             EtudiantSeeder::class,
             TimetableSeeder::class,
             DroppeSeeder::class,
+            YearSegmentSeeder::class,
           
         ]);
         
