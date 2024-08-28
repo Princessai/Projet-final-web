@@ -15,7 +15,7 @@ use App\Enums\seanceStateEnum;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-require(base_path('utilities\seeder\seanceDuration.php'));
+include_once(base_path('utilities\seeder\seanceDuration.php'));
 
 class TimetableSeeder extends Seeder
 {

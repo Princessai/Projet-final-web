@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\absenceStateEnum;
 use App\Models\Annee;
 use App\Models\Classe;
 use App\Models\Droppe;
@@ -17,7 +18,7 @@ class DroppeSeeder extends Seeder
      */
     public function run(): void
     {
-        $classes = Classe::with(['modules', 'etudiants'])->get();
+        $classes = Classe::with(['modules', 'etudiants.etudiantAbsences.seance'])->get();
         // $annee_scolaire = Annee::latest()->first();
 
         foreach ($classes as $classe) {
@@ -28,8 +29,6 @@ class DroppeSeeder extends Seeder
             $etudiantsAbsents = $classe->etudiants()->where(function ($query) {
                 return $query->has('etudiantAbsences');
             })->get();
-            dump('etudiant Absent', $etudiantsAbsents->pluck('id'));
-            $classeModules = $classe->modules;
 
 
             foreach ($etudiantsAbsents as $etudiantsAbsent) {
@@ -47,29 +46,38 @@ class DroppeSeeder extends Seeder
                         dump("module id____", $module_id);
                         dump("module absencee", $moduleAbsences->pluck('seance_id'));
                         $moduleMissingHours = 0;
-                        $classeModule = $classe->modules->where('id', $module_id)->first();
-                        $nbr_total_effectue =  $classeModule->pivot->nbre_heure_effectue;
+                        $classeModule = $classe->modules()->wherePivot('annee_id', $annee_id)->where('modules.id', $module_id)->first();
+                        $workedHours =  $classeModule->pivot->nbre_heure_effectue;
+                        $totalModuleHours =  $classeModule->pivot->nbre_heure_total;
 
-                        dump($nbr_total_effectue);
+                        dump($workedHours);
                         foreach ($moduleAbsences as $moduleAbsence) {
-                            $moduleMissingHours += $moduleAbsence->seance->duree;
-                        }
-
-                        if ($nbr_total_effectue != 0) {
-                            $absencePercentage = round(($moduleMissingHours * 100) / $nbr_total_effectue, 2);
-                            
-                            $presencePercentage = 100 - $absencePercentage;
-
-                            if ($presencePercentage <= 30) {
-                                dump('dropeeeeee ' . $etudiantsAbsent->id);
-                                dump('je suis dans le if');
-                                Droppe::create([
-                                    'user_id' => $etudiantsAbsent->id,
-                                    'module_id' => $classeModule->id,
-                                    'annee_id' => $annee_id
-                                ]);
+                            if ($moduleAbsence->etat == absenceStateEnum::notJustified->value) {
+                                $moduleMissingHours += $moduleAbsence->seance->duree;
                             }
-                            dump("pourcentage de presence", $presencePercentage);
+                        }
+                        $workedHoursPercentage = round((100 * $workedHours) / $totalModuleHours, 2);
+
+                        $minWorkedHoursPercentage = 30;
+
+                        if ($workedHoursPercentage >= $minWorkedHoursPercentage) {
+                            if ($workedHours != 0) {
+                                $absencePercentage = round(($moduleMissingHours * 100) / $workedHours, 2);
+
+                                $presencePercentage = 100 - $absencePercentage;
+
+
+                                if ($presencePercentage <= 30) {
+                                    dump('dropeeeeee ' . $etudiantsAbsent->id);
+                                    dump('je suis dans le if');
+                                    Droppe::create([
+                                        'user_id' => $etudiantsAbsent->id,
+                                        'module_id' => $classeModule->id,
+                                        'annee_id' => $annee_id
+                                    ]);
+                                }
+                                dump("pourcentage de presence", $presencePercentage);
+                            }
                         }
                     }
                 }

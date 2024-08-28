@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Carbon\Carbon;
 use App\Models\Annee;
 use Illuminate\Http\Request;
+use App\Services\AnneeService;
 use App\Services\ClasseService;
 use App\Services\StudentService;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -35,7 +36,7 @@ class ClasseStudentsAbsencesResource extends JsonResource
     {
         $classeService = new ClasseService;
         $studentService = new StudentService;
-        $currentYear = Annee::latest()->first();
+        $currentYear = (new AnneeService)->getCurrentYear();
         $timestamp1 =  $request->route('timestamp1');
         $timestamp2 =  $request->route('timestamp2');
 

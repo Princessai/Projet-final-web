@@ -2,21 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Resources\SeanceCollection;
+use Closure;
 use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Annee;
+use App\Models\Salle;
+use App\Models\Classe;
+use App\Models\Module;
 use App\Models\Seance;
 use App\Enums\roleEnum;
+use App\Models\TypeSeance;
+use Illuminate\Http\Request;
 use App\Services\AnneeService;
 use App\Services\StudentService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\ClasseResource;
+use App\Http\Resources\ModuleResource;
+use App\Http\Resources\SeanceResource;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 
-class UserController extends Controller
+class UserControllerCopy extends Controller
 {
 
     public function login(Request $request)
@@ -171,63 +182,4 @@ class UserController extends Controller
         $response = new UserResource($user);
         return apiSuccess(data: $response);
     }
-
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    
 }

@@ -22,7 +22,7 @@ use App\Http\Resources\UserCollection;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AttendanceRecordsRequest;
 
-require(base_path('utilities\seeder\seanceDuration.php'));
+include_once(base_path('utilities\seeder\seanceDuration.php'));
 
 class SeanceController extends Controller
 {
@@ -59,6 +59,9 @@ class SeanceController extends Controller
 
         $currentYear = (new AnneeService())->getCurrentYear();
 
+        $SeanceService = new SeanceService;
+
+
         $seance = Seance::with('classe');
 
 
@@ -71,9 +74,9 @@ class SeanceController extends Controller
 
         $seanceDuration = seanceDuration($seanceEnd, $seanceStart);
 
-        // if ($seanceStart->greaterThan(now())) {
-        //     return apiError(message: 'the session has not started yet');
-        // }
+        if ($seanceStart->greaterThan(now())) {
+            return apiError(message: 'the session has not started yet');
+        }
         if ($seance->attendance) {
             return apiError(message: 'the call is already done');
         }
@@ -88,24 +91,38 @@ class SeanceController extends Controller
         // ->nbre_heure_effectue;
 
 
-        $pivotDataBaseQuery = DB::table('classe_module')
-            ->where([
-                'annee_id' => $currentYear->id,
-                'module_id' => $seance->module_id,
-                'classe_id' => $seance->classe->id
-            ]);
+        // $pivotDataBaseQuery = DB::table('classe_module')
+        //     ->where([
+        //         'annee_id' => $currentYear->id,
+        //         'module_id' => $seance->module_id,
+        //         'classe_id' => $seance->classe->id
+        //     ]);
 
-        $pivotData = $pivotDataBaseQuery->first();
-
-
-        $workedHours = $pivotData->nbre_heure_effectue;
+        // $pivotData = $pivotDataBaseQuery->first();
 
 
+        // $workedHours = $pivotData->nbre_heure_effectue;
 
-        CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->increment('nbre_heure_effectue', $seanceDuration);
+        // $isThereModuleCourseHours= CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->exists();
 
-        $pivotDataBaseQuery->increment('nbre_heure_effectue', $seanceDuration);
+        // if (!$isThereModuleCourseHours) {
+        //     CourseHour::create([
+        //         'classe_module_id' => $pivotData->id,
+        //         'type_seance_id' => $seance->type_seance_id,
+        //         'nbre_heure_effectue' => $seanceDuration,
+        //     ]);
+        // } else {
+        //     CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->increment('nbre_heure_effectue', $seanceDuration);
+          
+        // }
 
+
+
+        // $pivotDataBaseQuery->increment('nbre_heure_effectue', $seanceDuration);
+       $pivotData = $SeanceService->incrementOrDecrementWorkedHours($seance, $currentYear);
+
+       $workedHours = $pivotData->nbre_heure_effectue;
+       
         $totalModuleHours = $pivotData->nbre_heure_total;
 
         $workedHoursPercentage = round((100 * $workedHours) / $totalModuleHours, 2);
@@ -189,11 +206,13 @@ class SeanceController extends Controller
                 $studentModuleAbscences = Absence::whereHas('seance', function ($query) use ($seance,) {
 
                     $query = $query->where('module_id', $seance->module_id);
-                })->where([
-                    'annee_id' => $currentYear->id,
-                    'user_id' => $student_id,
-                    'etat' => absenceStateEnum::notJustified->value
-                ])->get();
+                })
+                    ->where([
+
+                        'annee_id' => $currentYear->id,
+                        'user_id' => $student_id,
+                        'etat' => absenceStateEnum::notJustified->value
+                    ])->get();
 
                 $StudentService = new StudentService;
 
@@ -281,6 +300,12 @@ class SeanceController extends Controller
             $query->where(['module_id' => $seance->module_id, 'classe_id' => $seance->classe_id, 'annee_id' => $currentYear->id]);
         })->where('etat', absenceStateEnum::notJustified->value)->get();
 
+        $heure_fin = Carbon::parse($seance->heure_fin);
+        $offSet = now()->subDays(3);
+        if ($heure_fin->lessThanOrEqualTo($offSet)) {
+            return apiError(message: 'oops ! modification deadline has passed');
+        }
+
         // $classesModules = $seance->classe
         //     ->modules()
         //     ->wherePivot('annee_id', $currentYear->id)
@@ -289,6 +314,7 @@ class SeanceController extends Controller
 
         // $workedHours  =  $ClasseService->getClasseModulesWorkedHours($classesModules);
 
+        
         $pivotDataBaseQuery = DB::table('classe_module')
             ->where([
                 'annee_id' => $currentYear->id,

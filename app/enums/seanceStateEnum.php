@@ -7,4 +7,9 @@ namespace App\Enums;
     case Stop =2;
     case Done = 3;
     case ComingSoon = 4;
+
+
+//   public function getSeanceState()
+
 }
+

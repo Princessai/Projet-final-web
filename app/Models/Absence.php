@@ -23,7 +23,7 @@ class Absence extends Model
 
     public function etudiant(): BelongsTo // on récupère l'étudiant absent 
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'user_id');
     }
     public function seance(): BelongsTo // la séance de laquelle l'étudiant est absent 
     {

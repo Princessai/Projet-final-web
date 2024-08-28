@@ -21,6 +21,19 @@ class Seance extends Model
 {
     use HasFactory;
     public $timestamps = false;
+    protected $fillable = [
+        "etat",
+        "date",
+        "heure_debut",
+        "heure_fin",
+        "salle_id",
+        "module_id",
+        "user_id",
+        "type_seance_id",
+        "classe_id",
+        "annee_id",
+        "timetable_id",
+    ];
     public function absences(): HasMany
     {
         return $this->hasMany(Absence::class);
@@ -31,7 +44,7 @@ class Seance extends Model
         return $this->hasMany(Retard::class);
     }
 
-   
+
     public function presences(): HasMany
     {
         return $this->hasMany(Presence::class);
@@ -60,12 +73,10 @@ class Seance extends Model
     {
         return $this->belongsTo(TypeSeance::class,);
     }
- 
+
 
     public function classe(): BelongsTo
     {
-        return $this->belongsTo(Classe::class); 
+        return $this->belongsTo(Classe::class);
     }
-
-
 }

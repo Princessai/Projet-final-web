@@ -6,14 +6,17 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Annee;
 use App\Models\Classe;
+use App\Models\Droppe;
 use App\Models\Absence;
 use App\Models\YearSegment;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Enums\seanceStateEnum;
+use App\Services\AnneeService;
 use App\Enums\absenceStateEnum;
 use App\Services\ClasseService;
 use App\Services\StudentService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Resources\AbsenceResource;
 use App\Http\Resources\AbsenceCollection;
 use Illuminate\Support\Facades\Validator;
@@ -21,7 +24,7 @@ use App\Http\Resources\YearSegmentAbsenceResource;
 use App\Http\Resources\ClasseAttendanceRateResource;
 use App\Http\Resources\ClasseStudentsAbsencesResource;
 
-require(base_path('utilities\seeder\seanceDuration.php'));
+ include_once (base_path('utilities\seeder\seanceDuration.php'));
 
 
 class AbsenceController extends Controller
@@ -29,14 +32,17 @@ class AbsenceController extends Controller
     public function getStudentAttendanceRate($student_id, $timestamp1 = null, $timestamp2 = null)
     {
 
-        $currentYear = Annee::latest()->first();
+       
+        $currentYear = (new AnneeService)->getCurrentYear();
+        $StudentService = new StudentService;
+        $ClasseService = new ClasseService;
         if ($timestamp1 === null && $timestamp2 === null) {
 
             $student = User::with(['etudiantsClasses.modules', 'etudiantAbsences.seance']);
         } else {
             $student = User::with(['etudiantsClasses.seances.absences']);
         }
-        $classeService = new ClasseService;
+    
 
         $student = apiFindOrFail($student, $student_id, "no such student");
 
@@ -68,7 +74,7 @@ class AbsenceController extends Controller
             // }
 
 
-            $missingHoursCount = $classeService->getStudentMissedHours($studentAbsences);
+            $missingHoursCount = $ClasseService->getStudentMissedHours($studentAbsences);
 
             $classesModules = $studentClasse->modules()->wherePivot('annee_id', $currentYear->id)->get();
             // foreach ($classesModules as $classesModule) {
@@ -76,7 +82,7 @@ class AbsenceController extends Controller
             //     $nbre_heure_effectue += $classesModule->pivot->nbre_heure_effectue;
             // }
 
-            $nbre_heure_effectue =  $classeService->getClasseModulesWorkedHours($classesModules);
+            $nbre_heure_effectue =  $ClasseService->getClasseModulesWorkedHours($classesModules);
         }
 
 
@@ -104,7 +110,7 @@ class AbsenceController extends Controller
             //     }
             // }
 
-            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $classeService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
+            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
 
             // return apiSuccess(data: $missingHoursCount);
         }
@@ -130,7 +136,7 @@ class AbsenceController extends Controller
             //     }
             // }
 
-            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $classeService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
+            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
         }
 
 
@@ -143,9 +149,9 @@ class AbsenceController extends Controller
         //     return apiError(message: 'no courses has been done for this interval');
         // }
 
-        $studentService = new StudentService;
+    
 
-        $presencePercentage = $studentService->AttendancePercentageCalc($missingHoursCount, $nbre_heure_effectue);
+        $presencePercentage = $StudentService->AttendancePercentageCalc($missingHoursCount, $nbre_heure_effectue);
 
         $maxAttendanceMark = 15;
 
@@ -157,7 +163,7 @@ class AbsenceController extends Controller
 
     public function getClassseStudentsAttendanceRate($classe_id, $timestamp1 = null, $timestamp2 = null)
     {
-        $classeService = new ClasseService;
+        $ClasseService = new ClasseService;
 
         if ($timestamp1 === null && $timestamp2 === null) {
             $classe = Classe::with(['etudiants.etudiantAbsences', 'modules']);
@@ -173,15 +179,15 @@ class AbsenceController extends Controller
 
         // if ($timestamp1 === null && $timestamp2 === null) {
 
-        //     $nbre_heure_effectue = $classeService->getClasseModulesWorkedHours($classe->modules);
+        //     $nbre_heure_effectue = $ClasseService->getClasseModulesWorkedHours($classe->modules);
         // } else if ($timestamp1 !== null && $timestamp2 !== null) {
 
         //     $classeSeances = $classe->seances()->where('etat', seanceStateEnum::Done->value)->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
-        //     $nbre_heure_effectue = $classeService->getClasseSeancesWorkedHours($classeSeances);
+        //     $nbre_heure_effectue = $ClasseService->getClasseSeancesWorkedHours($classeSeances);
         // } else if ($timestamp1 !== null && $timestamp2 === null) {
 
         //     $classeSeances = $classe->seances()->where('etat', seanceStateEnum::Done->value)->where('heure_debut', '>', $timestamp1)->get();
-        //     $nbre_heure_effectue = $classeService->getClasseSeancesWorkedHours($classeSeances);
+        //     $nbre_heure_effectue = $ClasseService->getClasseSeancesWorkedHours($classeSeances);
         // }
 
 
@@ -204,7 +210,7 @@ class AbsenceController extends Controller
 
         // $classeAttendanceRate = round($classeStudentsAttendanceRate / $classeStudentsCount, 2);
 
-        ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate] = $classeService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2);
+        ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate] = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2);
 
         return apiSuccess(data: ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate]);
     }
@@ -219,14 +225,17 @@ class AbsenceController extends Controller
     public function getModuleAttendanceRate($student_id, $module_id, $timestamp1 = null, $timestamp2 = null)
     {
 
-        $currentYear = Annee::latest()->first();
+        $currentYear = (new AnneeService)->getCurrentYear();
+        $StudentService = new StudentService;
+        $ClasseService = new ClasseService;
+
         if ($timestamp1 === null && $timestamp2 === null) {
 
             $student = User::with(['etudiantsClasses.modules', 'etudiantAbsences.seance']);
         } else {
             $student = User::with(['etudiantsClasses.seances.absences']);
         }
-        $classeService = new ClasseService;
+      
 
         $student = apiFindOrFail($student, $student_id, "no such student");
 
@@ -243,19 +252,21 @@ class AbsenceController extends Controller
 
         if ($timestamp1 === null && $timestamp2 === null) {
 
-            $studentAbsences = $student->etudiantAbsences()->whereHas('seance', function ($query) use ($currentYear, $module_id) {
-                $query->where([
-                    'annee_id' => $currentYear->id,
-                    'module_id' => $module_id,
-                ]);
-            })->get();
+            // $studentAbsences = $student->etudiantAbsences()->whereHas('seance', function ($query) use ($currentYear, $module_id) {
+            //     $query->where([
+            //         'annee_id' => $currentYear->id,
+            //         'module_id' => $module_id,
+            //     ]);
+            // })->get();
+
+            $studentAbsences= $StudentService->getModuleAbsences($student,$module_id,$currentYear);
 
 
-            $missingHoursCount = $classeService->getStudentMissedHours($studentAbsences);
+            $missingHoursCount = $ClasseService->getStudentMissedHours($studentAbsences);
 
             $classesModules = $studentClasse->modules()->wherePivot('annee_id', $currentYear->id)->where('modules.id', $module_id)->get();
 
-            $nbre_heure_effectue =  $classeService->getClasseModulesWorkedHours($classesModules);
+            $nbre_heure_effectue =  $ClasseService->getClasseModulesWorkedHours($classesModules);
         }
 
 
@@ -265,7 +276,7 @@ class AbsenceController extends Controller
 
             $seancesClasses = $studentClasse->seances()->where(['etat' => seanceStateEnum::Done->value, 'module_id' => $module_id])->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
 
-            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $classeService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
+            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
         }
 
 
@@ -275,13 +286,13 @@ class AbsenceController extends Controller
 
 
 
-            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $classeService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
+            ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
         }
 
 
-        $studentService = new StudentService;
+ 
 
-        $presencePercentage = $studentService->AttendancePercentageCalc($missingHoursCount, $nbre_heure_effectue);
+        $presencePercentage = $StudentService->AttendancePercentageCalc($missingHoursCount, $nbre_heure_effectue);
 
         $maxAttendanceMark = 15;
 
@@ -293,7 +304,7 @@ class AbsenceController extends Controller
 
     public function getClasseModuleAttendanceRate($classe_id, $module_id, $timestamp1 = null, $timestamp2 = null)
     {
-        $classeService = new ClasseService;
+        $ClasseService = new ClasseService;
 
         if ($timestamp1 === null && $timestamp2 === null) {
             $classe = Classe::with(['etudiants.etudiantAbsences', 'modules']);
@@ -305,7 +316,7 @@ class AbsenceController extends Controller
 
 
 
-        $response = $classeService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id);
+        $response = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id);
 
         return apiSuccess(data: $response);
     }
@@ -313,7 +324,7 @@ class AbsenceController extends Controller
     public function getStudentAbsences($student_id, $timestamp1 = null, $timestamp2 = null)
     {
 
-        $currentYear = Annee::latest()->first();
+        $currentYear = (new AnneeService)->getCurrentYear();
         $student =  User::with('etudiantAbsences');
         $student = apiFindOrFail($student, $student_id);
         $baseQuery = $student->etudiantAbsences();
@@ -347,7 +358,7 @@ class AbsenceController extends Controller
             'year_segments' => [
                 'nullable',
                 "regex:$regexPattern",
-               
+
 
             ]
 
@@ -377,14 +388,15 @@ class AbsenceController extends Controller
 
 
         $StudentService = new StudentService;
-        $currentYear = Annee::latest()->first();
+    
+        $currentYear = (new AnneeService)->getCurrentYear();
         $student =  User::with(['etudiantsClasses.seances.absences']);
         $student = apiFindOrFail($student, $student_id);
         $studentClasse = $student->etudiantsClasses()->wherePivot('annee_id', $currentYear->id)->first();
         $seances = $studentClasse->seances()->where([
-            'annee_id'=> $currentYear->id,
-            'etat'=>seanceStateEnum::Done->value
-    ])->get();
+            'annee_id' => $currentYear->id,
+            'etat' => seanceStateEnum::Done->value
+        ])->get();
 
         $yearSegmentBaseQuery = YearSegment::where('annee_id', $currentYear->id);
 
@@ -457,5 +469,88 @@ class AbsenceController extends Controller
         return apiSuccess(data: $response);
     }
 
+    public function justifyStudentAbsence(Request $request, $absence_id)
+    {
+        $ClasseService =new ClasseService;
+        $StudentService = new StudentService;
+        $AnneeService = new AnneeService;
 
+        $validator = Validator::make($request->all(), [
+            'receipt' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'comments' => 'string',
+            'coordinateur_id'=>'integer'
+
+        ]);
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
+
+        $fileName = null;
+
+        if ($request->has('receipt')) {
+            $receipt = $request->file('receipt');
+            $fileName = $receipt->store('receipts');
+        }
+    
+
+        $currentYear = $AnneeService->getCurrentYear();
+        $absence =  Absence::with(['etudiant.etudiantAbsences.seance', 'seance.classe']);
+
+        $absence = apiFindOrFail($absence, $absence_id, "no absence found");
+
+
+        $student = $absence->etudiant;
+        $module_id = $absence->seance->module_id;
+        $studentClasse = $absence->seance->classe;
+        $seance_id =$absence->seance->id;
+        $coordinateur_id = $studentClasse->coordinateur_id;
+        if ($request->has('coordinateur_id')) {
+            $coordinateur_id=$request->coordinateur_id;
+         }
+        
+
+        // $studentClasse = $absence->etudiant()->etudiantsClasses()->where()->first();
+
+        $pivotDataBaseQuery = DB::table('classe_module')
+            ->where([
+                'annee_id' => $currentYear->id,
+                'module_id' => $module_id,
+                'classe_id' => $studentClasse->id
+            ]);
+
+        $pivotData = $pivotDataBaseQuery->first();
+        $totalModuleHours = $pivotData->nbre_heure_total;
+        $workedHours = $pivotData->nbre_heure_effectue;
+
+        $workedHoursPercentage = round((100 * $workedHours) / $totalModuleHours, 2);
+        $minWorkedHoursPercentage = 30;
+
+        $minAttendancePercentage = 30;
+      
+        if($workedHoursPercentage>$minWorkedHoursPercentage){
+            
+            $studentModuleAbscences= $StudentService->getModuleAbsences($student,$module_id,$currentYear,function($seanceQuery) use($seance_id){
+                $seanceQuery->where('seance_id','!=',$seance_id)->Where('etat', absenceStateEnum::notJustified->value);
+            });
+    
+    
+                $missedHours =  $ClasseService->getStudentMissedHours($studentModuleAbscences);
+                $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc($missedHours, $workedHours);
+    
+                if ($unJustifiedpresencePercentage > $minAttendancePercentage) {
+                    Droppe::where([
+                        'user_id' => $student->id,
+                        'module_id' => $module_id,
+                        'annee_id' => $currentYear->id
+                    ])->delete();
+                       
+                }
+        }
+      
+   
+        $absence->update(['etat' => absenceStateEnum::justified->value,'receipt' => $fileName,'coordinateur_id' => $coordinateur_id]);
+
+        return apiSuccess(message: 'absence justified successfully !');
+    }
 }

@@ -32,15 +32,6 @@ class AttendanceRecordsRequest extends FormRequest
             'attendances.*.isDropped' => 'required|boolean',
             'attendances.*.status'=>['required',Rule::enum(attendanceStateEnum::class),]
 
-            // 'delays' => 'present|array',
-            // 'delays.*' => 'nullable|array',
-            // 'delays.*.id' => 'required|integer',
-            // 'delays.*.isDropped' => 'required|boolean',
-            // 'presences' => 'present|array',
-            // 'presences.*' => 'nullable|array',
-            // 'presences.*.id' => 'required|integer',
-            // 'presences.*.isDropped' => 'required|boolean',
-
         ];
     }
 

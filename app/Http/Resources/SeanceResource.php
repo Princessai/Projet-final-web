@@ -31,11 +31,11 @@ class SeanceResource extends JsonResource
                 "heure_fin" =>  $this->heure_fin,
                 "duree" =>  $this->duree,
                 "salle" =>  $this->salle,
-                "module" => new ModuleResource($this->module) ,
+                "module" => new ModuleResource($this->whenLoaded('module')) ,
                 
                 "timetable_id" =>  $this->timetable_id,
                 "type_seance" => $this->typeSeance,
-                "classe" => new ClasseResource($this->classe)  ,
+                "classe" => new ClasseResource($this->whenLoaded('classe'))  ,
                 "annee_id" => $this->annee_id 
 
         ];

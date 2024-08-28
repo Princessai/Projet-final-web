@@ -24,7 +24,7 @@ class TimetableResource extends JsonResource
             'date_fin' => $this->date_fin,
             'commentaire' => $this->commentaire,
             'classe_id' => $this->classe_id,
-            'seances'=> SeanceResource::collection($this->seances),
+            'seances'=> SeanceResource::collection( $this->whenLoaded('seances')),
         ];
     }
 }

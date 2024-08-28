@@ -16,7 +16,6 @@ Route::prefix('trackin')->group(function () {
     Route::post("/login", [UserController::class, 'login']);
 
 
-
     // groupe de routes authentifiés
     Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -24,7 +23,7 @@ Route::prefix('trackin')->group(function () {
             return $request->user();
         });
 
-        // methode get
+        
         Route::get("/logout", [UserController::class, 'logout']);
 
         Route::get("/logged_user/infos", [UserController::class, 'loggedUserInfos']);
@@ -38,10 +37,22 @@ Route::prefix('trackin')->group(function () {
         Route::get("/gethours/classe/year_segments/{classe_id}/{year_segments}", [CourseHourController::class, 'getClasseWorkedHours']);
 
         Route::get("/gethours/classes/year_segments/{year_segments}", [CourseHourController::class, 'getAllClassesWorkedHours']);
+        
+
+        // crud emploi du temps
+        // Route::prefix("/timetable")->group(function () {
+        //     Route::get("/create", [TimetableController::class, 'createTimetable'])
+        //     ->whereNumber(['classe_id']);
+        // });
+
+        // CRUD timetable
+        Route::resource('timetable', TimetableController::class);
+
+        // CRUD users
+        Route::resource('user', UserController::class);
 
 
-
-        // faire l'appel 
+        // // faire l'appel 
         Route::prefix("/attendance-record")->group(function () {
 
             // faire l'appel; persister les données de l'appel 
@@ -57,14 +68,11 @@ Route::prefix('trackin')->group(function () {
 
 
 
-
-
-
-        // les taux de présence
+        // // les taux de présence
         Route::prefix("/presence")->group(function () {
 
             Route::get("/student/{student_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getStudentAttendanceRate'])
-                ->whereNumber(['student_id']);;
+                ->whereNumber(['student_id']);
 
             Route::get("/students/classe/{classe_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getClassseStudentsAttendanceRate'])
                 ->whereNumber(['classe_id']);
@@ -84,7 +92,10 @@ Route::prefix('trackin')->group(function () {
             // ->whereNumber(['student_id', 'months']);;
         });
 
-        // toutes les liste
+        Route::post("/justify/absence/{absence_id}", [AbsenceController::class, 'justifyStudentAbsence'])
+        ->whereNumber(['absence_id']);
+
+        // // toutes les liste
         Route::prefix('list')->group(function () {
 
 
