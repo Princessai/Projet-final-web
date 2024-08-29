@@ -5,9 +5,11 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\Annee;
 use App\Models\Classe;
+use App\Models\Absence;
 use App\Enums\seanceStateEnum;
-use App\Http\Resources\ClasseStudentsAbsencesResource;
+use App\Enums\absenceStateEnum;
 use Illuminate\Database\Eloquent\Collection;
+use App\Http\Resources\ClasseStudentsAbsencesResource;
 
 include_once(base_path('utilities\copyCollection.php'));
 include_once(base_path('utilities\seeder\seanceDuration.php'));
@@ -32,13 +34,15 @@ function isSeanceInYearSegments($seance, $yearSegments)
 
 class ClasseService
 {
-    public function getClassCurrentStudent($classe,$currentYear=null){
-        if($currentYear==null){
-        $currentYear = (new AnneeService())->getCurrentYear();                
-
+    public function getClassCurrentStudent($classe, $currentYear = null)
+    {
+        if ($currentYear == null) {
+            $currentYear = (new AnneeService())->getCurrentYear();
         }
         return $classe->etudiants()->wherePivot('annee_id', $currentYear->id)->get();
     }
+
+
     public function getStudentMissedAndWorkedHours($seancesClasses, $student_id)
     {
         $nbre_heure_effectue = 0;
@@ -53,7 +57,7 @@ class ClasseService
             $studentAbsence = $seance->absences()->where('user_id', $student_id)->first();
 
             if (!is_null($studentAbsence)) {
-                //  return apiSuccess(data: $studentAbsence);
+
                 $missingHoursCount += $duree;
             }
         }
@@ -83,11 +87,10 @@ class ClasseService
         $nbre_heure_effectue = 0;
         if ($classesModules instanceof Collection) {
             foreach ($classesModules as $classesModule) {
-    
+
                 $nbre_heure_effectue += $classesModule->pivot->nbre_heure_effectue;
             }
-            
-        }else {
+        } else {
             $nbre_heure_effectue = $classesModules->pivot->nbre_heure_effectue;
         }
 
@@ -108,23 +111,32 @@ class ClasseService
         return $nbre_heure_effectue;
     }
 
-    public function getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id = null)
-    {
+    public function getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id = null,$currentYear_id=null)
+    {   if($currentYear_id==null){
+            $currentYear_id =(new AnneeService)->getCurrentYear()->id;
+        }
 
         $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
         $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
 
 
         if ($timestamp1 === null && $timestamp2 === null) {
-            $currentYear = Annee::latest()->first();
-
-            $baseQuery = $classe->modules()->wherePivot('annee_id', $currentYear->id);
-
-            if ($module_id !== null) {
-                $baseQuery = $baseQuery->where('modules.id', $module_id);
+            if(isset($classe->workedHoursSum)){
+                $nbre_heure_effectue =$classe->workedHoursSum;
+            }else{
+                $classe->modules->sum('pivot.nbre_heure_effectue');
             }
+            
+           
 
-            $nbre_heure_effectue = $this->getClasseModulesWorkedHours($baseQuery->get());
+            // $baseQuery = $classe->modules()->wherePivot('annee_id', $currentYear_id);
+
+            // if ($module_id !== null) {
+            //     $baseQuery = $baseQuery->where('modules.id', $module_id);
+            // }
+
+            // $nbre_heure_effectue = $this->getClasseModulesWorkedHours($baseQuery->get());
+
         } else if ($timestamp1 !== null && $timestamp2 !== null) {
 
             $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
@@ -132,11 +144,13 @@ class ClasseService
             if ($module_id !== null) {
                 $baseQuery = $baseQuery->where('module_id', $module_id);
             }
+
             $classeSeances = $baseQuery->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
             $nbre_heure_effectue = $this->getClasseSeancesWorkedHours($classeSeances);
         } else if ($timestamp1 !== null && $timestamp2 === null) {
 
             $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
+
             if ($module_id !== null) {
                 $baseQuery = $baseQuery->where('module_id', $module_id);
             }
@@ -205,7 +219,7 @@ class ClasseService
 
 
             if (!isset($currentSeanceYearSegment->workedHours)) {
-                $currentSeanceYearSegment->workedHours = ['all'=>0];
+                $currentSeanceYearSegment->workedHours = ['all' => 0];
             }
 
 
@@ -213,19 +227,19 @@ class ClasseService
             if (isset($currentSeanceYearSegment->workedHours)) {
 
                 $workedHours = $currentSeanceYearSegment->workedHours;
-                $workedHours['all'] += $seanceDuration; 
+                $workedHours['all'] += $seanceDuration;
                 $label = $seanceType->label;
-              
+
                 if (isset($workedHours[$label])) {
                     $workedHours[$label] += $seanceDuration;
                 } else {
 
-                   $workedHours[$label] = $seanceDuration;
+                    $workedHours[$label] = $seanceDuration;
                 }
-                $currentSeanceYearSegment->workedHours=$workedHours;
+                $currentSeanceYearSegment->workedHours = $workedHours;
                 // apiSuccess([$workedHours,$currentSeanceYearSegment->workedHours ])->send();
                 // die();
-            
+
             }
             //     $currentSeanceYearSegment->workedHours += $seanceDuration;
             // } else {
@@ -235,4 +249,17 @@ class ClasseService
 
         return $yearSegmentsCopy;
     }
+
+    public function getModuleAbsences($classe_id, $module_id, $currentYear_id, $etat = null)
+    {
+        // $classeModuleAbsences = Absence::whereHas('seance', function ($query) use ($seance, $currentYear) {
+        //     $query->where(['module_id' => $seance->module_id, 'classe_id' => $seance->classe_id, 'annee_id' => $currentYear->id]);
+        // })->where('etat', absenceStateEnum::notJustified->value)->get();
+        $baseWhereClause = ['classe_id' => $classe_id, 'module_id' => $module_id, 'annee_id' => $currentYear_id];
+        if ($etat !== null) {
+            $baseWhereClause['etat'] = $etat;
+        }
+        return $absences = Absence::where($baseWhereClause)->get();
+    }
+
 }

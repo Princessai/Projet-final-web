@@ -15,6 +15,9 @@ class Retard extends Model
         'user_id',
         'seance_id',
         "annee_id",
+        "duree",
+        "module_id",
+        "duree_raw",
         
     ];
 

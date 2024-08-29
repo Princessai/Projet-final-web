@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('retards', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
+               $table->unsignedBigInteger('module_id')->nullable();
+            $table->integer('duree')->nullable();
+            $table->integer('duree_raw')->nullable();
             $table->foreignId('seance_id')->constrained()->onDelete('cascade');
             $table->foreignId('annee_id')->constrained();
             $table->timestamps();

@@ -17,6 +17,9 @@ class Absence extends Model
         'coordinateur_id',
         'etat',
         "annee_id",
+        "duree",
+        "duree_raw",
+        "module_id",
         
     ];
 

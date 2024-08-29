@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Resources\SeanceCollection;
 use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Seance;
 use App\Enums\roleEnum;
+use Illuminate\Http\Request;
 use App\Services\AnneeService;
 use App\Services\StudentService;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\SeanceCollection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 
+use function PHPUnit\Framework\isNull;
 
 class UserController extends Controller
 {
@@ -71,7 +73,7 @@ class UserController extends Controller
 
         $currentTime = now()->addMinutes(15);
         $timestamp = ($timestamp === null) ? 0 : Carbon::createFromTimestamp($timestamp);
-       
+
 
         $user = new User();
         $user = apiFindOrFail(query: $user, id: $user_id, message: 'no such  user');
@@ -80,8 +82,8 @@ class UserController extends Controller
 
         if ($userRole->label == roleEnum::Etudiant->value) {
             $studentService = new StudentService;
-            $user->load(['etudiantsClasses'=>[
-                'seances'=>['typeSeance','classe','module','salle']
+            $user->load(['etudiantsClasses' => [
+                'seances' => ['typeSeance', 'classe', 'module', 'salle']
             ]]);
             $studentClasse = $studentService->getCurrentClasse($user, $currentYear);
 
@@ -89,20 +91,17 @@ class UserController extends Controller
             $seanceBaseQuery = $studentClasse->seances()->orderBy('id', 'desc');
             if ($timestamp !== null) {
                 $seanceBaseQuery = $seanceBaseQuery->where('heure_fin', '>=', $timestamp);
-            }else {
+            } else {
                 $seanceBaseQuery = $seanceBaseQuery->where('annee_id', $currentYear->id);
             }
             $seances = $seanceBaseQuery->get();
-           
         } else {
-                $eagerLoadedRelation =['typeSeance','classe','module','salle'];
+            $eagerLoadedRelation = ['typeSeance', 'classe', 'module', 'salle'];
             if ($timestamp !== null) {
                 $seances = Seance::with($eagerLoadedRelation)->where(['user_id' => $user->id])->where('heure_fin', '>=', $timestamp)->orderBy('id', 'desc')->get();
-            }else {
+            } else {
                 $seances = Seance::with($eagerLoadedRelation)->where(['user_id' => $user->id, 'annee_id' => $currentYear->id])->orderBy('id', 'desc')->get();
-            }
-            ;
-
+            };
         }
 
 
@@ -118,7 +117,7 @@ class UserController extends Controller
         //         "duree" =>  $seance->duree,
         //         "salle" =>  $seance->salle,
         //         "module" => new ModuleResource($seance->module) ,
-                
+
         //         "timetable_id" =>  $seance->timetable_id,
         //         "type_seance" => $seance->typeSeance,
         //         "classe" => new ClasseResource($seance->classe)  ,
@@ -127,18 +126,18 @@ class UserController extends Controller
         //     ];
         // })
         // ->groupBy(function ( $item, int $key) use($currentTime){
-           
+
         //     if($item['heure_fin'] >= $currentTime) {
         //         return 'coming';
         //     }
-      
+
         //     return 'passed';
         // });
 
         $response =  new SeanceCollection($seances);
         $response->setCurrentTime($currentTime);
 
-       
+
         return apiSuccess(data: $response);
     }
 
@@ -172,7 +171,6 @@ class UserController extends Controller
         return apiSuccess(data: $response);
     }
 
-
     /**
      * Display a listing of the resource.
      */
@@ -182,33 +180,67 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        //
+
+        $roles = Role::all();
+        if (!$request->has('role_id')) {
+            return apiError(message: "role_id is required");
+        }
+
+
+        $userRole = $roles->where('id', $request->role_id)->first();
+        if (is_null($userRole)) {
+            return apiError(message: "no such role in the database");
+        }
+
+
+     
+
+
+
+        $baseRules = [
+            'name' => 'required|string',
+            'lastname' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => ['required', Password::min(8)],
+            'phone_number' => 'required',
+            'picture' => 'nullable',
+
+        ];
+
+        $parentRules = ['parent' => 'nullable|array'];
+
+        foreach ($baseRules as $field => $baseRule) {
+            $parentRules["parent.$field"] = $baseRule;
+        }
+
+        $rules = $baseRules + $parentRules;
+
+        $specificRules = [
+            'role_id' => 'required|integer',
+
+        ];
+        if ($userRole->label != roleEnum::Admin->value && $userRole->label != roleEnum::Parent->value) {
+             $specificRules['classe_id'] = ["array"];
+             $specificRules['classe_id.*'] = ["integer"];
+        }
+
+
+
+        $validator = Validator::make($request->all(), $rules + $specificRules);
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
     }
 
     /**
      * Display the specified resource.
      */
     public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
     {
         //
     }
@@ -228,6 +260,4 @@ class UserController extends Controller
     {
         //
     }
-
-    
 }

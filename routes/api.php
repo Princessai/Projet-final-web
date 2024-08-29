@@ -49,7 +49,7 @@ Route::prefix('trackin')->group(function () {
         Route::resource('timetable', TimetableController::class);
 
         // CRUD users
-        Route::resource('user', UserController::class);
+        Route::apiResource('user', UserController::class);
 
 
         // // faire l'appel 

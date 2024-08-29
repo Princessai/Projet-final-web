@@ -83,6 +83,8 @@ class SeanceFactory extends Factory
                         $randomAbsentStudent->etudiantAbsences()->create([
                             'etat' => $randomAbsenceState->value,
                             'seance_id' => $seance->id,
+                            'module_id'=>$seance->module_id,
+                            'duree'=>$seance->duree,
                             'annee_id' => $annee_scolaire_id,
                             'created_at' => $seance->date,
                             'coordinateur_id' => $coordinateur_id,
@@ -104,6 +106,8 @@ class SeanceFactory extends Factory
                             'seance_id' => $seance->id,
                             'created_at' => $seance->date,
                             'annee_id' => $annee_scolaire_id,
+                            'duree'=>$seance->duree,
+                            'module_id'=>$seance->module_id,
                         ]);
                     }
                 
