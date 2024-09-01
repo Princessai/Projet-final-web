@@ -8,6 +8,8 @@ use App\Models\Classe;
 use App\Models\Absence;
 use App\Enums\seanceStateEnum;
 use App\Enums\absenceStateEnum;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use App\Http\Resources\ClasseStudentsAbsencesResource;
 
@@ -34,12 +36,28 @@ function isSeanceInYearSegments($seance, $yearSegments)
 
 class ClasseService
 {
-    public function getClassCurrentStudent($classe, $currentYear = null)
+    public function getClassCurrentStudent($classe_id, $currentYear = null)
     {
+
+     
+
         if ($currentYear == null) {
             $currentYear = (new AnneeService())->getCurrentYear();
         }
-        return $classe->etudiants()->wherePivot('annee_id', $currentYear->id)->get();
+        if(!($classe_id instanceof Builder)&&!($classe_id instanceof Model)){
+
+           $classeQuery= Classe::with(['etudiants'=>function($query) use($currentYear){
+                $query->with('role');
+                $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
+            }]);
+           
+            $classe= apiFindOrFail($classeQuery,   $classe_id, "no such class");
+            return  $classe->etudiants;
+
+        }
+       
+
+        // return $classe->etudiants()->wherePivot('annee_id', $currentYear->id)->get();
     }
 
 
@@ -111,23 +129,33 @@ class ClasseService
         return $nbre_heure_effectue;
     }
 
-    public function getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id = null,$currentYear_id=null)
-    {   if($currentYear_id==null){
-            $currentYear_id =(new AnneeService)->getCurrentYear()->id;
+    public function getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id = null, $currentYear_id = null)
+    {
+        if ($currentYear_id == null) {
+            $currentYear_id = app(AnneeService::class)->getCurrentYear()->id;
         }
 
-        $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
-        $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
+        $timestamp1 = ($timestamp1 !== null && !($timestamp1 instanceof Carbon)) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
+        $timestamp2 = ($timestamp2 !== null && !($timestamp2 instanceof Carbon)) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
 
-
+      
         if ($timestamp1 === null && $timestamp2 === null) {
-            if(isset($classe->workedHoursSum)){
-                $nbre_heure_effectue =$classe->workedHoursSum;
-            }else{
-                $classe->modules->sum('pivot.nbre_heure_effectue');
-            }
-            
-           
+            apiSuccess([property_exists($classe, 'workedHoursSum')])->send();
+            // return $classe;
+            // die();
+            // if (property_exists($classe, 'workedHoursSum')) {
+        
+             
+            // } else {
+             
+            //     $classe->modules->sum('pivot.nbre_heure_effectue');
+
+
+            // }
+
+            $nbre_heure_effectue = $classe->workedHoursSum === null ? 0 : $classe->workedHoursSum;
+
+
 
             // $baseQuery = $classe->modules()->wherePivot('annee_id', $currentYear_id);
 
@@ -139,31 +167,34 @@ class ClasseService
 
         } else if ($timestamp1 !== null && $timestamp2 !== null) {
 
-            $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
+            // $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
 
-            if ($module_id !== null) {
-                $baseQuery = $baseQuery->where('module_id', $module_id);
-            }
+            // if ($module_id !== null) {
+            //     $baseQuery = $baseQuery->where('module_id', $module_id);
+            // }
 
-            $classeSeances = $baseQuery->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
-            $nbre_heure_effectue = $this->getClasseSeancesWorkedHours($classeSeances);
+            // $classeSeances = $baseQuery->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
+            // $nbre_heure_effectue = $this->getClasseSeancesWorkedHours($classeSeances);
         } else if ($timestamp1 !== null && $timestamp2 === null) {
 
-            $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
+            // $baseQuery = $classe->seances()->where('etat', seanceStateEnum::Done->value);
 
-            if ($module_id !== null) {
-                $baseQuery = $baseQuery->where('module_id', $module_id);
-            }
+            // if ($module_id !== null) {
+            //     $baseQuery = $baseQuery->where('module_id', $module_id);
+            // }
 
-            $classeSeances = $baseQuery->where('heure_debut', '>', $timestamp1)->get();
-            $nbre_heure_effectue = $this->getClasseSeancesWorkedHours($classeSeances);
+            // $classeSeances = $baseQuery->where('heure_debut', '>', $timestamp1)->get();
+            // $nbre_heure_effectue = $this->getClasseSeancesWorkedHours($classeSeances);
         }
 
 
         $classeStudents = $classe->etudiants;
-        $classeStudentsCount = $classeStudents->count();
+        // $classeStudentsCount = $classeStudents->count();
+        $classeStudentsCount = (int)$classe->etudiants_count;
         $strudentAttendanceRate = [];
         $classeStudentsAttendanceRate = 0;
+        $nbre_heure_effectue = (int) $classe->workedHoursSum;
+
         foreach ($classeStudents as $classeStudent) {
 
             // return apiSuccess(data:new ClasseStudentsAbsencesResource($classeStudent, $nbre_heure_effectue));
@@ -262,4 +293,144 @@ class ClasseService
         return $absences = Absence::where($baseWhereClause)->get();
     }
 
+    public function loadWithWorkedHoursAndStudentsMissingHoursSum($classe_id, $currentYear_id, $module_id = null, $timestamp1 = null, $timestamp2 = null)
+    {
+     
+
+
+        $classe = $classe_id;
+        if (is_numeric($classe_id)) {
+            apiSuccess('test')->send();
+            $classe = new Classe();
+        }
+
+
+        $baseQuery =   $classe->withCount([
+            'etudiants' => function ($query) use ($currentYear_id, $module_id) {
+                $query->where('classe_etudiants.annee_id', $currentYear_id);
+            }
+        ])->with(['etudiants' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
+            $query->wherePivot('classe_etudiants.annee_id', $currentYear_id);
+            $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
+
+                if ($module_id !== null) {
+                    $query->where('module_id', $module_id);
+                }
+                if ($timestamp1 === null && $timestamp2 === null) {
+                    $query->where('annee_id', $currentYear_id);
+                }
+                if ($timestamp1 !== null && $timestamp2 === null) {
+                    $query->where('seance_heure_debut', '>', $timestamp1);
+                }
+
+                if ($timestamp1 !== null && $timestamp2 !== null) {
+                    $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
+                };
+            }], 'duree');
+        }]);
+
+        if ($timestamp1 === null && $timestamp2 === null) {
+
+
+            // $classe = Classe::withCount(['etudiants' => function ($query) use ($currentYear, $module_id) {
+            //         $query->where('classe_etudiants.annee_id', $currentYear->id);
+            //     }
+            // ])
+            // ->with(['etudiants' => function ($query) use ($currentYear, $module_id) {
+            //     $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
+            //     $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear, $module_id) {
+            //         $query->where('annee_id', $currentYear->id);
+            //         if ($module_id !== null) {
+            //             $query->where('module_id', $module_id);
+            //         }
+            //     }], 'duree');
+            // }])
+
+            $classe = $baseQuery->withSum(['modules as workedHoursSum' => function ($query) use ($currentYear_id, $module_id) {
+                $query->where('annee_id', $currentYear_id);
+                if ($module_id !== null) {
+                    $query->where('module_id', $module_id);
+                }
+            }], 'classe_module.nbre_heure_effectue');
+        } else {
+
+
+
+            // with(['etudiants.etudiantAbsences'=>function($query) use($currentYear,$module_id,$timestamp2,$timestamp1)  {
+
+
+            //     if($module_id!==null){
+            //         $query->where('module_id',$module_id);
+            //     }
+
+            //     if ($timestamp1 !== null && $timestamp2 === null) {
+            //         $query->where('seance_heure_debut', '>', $timestamp1);
+
+            //         }
+
+            //     if ($timestamp1 !== null && $timestamp2 !== null) {
+            //              $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
+            //     };
+
+
+            // }])
+
+
+            $classe = $baseQuery->withSum(['seances as workedHoursSum' => function ($query) use ($module_id, $timestamp2, $timestamp1) {
+
+                $baseWhereClause = ['etat' => seanceStateEnum::Done->value];
+
+
+
+                if ($module_id !== null) {
+                    $baseWhereClause['module_id'] = $module_id;
+                }
+
+
+                $query->where($baseWhereClause);
+
+                if ($timestamp1 !== null && $timestamp2 === null) {
+                    $query->where('heure_debut', '>', $timestamp1);
+                }
+
+                if ($timestamp1 !== null && $timestamp2 !== null) {
+                    $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
+                };
+            }], 'duree')
+                // ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
+
+                //     $baseWhereClause=['etat'=> seanceStateEnum::Done->value];
+
+
+
+                //     if($module_id!==null){
+                //         $baseWhereClause['module_id']=$module_id;
+                //     }
+
+
+                //     $query->where($baseWhereClause);
+
+                //     if ($timestamp1 !== null && $timestamp2 === null) {
+                //         $query->where('heure_debut', '>', $timestamp1);
+
+                //         }
+
+                //         if ($timestamp1 !== null && $timestamp2 !== null) {
+                //              $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
+                //         };
+
+                // })
+
+            ;
+        }
+
+
+
+        if (!is_numeric($classe_id)) {
+           return $classe;
+        }
+
+     
+        return $classe = apiFindOrFail($classe, $classe_id, "no such class");
+    }
 }

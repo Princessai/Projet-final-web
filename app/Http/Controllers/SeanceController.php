@@ -236,7 +236,17 @@ class SeanceController extends Controller
             }
 
             if ($attendanceTabName !== null) {
-                $$attendanceTabName[] = ['user_id' => $student_id, "seance_id" => $seance->id, "annee_id" => $currentYear->id];
+
+                $$attendanceTabName[] = [
+                'user_id' => $student_id,
+                'module_id'=> $seance->module_id,
+                'seance_heure_fin'=>$seance->heure_fin,
+                'seance_heure_debut'=>$seance->heure_debut,
+                'duree'=>$seance->duree,
+                'duree_raw'=>$seance->duree_raw,
+                "seance_id" => $seance->id, 
+                "annee_id" => $currentYear->id
+            ];
             }
         }
 
@@ -292,9 +302,6 @@ class SeanceController extends Controller
         $seanceAbsences =  $seance->absences;
         $seanceDelays =  $seance->delays;
 
-        $seanceStart = Carbon::parse($seance->heure_debut);
-        $seanceEnd = Carbon::parse($seance->heure_fin);
-        $seanceDuration = seanceDuration($seanceEnd, $seanceStart);
 
         $classeModuleAbsences = Absence::whereHas('seance', function ($query) use ($seance, $currentYear) {
             $query->where(['module_id' => $seance->module_id, 'classe_id' => $seance->classe_id, 'annee_id' => $currentYear->id]);
@@ -304,9 +311,9 @@ class SeanceController extends Controller
 
         $heure_fin = Carbon::parse($seance->heure_fin);
         $offSet = now()->subDays(7);
-        // if ($heure_fin->lessThanOrEqualTo($offSet)) {
-        //     return apiError(message: 'oops ! modification deadline has passed');
-        // }
+        if ($heure_fin->lessThanOrEqualTo($offSet)) {
+            return apiError(message: 'oops ! modification deadline has passed');
+        }
 
 
         $pivotDataBaseQuery = DB::table('classe_module')
@@ -360,7 +367,10 @@ class SeanceController extends Controller
                         'user_id' => $student_id,
                         'seance_id' => $seance->id,
                         'annee_id' => $currentYear->id,
-                        'duree' => $seanceDuration,
+                        'duree' => $seance->duree,     
+                        'duree_raw'=>$seance->duree_raw,
+                        'seance_heure_fin'=>$seance->heure_fin,
+                        'seance_heure_debut'=>$seance->heure_debut,
                         'module_id' => $seance->module_id,
 
                     ]);
@@ -380,7 +390,10 @@ class SeanceController extends Controller
                 if ($PrevAttendanceStatus != attendanceStateEnum::Absent->value) {
                     Absence::create([
                         'user_id' => $student_id,
-                        'duree' => $seanceDuration,
+                        'duree' => $seance->duree,
+                        'duree_raw'=>$seance->duree_raw,
+                        'seance_heure_fin'=>$seance->heure_fin,
+                        'seance_heure_debut'=>$seance->heure_debut,
                         'seance_id' => $seance->id,
                         'annee_id' => $currentYear->id,
                         'module_id' => $seance->module_id,

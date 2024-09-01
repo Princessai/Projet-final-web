@@ -84,7 +84,10 @@ class SeanceFactory extends Factory
                             'etat' => $randomAbsenceState->value,
                             'seance_id' => $seance->id,
                             'module_id'=>$seance->module_id,
-                            'duree'=>$seance->duree,
+                            'duree'=>$seance->duree,   
+                            "duree_raw"=>$seance->duree_raw,
+                            'seance_heure_debut'=>$seance->heure_debut,
+                            'seance_heure_fin'=>$seance->heure_fin,
                             'annee_id' => $annee_scolaire_id,
                             'created_at' => $seance->date,
                             'coordinateur_id' => $coordinateur_id,
@@ -107,6 +110,9 @@ class SeanceFactory extends Factory
                             'created_at' => $seance->date,
                             'annee_id' => $annee_scolaire_id,
                             'duree'=>$seance->duree,
+                            "duree_raw"=>$seance->duree_raw,
+                            'seance_heure_debut'=>$seance->heure_debut,  
+                            'seance_heure_fin'=>$seance->heure_fin,
                             'module_id'=>$seance->module_id,
                         ]);
                     }

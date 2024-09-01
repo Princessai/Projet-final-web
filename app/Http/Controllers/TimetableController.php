@@ -256,8 +256,7 @@ class TimetableController extends Controller
     {
 
         $validator = Validator::make($request->route()->parameters(), [
-            'classe_id' => 'exists:classes,id',
-            'annee_id' => 'exists:annees,id',
+            'annee_id' => 'integer',
             'interval' => 'nullable|in:0,1,-1'
         ]);
 
@@ -267,34 +266,60 @@ class TimetableController extends Controller
 
 
         $validated = $validator->validated();
-        $classe = Classe::with(['timetables.seances'])->find($classe_id);
+        $classe = Classe::with(['timetables'=>function($query) use($interval,$annee_id){
 
+            $now = now();
+            switch (true) {
+                case $interval === '0':
+                   $query->where('annee_id', $annee_id);
+                    break;
 
-        switch (true) {
-            case $interval === '0':
-                $yearTimetables = $classe->timetables()->where('annee_id', $annee_id)->get();
-                break;
+                case $interval === "1":
+            
+                $query->where('date_fin', '>=', $now);
 
-            case $interval === "1":
-                $now = now();
-                $yearTimetables = $classe->timetables()->where('date_fin', '>=', $now)->get();
+                    break;
 
-                break;
+                case $interval === "-1":
+                
+                  $query->where('date_fin', '<', $now);
+                    break;
 
-            case $interval === "-1":
-                $now = now();
-                $yearTimetables = $classe->timetables()->where('date_fin', '<', $now)->get();
-                break;
+                default:
+        
+                   $query->where('date_fin', '>=', $now)->orderBy('created_at')->first();
+                    break;
+            }   
+            $query->with(['seances'=>['typeSeance','module', 'salle']]);
 
-            default:
-                $now = now();
-                $yearTimetables = $classe->timetables()->where('date_fin', '>=', $now)->orderBy('created_at')->first();
-                break;
-        }
+        }]);
+        $classe = apiFindOrFail($classe,$classe_id);
+  
 
+        //     case $interval === '0':
+        //         $yearTimetables = $classe->timetables()->where('annee_id', $annee_id)->get();
+        //         break;
 
+        //     case $interval === "1":
+        //         $now = now();
+        //         $yearTimetables = $classe->timetables()->where('date_fin', '>=', $now)->get();
+
+        //         break;
+
+        //     case $interval === "-1":
+        //         $now = now();
+        //         $yearTimetables = $classe->timetables()->where('date_fin', '<', $now)->get();
+        //         break;
+
+        //     default:
+        //         $now = now();
+        //         $yearTimetables = $classe->timetables()->where('date_fin', '>=', $now)->orderBy('created_at')->first();
+        //         break;
+        // }
+
+        $yearTimetables =$classe->timetables;
         if ($interval == null) {
-            // return apiSuccess(data:$yearTimetables );
+         
             $response = new TimetableResource($yearTimetables);
         } else {
 

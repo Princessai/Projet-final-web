@@ -302,6 +302,9 @@ class TimetableSeeder extends Seeder
                                     if ($pauseDebut->diffInHours($newSeanceStart, absolute: true) != 0) {
                                         // $duree = $pauseDebut->diffInHours($newSeanceStart, absolute: true);
                                         $duree = seanceDuration($pauseDebut, $newSeanceStart);
+                                        $dureeraw = seanceDuration($pauseDebut, $newSeanceStart,false);
+                                        dump('rawwww___',  $dureeraw);
+
                                         $randomSeanceState = randomState($pauseDebut, $now);
                                         $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                             'salle_id' => $salle_id,
@@ -310,6 +313,7 @@ class TimetableSeeder extends Seeder
                                             "heure_debut" => $newSeanceStart,
                                             "heure_fin" => $pauseDebut,
                                             "duree" => $duree,
+                                            "duree_raw"=>$dureeraw,
                                             "module_id" => $classeModuleRandom->id,
                                             "classe_id" => $classe->id,
                                             "annee_id" => $annee_scolaire_id,
@@ -399,6 +403,7 @@ class TimetableSeeder extends Seeder
                                 if ($pauseDebut->diffInHours($newSeanceStart, absolute: true) != 0) {
                                     // $duree = ceil($seance->heure_debut->diffInHours($seance->heure_fin ,absolute:true)) ;
                                     $duree = seanceDuration($pauseDebut, $newSeanceStart);
+                                    $dureeraw = seanceDuration($pauseDebut, $newSeanceStart,false);
                                     // $pauseDebut->diffInHours($newSeanceStart, absolute: true);
                                     $randomSeanceState = randomState($pauseDebut, $now);
                                     $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
@@ -407,7 +412,8 @@ class TimetableSeeder extends Seeder
                                         "date" => $currentDay,
                                         "heure_debut" => $newSeanceStart,
                                         "heure_fin" => $pauseDebut,
-                                        "duree" => $duree,
+                                        "duree" => $duree, 
+                                        "duree_raw"=>$dureeraw,
                                         "module_id" => $classeModuleRandom->id,
                                         "classe_id" => $classe->id,
                                         "annee_id" => $annee_scolaire_id,
@@ -474,6 +480,7 @@ class TimetableSeeder extends Seeder
                                         */
                                         // $duree = $newSeanceEnd->diffInHours($lastIntersectingPauseEnd, absolute: true);
                                         $duree = seanceDuration($newSeanceEnd, $lastIntersectingPauseEnd);
+                                        $dureeraw = seanceDuration($newSeanceEnd, $lastIntersectingPauseEnd,false);
                                         $randomSeanceState = randomState($newSeanceEnd, $now);
                                         $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
                                             'salle_id' => $salle_id,
@@ -481,7 +488,8 @@ class TimetableSeeder extends Seeder
                                             "date" => $currentDay,
                                             "heure_debut" => $lastIntersectingPauseEnd,
                                             "heure_fin" => $newSeanceEnd,
-                                            "duree" => $duree,
+                                            "duree" => $duree,   
+                                            "duree_raw"=>$dureeraw,
                                             "module_id" => $classeModuleRandom->id,
                                             "classe_id" => $classe->id,
                                             "annee_id" => $annee_scolaire_id,
@@ -505,6 +513,7 @@ class TimetableSeeder extends Seeder
                             dump("seance sans intersection" . "debut: " . $newSeanceStart->toTimeString() . " fin: " . $newSeanceEnd->toTimeString());
                             // $duree = $newSeanceEnd->diffInHours($newSeanceStart, absolute: true);
                             $duree = seanceDuration($newSeanceEnd, $newSeanceStart);
+                            $dureeraw = seanceDuration($newSeanceEnd, $newSeanceStart,false);
 
                             $randomSeanceState = randomState($newSeanceEnd, $now);
                             $seance = Seance::factory()->createAbsentStudent($classe, $annee_scolaire_id)->create([
@@ -514,6 +523,7 @@ class TimetableSeeder extends Seeder
                                 "heure_debut" => $newSeanceStart,
                                 "heure_fin" => $newSeanceEnd,
                                 "duree" => $duree,
+                                "duree_raw"=>$dureeraw,
                                 "module_id" => $classeModuleRandom->id,
                                 "classe_id" => $classe->id,
                                 "annee_id" => $annee_scolaire_id,

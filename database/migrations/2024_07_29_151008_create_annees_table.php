@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('annees', function (Blueprint $table) {
             $table->id();
             $table->string('annee_scolaire');
+            $table->timestamp('date_debut')->nullable();
+            $table->timestamp('date_fin')->nullable();
             $table->timestamps();
         });
     }

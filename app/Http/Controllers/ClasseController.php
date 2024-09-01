@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\roleEnum;
 use App\Models\Classe;
 use App\Models\Seance;
 use Illuminate\Http\Request;
@@ -16,19 +17,23 @@ class ClasseController extends Controller
 {
     public function getAllClasses()
     {
-        $response = ClasseResource::collection(Classe::with(['coordinateur', 'filiere', 'niveau'])->get());
+        $response = ClasseResource::collection(Classe::with(['coordinateur.role', 'filiere', 'niveau'])->get());
         return apiSuccess($response);
     }
 
     public function getAllClasseStudents(Request $request, $classe_id)
     {
-
-        $classe  =  Classe::with('etudiants');
-        $classe = apiFindOrFail($classe, $classe_id, "no such class");
         $AnneeService = new AnneeService();
         $ClasseService= new ClasseService();
         $currentYear = $AnneeService->getCurrentYear();
-        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe,$currentYear)))->setCurrentYear($currentYear);
+        // $classe  =  Classe::with(['etudiants'=>function($query) use($currentYear){
+        //     $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
+        // }]);
+        // $classe = apiFindOrFail($classe, $classe_id, "no such class");
+      
+        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe_id,$currentYear)))
+        ->setCurrentYear($currentYear)
+        ->setRoleLabel(roleEnum::Etudiant->value);
 
         return apiSuccess(data: $response);
     }
@@ -38,22 +43,35 @@ class ClasseController extends Controller
         // $seanceManager = $classeModuleRandom->enseignants()->whereHas('enseignantClasses', function ($query) use ($classe) {
         //     $query->where('classes.id', $classe->id);
         // })->first();
+        // 'enseignantModules' =>
+        // function ($query) use ($classe_id) {
+        //     $query->whereHas('classes', function ($query) use ($classe_id) {
+        //         $query->where('classes.id', $classe_id);
+        //     });
+        // }
+   
         $classe = Classe::with([
 
-            'enseignants' => [
-                'enseignantModules' =>
-                function ($query) use ($classe_id) {
-                    $query->whereHas('classes', function ($query) use ($classe_id) {
-                        $query->where('classes.id', $classe_id);
-                    });
+            'enseignants' => function($query) use($classe_id){
+                $query->wherePivot('classe_id',$classe_id);
+                $query->with('role');
+                $query->with('enseignantModules', function ($query) use ($classe_id) {
+                        $query->whereHas('classes', function ($query) use ($classe_id) {
+                            $query->where('classes.id', $classe_id);
+                        });
+                    
+                });
+                   
                 }
-            ]
 
+        
         ]);
 
         $classe = apiFindOrFail($classe, $classe_id, "no such class");
+        // return $classe;
 
-        $response = UserResource::collection($classe->enseignants);
+        $response = (new Usercollection($classe->enseignants))
+        ->setRoleLabel(roleEnum::Enseignant->value);
         return apiSuccess(data: $response);
     }
 

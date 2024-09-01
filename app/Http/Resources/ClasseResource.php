@@ -18,7 +18,7 @@ class ClasseResource extends JsonResource
         return [
             'id' => $this->id,
             'label' => $this->label,
-            'coordinateur' => new UserResource($this->coordinateur),
+            'coordinateur' => new UserResource($this->whenLoaded('coordinateur')),
             'filiere' => $this->filiere,
             'niveau' => $this->niveau,
 

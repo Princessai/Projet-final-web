@@ -28,6 +28,8 @@ class Seance extends Model
         "heure_fin",
         "salle_id",
         "module_id",
+        'duree',
+        "duree_raw",
         "user_id",
         "type_seance_id",
         "classe_id",

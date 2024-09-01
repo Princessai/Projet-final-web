@@ -2,33 +2,50 @@
 
 namespace App\Services;
 
+use Exception;
 use Carbon\Carbon;
 use Carbon\Callback;
 use App\Models\Absence;
 use App\Services\AnneeService;
 use App\Enums\absenceStateEnum;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Exceptions\NoWorkedHoursException;
+use Illuminate\Database\Eloquent\Collection;
 
 class StudentService
 {
 
     public function AttendancePercentageCalc($missedHours, $workedHours)
+
     {
-        if ($workedHours != 0) {
-            $absencePercentage = ($missedHours * 100) / $workedHours;
-        } else {
-            apiError(message: 'no courses has been done for this interval')->send();
-            die();
+        if($workedHours == 0){
+            throw new NoWorkedHoursException('division by zero no  courses have been done.');
         }
 
+        $absencePercentage = ($missedHours * 100) / $workedHours;
+        
         $attendanceRate = round(100 - $absencePercentage, 2);
 
         return $attendanceRate;
     }
 
-    public function getCurrentClasse($user, $currentYear)
+    public function getCurrentClasse($user, $currentYear=null)
     {
+        // if($user instanceof Builder|| $user instanceof Model){
+         
+        //    return $user->with('etudiantsClasses', function ($query)use($currentYear){
+
+        //     if( $currentYear===null){
+
+        //         $currentYear =(new AnneeService)->getCurrentYear();
+        //         $query->wherePivot('annee_id',$currentYear->id);
+
+        //     }
+
+        //     });
+        // }
+        
         $studentClasses = $this->getCurrentClasses($user, $currentYear);
         return $studentClasses->last();
     }
@@ -117,7 +134,7 @@ class StudentService
             $callback($absencebaseQuery);
         }
 
-        return (int) $absencebaseQuery->sum('duree');
+        return (int)$absencebaseQuery->sum('duree');
     }
 
     public function calcMissedHours(Collection $studentAbsences)

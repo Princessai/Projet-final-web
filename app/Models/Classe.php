@@ -9,6 +9,7 @@ use App\Models\Seance;
 use App\Models\Timetable;
 use App\Models\ClasseModule;
 use App\Models\ClasseEtudiant;
+use App\Services\AnneeService;
 use App\Models\ClasseEnseignant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,6 +71,10 @@ class Classe extends Model
         return $this->hasMany(Seance::class); 
     }
 
+    public function scopeStudentCurrentClasse($query)
+    {   $currentYear = app (AnneeService::class)->getCurrentYear();
+        return $query->where('classe_etudiants.annee_id',$currentYear->id)->first;
+    }
 
 
 

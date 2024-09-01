@@ -12,11 +12,12 @@ use App\Services\AnneeService;
 use App\Services\StudentService;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\UserCollection;
+use function PHPUnit\Framework\isNull;
 use App\Http\Resources\SeanceCollection;
+
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
-
-use function PHPUnit\Framework\isNull;
 
 class UserController extends Controller
 {
@@ -34,7 +35,7 @@ class UserController extends Controller
         }
 
         $validated = $validator->validated();
-        $user = User::where(['email' => $validated['email']])->first();
+        $user = User::with('role')->where(['email' => $validated['email']])->first();
 
         if (!$user) {
             return apiError(errors: ["email" => "wrong email"], statusCode: 401);
@@ -45,7 +46,7 @@ class UserController extends Controller
         }
 
         $response = [
-
+            'role'=> $user->role,
             'token' => $user->createToken("token",  ['*'])->plainTextToken,
             // 'token' => $user->createToken("token",  ['*'], now()->addMinutes(15))->plainTextToken,
 
@@ -63,40 +64,59 @@ class UserController extends Controller
     public function getAllTeachers(Request $request)
     {
 
-        $teachers = Role::with('roleUsers.enseignantModules')->where('label', roleEnum::Enseignant->value)->first()->roleUsers;
-        $response = UserResource::collection($teachers);
+        $role = Role::with(['roleUsers' => function ($query) {
+            $query->with('enseignantModules');
+        }])
+            ->where('label', roleEnum::Enseignant->value)->first();
+
+
+        // $teachers = Role::with('roleUsers.enseignantModules')->where('label', )->first()->roleUsers;
+
+
+        $response = (new UserCollection($role->roleUsers))
+            ->setRoleLabel(roleEnum::Enseignant->value);
         return apiSuccess(data: $response);
     }
     public function getUserSeances(Request $request, $user_id, $timestamp = null)
     {
-        $currentYear = (new AnneeService())->getCurrentYear();
+        $currentYear = app(AnneeService::class)->getCurrentYear();
+        $currentYearId =$currentYear->id;
 
         $currentTime = now()->addMinutes(15);
         $timestamp = ($timestamp === null) ? 0 : Carbon::createFromTimestamp($timestamp);
 
 
-        $user = new User();
+        $user =User::with('role');
         $user = apiFindOrFail(query: $user, id: $user_id, message: 'no such  user');
 
         $userRole = $user->role;
 
         if ($userRole->label == roleEnum::Etudiant->value) {
             $studentService = new StudentService;
-            $user->load(['etudiantsClasses' => [
-                'seances' => ['typeSeance', 'classe', 'module', 'salle']
-            ]]);
-            $studentClasse = $studentService->getCurrentClasse($user, $currentYear);
+            $user->loadMissing(['etudiantsClasses' => function($query) use($studentService, $currentYearId,$timestamp){
+                $query->orderByPivot('id', 'desc')->take(1);        
+                $query->with('seances',function($query) use($currentYearId,$timestamp){
 
+                    if ($timestamp !== null) {
+                        $query->where('heure_fin', '>=', $timestamp);
+                    } else {
+                        $query->where('annee_id',$currentYearId);   
+                    }
+                   
+                    $query->with(['typeSeance', 'module', 'salle'])
+                    ->orderBy('id', 'desc');
 
-            $seanceBaseQuery = $studentClasse->seances()->orderBy('id', 'desc');
-            if ($timestamp !== null) {
-                $seanceBaseQuery = $seanceBaseQuery->where('heure_fin', '>=', $timestamp);
-            } else {
-                $seanceBaseQuery = $seanceBaseQuery->where('annee_id', $currentYear->id);
-            }
-            $seances = $seanceBaseQuery->get();
+                    
+                });
+
+            }]);
+   
+        
+            $studentClasse = $user->etudiantsClasses->first();
+            $seances = $studentClasse->seances;
+
         } else {
-            $eagerLoadedRelation = ['typeSeance', 'classe', 'module', 'salle'];
+            $eagerLoadedRelation = ['typeSeance', 'classe.filiere','classe.niveau','module', 'salle'];
             if ($timestamp !== null) {
                 $seances = Seance::with($eagerLoadedRelation)->where(['user_id' => $user->id])->where('heure_fin', '>=', $timestamp)->orderBy('id', 'desc')->get();
             } else {
@@ -105,7 +125,7 @@ class UserController extends Controller
         }
 
 
-        // $response = $seances
+   
         // ->transform(function($seance){
         //     return [
         //         "id" => $seance->id ,
@@ -143,14 +163,19 @@ class UserController extends Controller
 
     public function getParentsChildren(Request $request, $parent_id)
     {
-        // try {
 
-        //     $user = User::with('parentEtudiants.etudiantsClasses')->findOrFail($parent_id);
-        // } catch (\Throwable $th) {
-        //     return apiError(message: "no such user");
-        // }
-        $user = User::with('parentEtudiants.etudiantsClasses');
+        $currentYear = (new AnneeService())->getCurrentYear();
+        // $user = User::with('parentEtudiants.etudiantsClasses');
+        $user = User::with(['parentEtudiants' => function ($query) use ($currentYear) {
+            $query->with('etudiantsClasses', function ($query){
+                $query->orderByPivot('id', 'desc')->take(1);
+            });
+        }]);
+
+        
         $user = apiFindOrFail($user, $parent_id, "no such user");
+      
+
         if ($user->role->label != roleEnum::Parent->value) {
             return apiError(message: "the user $parent_id is not parent");
         }
@@ -159,14 +184,16 @@ class UserController extends Controller
 
 
         $children = $parent->parentEtudiants;
+        // return $children;
 
-        $response = UserResource::collection($children);
+        $response = new Usercollection($children);
         return apiSuccess(data: $response);
     }
 
     public function loggedUserInfos(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()
+        ->load('role');
         $response = new UserResource($user);
         return apiSuccess(data: $response);
     }
@@ -197,7 +224,7 @@ class UserController extends Controller
         }
 
 
-     
+
 
 
 
@@ -224,8 +251,8 @@ class UserController extends Controller
 
         ];
         if ($userRole->label != roleEnum::Admin->value && $userRole->label != roleEnum::Parent->value) {
-             $specificRules['classe_id'] = ["array"];
-             $specificRules['classe_id.*'] = ["integer"];
+            $specificRules['classe_id'] = ["array"];
+            $specificRules['classe_id.*'] = ["integer"];
         }
 
 

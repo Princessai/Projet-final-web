@@ -26,7 +26,7 @@ use App\Http\Resources\ClasseAttendanceRateResource;
 include_once(base_path('utilities\seeder\seanceDuration.php'));
 
 
-class AbsenceController extends Controller
+class AbsenceControllercopy extends Controller
 {
     public function getStudentAttendanceRate($student_id, $timestamp1 = null, $timestamp2 = null)
     {
@@ -43,11 +43,11 @@ class AbsenceController extends Controller
             $student = User::with(['etudiantsClasses.seances.absences']);
         }
 
-
+     
 
         $student = apiFindOrFail($student, $student_id, "no such student");
 
-
+      
 
 
 
@@ -159,25 +159,15 @@ class AbsenceController extends Controller
     public function getClassseStudentsAttendanceRate($classe_id, $timestamp1 = null, $timestamp2 = null)
     {
         $ClasseService = new ClasseService;
-        $currentYear = app(AnneeService::class)->getCurrentYear();
 
-        // if ($timestamp1 === null && $timestamp2 === null) {
-        //     // $classe = Classe::with(['etudiants.etudiantAbsences', 'modules']);
-           
-        // } else {
-        //     $classe = Classe::with(['etudiants.etudiantAbsences', 'seances']);
-        // }
+        if ($timestamp1 === null && $timestamp2 === null) {
+            $classe = Classe::with(['etudiants.etudiantAbsences', 'modules']);
+        } else {
+            $classe = Classe::with(['etudiants.etudiantAbsences', 'seances']);
+        }
+     
 
-
-        // $classe = apiFindOrFail($classe, $classe_id, "no such class");
-        $classe = $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum(
-            classe_id: $classe_id,
-            currentYear_id: $currentYear->id,
-            module_id:  null,
-            timestamp1: $timestamp1,
-            timestamp2: $timestamp2
-        );
-
+        $classe = apiFindOrFail($classe, $classe_id, "no such class");
 
         // $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
         // $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
@@ -223,89 +213,29 @@ class AbsenceController extends Controller
 
     public function getClasssesAttendanceRate()
     {
-  
-        $ClasseService= new ClasseService;
-        $currentYear = app(AnneeService::class)->getCurrentYear();
-
-        $classes = $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum(new Classe, $currentYear->id);
-        // return $classes->get(
-
-        // );
-
-        $response =  ClasseAttendanceRateResource::collection($classes->get());
+        $classes = Classe::all();
+        $response =  ClasseAttendanceRateResource::collection($classes);
         return apiSuccess(data: $response);
     }
 
     public function getModuleAttendanceRate($student_id, $module_id, $timestamp1 = null, $timestamp2 = null)
     {
-       
 
-        $currentYear = app(AnneeService::class)->getCurrentYear();
-        $currentYear_id =$currentYear->id;
+        $currentYear = (new AnneeService)->getCurrentYear();
         $StudentService = new StudentService;
         $ClasseService = new ClasseService;
 
         if ($timestamp1 === null && $timestamp2 === null) {
 
-            // $student = User::with(['etudiantsClasses.modules', 'etudiantAbsences.seance']);
-       
-            // $student = User::with(['etudiantsClasses'=>function($query) use($student_id,$ClasseService,$module_id,$currentYear, $timestamp2, $timestamp1,$currentYear_id){
-
-            //     // $query->withCount([
-            //     //     'etudiants' => function ($query) use ($currentYear, $module_id, $student_id) {
-            //     //         $query->where('users.id',$student_id);
-            //     //         // $query->where('classe_etudiants.annee_id', $currentYear->id);
-            //     //     }
-            //     // ]);
-            //     // ->with(['etudiants' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
-            //     //     $query->wherePivot('classe_etudiants.annee_id', $currentYear_id);
-            //     //     $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
-        
-            //     //         if ($module_id !== null) {
-            //     //             $query->where('module_id', $module_id);
-            //     //         }
-            //     //         if ($timestamp1 === null && $timestamp2 === null) {
-            //     //             $query->where('annee_id', $currentYear_id);
-            //     //         }
-            //     //         if ($timestamp1 !== null && $timestamp2 === null) {
-            //     //             $query->where('seance_heure_debut', '>', $timestamp1);
-            //     //         }
-        
-            //     //         if ($timestamp1 !== null && $timestamp2 !== null) {
-            //     //             $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-            //     //         };
-            //     //     }], 'duree');
-            //     // }])
-            //     // ->withSum(['modules as workedHoursSum' => function ($query) use ($currentYear_id, $module_id) {
-            //     //     $query->where('annee_id', $currentYear_id);
-            //     //     if ($module_id !== null) {
-            //     //         $query->where('module_id', $module_id);
-            //     //     }
-            //     // }], 'classe_module.nbre_heure_effectue')
-            //     // ;
-
-
-            //     $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum(
-            //                                                         classe_id:$query,
-            //                                                         module_id:$module_id,
-            //                                                         currentYear_id:$currentYear->id,
-            //                                                         timestamp2:null,
-            //                                                         timestamp1:null,
-                                                               
-            //                                                     );
-            // }]);
-       
-
-            // $student = $StudentService->getMissedHours($student, $currentYear->id, $module_id);
+            $student = User::with(['etudiantsClasses.modules', 'etudiantAbsences.seance']);
+            $student = $StudentService->getMissedHours($student, $currentYear->id, $module_id);
+            
         } else {
             $student = User::with(['etudiantsClasses.seances.absences']);
         }
 
-        $student= User::active($currentYear_id,$module_id,$timestamp1,$timestamp2);
 
         $student = apiFindOrFail($student, $student_id, "no such student");
-     
-        return $student;
 
 
 
@@ -375,138 +305,68 @@ class AbsenceController extends Controller
     public function getClasseModuleAttendanceRate($classe_id, $module_id, $timestamp1 = null, $timestamp2 = null)
     {
         $ClasseService = new ClasseService;
-        $currentYear = (new AnneeService)->getCurrentYear();
+        $currentYear =(new AnneeService)->getCurrentYear();
 
-        $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
-        $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
+        if ($timestamp1 === null && $timestamp2 === null) {
+            
+            $classe = Classe::with(['etudiants'=>function($query)use($currentYear,$module_id){
+                
+                $query->withSum(['etudiantAbsences as missedHoursSum'=>function($query) use($currentYear,$module_id){
+                    $query->where('annee_id',$currentYear->id);
+                    if($module_id!==null){
+                        $query->where('module_id',$module_id);
+                    }
+                  
+                }],'duree');
 
-        // $baseQuery =  Classe::withCount(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     $query->where('classe_etudiants.annee_id', $currentYear->id);
-        // }
-        // ])->with(['etudiants' => function ($query) use ($currentYear, $module_id, $timestamp2, $timestamp1) {
-        // $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
-        // $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear, $module_id, $timestamp2, $timestamp1) {
+               
 
-        //     if ($module_id !== null) {
-        //         $query->where('module_id', $module_id);
-        //     }
-        //     if($timestamp1 === null && $timestamp2 === null){
-        //         $query->where('annee_id', $currentYear->id);   
-        //     }
-        //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         $query->where('seance_heure_debut', '>', $timestamp1);
-        //     }
-
-        //     if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-        //     };
-        // }], 'duree');
-        // }]);
-
-        // if ($timestamp1 === null && $timestamp2 === null) {
-
-
-        //     // $classe = Classe::withCount(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     //         $query->where('classe_etudiants.annee_id', $currentYear->id);
-        //     //     }
-        //     // ])
-        //     // ->with(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     //     $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
-        //     //     $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear, $module_id) {
-        //     //         $query->where('annee_id', $currentYear->id);
-        //     //         if ($module_id !== null) {
-        //     //             $query->where('module_id', $module_id);
-        //     //         }
-        //     //     }], 'duree');
-        //     // }])
-
-        //     $classe= $baseQuery->withSum(['modules as workedHoursSum' => function ($query) use ($currentYear, $module_id) {
-        //             $query->where('annee_id', $currentYear->id);
-        //             if ($module_id !== null) {
-        //                 $query->where('module_id', $module_id);
-        //             }
-        //         }], 'classe_module.nbre_heure_effectue');
-        // } else {
+            }])->withCount('etudiants')
+            ->withSum(['modules as workedHoursSum'=>function($query) use($currentYear,$module_id){
+                $query->where('annee_id',$currentYear->id);
+                if($module_id!==null){
+                    $query->where('module_id',$module_id);
+                }
+              
+            }],'classe_module.nbre_heure_effectue');
 
 
 
-        //         // with(['etudiants.etudiantAbsences'=>function($query) use($currentYear,$module_id,$timestamp2,$timestamp1)  {
+
+        } else {
+            $classe = Classe::with(['etudiants'])->with(['etudiants.etudiantAbsences'=>function($query) use($currentYear) {
+                // $query->where('annee_id',$currentYear->id);
+            }])
+            ->withCount(['etudiants'])
+            ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
+                $baseWhereClause=['etat'=> seanceStateEnum::Done->value,'annee_id'=> $currentYear->id];
+                if($module_id!==null){
+                    $baseWhereClause['module_id']=$module_id;
+                }
+               
+
+                $query->where($baseWhereClause);
+
+                if ($timestamp1 !== null && $timestamp2 === null) {
+                    $query->where('heure_debut', '>', $timestamp1);
+                  
+                    }
+                    if ($timestamp1 !== null && $timestamp2 !== null) {
+                         $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
+                    };
+              
+            });
+
+        }
+ 
 
 
-        //         //     if($module_id!==null){
-        //         //         $query->where('module_id',$module_id);
-        //         //     }
-
-        //         //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         //         $query->where('seance_heure_debut', '>', $timestamp1);
-
-        //         //         }
-
-        //         //     if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         //              $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-        //         //     };
-
-
-        //         // }])
-
-
-        //         $classe=$baseQuery->withSum(['seances as workedHoursSum' => function ($query) use ($module_id, $currentYear, $timestamp2, $timestamp1) {
-
-        //             $baseWhereClause = ['etat' => seanceStateEnum::Done->value];
-
-
-
-        //             if ($module_id !== null) {
-        //                 $baseWhereClause['module_id'] = $module_id;
-        //             }
-
-
-        //             $query->where($baseWhereClause);
-
-        //             if ($timestamp1 !== null && $timestamp2 === null) {
-        //                 $query->where('heure_debut', '>', $timestamp1);
-        //             }
-
-        //             if ($timestamp1 !== null && $timestamp2 !== null) {
-        //                 $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-        //             };
-        //         }], 'duree')
-        //         // ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
-
-        //         //     $baseWhereClause=['etat'=> seanceStateEnum::Done->value];
-
-
-
-        //         //     if($module_id!==null){
-        //         //         $baseWhereClause['module_id']=$module_id;
-        //         //     }
-
-
-        //         //     $query->where($baseWhereClause);
-
-        //         //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         //         $query->where('heure_debut', '>', $timestamp1);
-
-        //         //         }
-
-        //         //         if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         //              $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-        //         //         };
-
-        //         // })
-
-        //     ;
-        // }
-
-
-
-        // $classe = apiFindOrFail($classe, $classe_id, "no such class");
-
-
-        $classe = $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum($classe_id, $currentYear->id, $module_id, $timestamp1, $timestamp2);
-
-
-        $response = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id, $currentYear->id);
+        $classe = apiFindOrFail($classe, $classe_id, "no such class");
+       
+        
+return $classe;
+ 
+        $response = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2, $module_id,$currentYear->id);
 
         return apiSuccess(data: $response);
     }

@@ -20,13 +20,15 @@ class Absence extends Model
         "duree",
         "duree_raw",
         "module_id",
-        
+        'seance_heure_debut',
+        'seance_heure_fin',
+
     ];
 
 
     public function etudiant(): BelongsTo // on récupère l'étudiant absent 
     {
-        return $this->belongsTo(User::class,'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
     public function seance(): BelongsTo // la séance de laquelle l'étudiant est absent 
     {

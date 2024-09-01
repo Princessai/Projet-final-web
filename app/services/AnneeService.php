@@ -12,6 +12,8 @@ class AnneeService{
         if($annee_id==null){
             $this->currentYear = Annee::latest()->first();
         }
+        
+
        
       }
 

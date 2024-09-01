@@ -19,7 +19,8 @@ return new class extends Migration
             $table->boolean('attendance')->default(false);
             $table->timestamp('heure_debut')->nullable();
             $table->timestamp('heure_fin')->nullable();
-            $table->integer('duree')->nullable();
+            $table->integer('duree')->nullable();       
+            $table->float('duree_raw')->nullable();
             $table->foreignId('salle_id')->constrained();
             $table->foreignId('module_id')->constrained();
             $table->foreignId('user_id')->constrained()->nullable();

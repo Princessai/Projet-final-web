@@ -20,10 +20,11 @@ return new class extends Migration
             $table->string('receipt')->nullable();
             $table->unsignedBigInteger('module_id')->nullable();
             $table->integer('duree')->nullable();
-            $table->integer('duree_raw')->nullable();
+            $table->float('duree_raw')->nullable(); 
+            $table->timestamp('seance_heure_debut')->nullable();
+            $table->timestamp('seance_heure_fin')->nullable();
             $table->foreignId('user_id')->constrained(); // l'étudiant
             $table->foreignId('seance_id')->constrained()->onDelete('cascade');
-            
             $table->foreignId('annee_id')->constrained();
             $table->unsignedBigInteger('coordinateur_id')->nullable();
             $table->foreign('coordinateur_id')->references('id')->on('users');

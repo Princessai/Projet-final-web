@@ -23,21 +23,25 @@ Route::prefix('trackin')->group(function () {
             return $request->user();
         });
 
-        
+
         Route::get("/logout", [UserController::class, 'logout']);
 
         Route::get("/logged_user/infos", [UserController::class, 'loggedUserInfos']);
 
+        // CRUD users
+        Route::apiResource('user', UserController::class);
+
         Route::get("/user/seances/{user_id}/{timestamp?}", [UserController::class, 'getUserSeances'])
             ->whereNumber(['user_id']);
 
-        Route::get("/timetable/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
-            ->whereNumber(['classe_id', 'annee_id']);
 
+
+
+        // worked hours
         Route::get("/gethours/classe/year_segments/{classe_id}/{year_segments}", [CourseHourController::class, 'getClasseWorkedHours']);
 
         Route::get("/gethours/classes/year_segments/{year_segments}", [CourseHourController::class, 'getAllClassesWorkedHours']);
-        
+
 
         // crud emploi du temps
         // Route::prefix("/timetable")->group(function () {
@@ -45,11 +49,13 @@ Route::prefix('trackin')->group(function () {
         //     ->whereNumber(['classe_id']);
         // });
 
+        // class timetable
+        Route::get("/timetable/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
+            ->whereNumber(['classe_id', 'annee_id']);
         // CRUD timetable
         Route::resource('timetable', TimetableController::class);
 
-        // CRUD users
-        Route::apiResource('user', UserController::class);
+
 
 
         // // faire l'appel 
@@ -71,49 +77,70 @@ Route::prefix('trackin')->group(function () {
         // // les taux de présence
         Route::prefix("/presence")->group(function () {
 
+            // student
             Route::get("/student/{student_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getStudentAttendanceRate'])
                 ->whereNumber(['student_id']);
-
-            Route::get("/students/classe/{classe_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getClassseStudentsAttendanceRate'])
-                ->whereNumber(['classe_id']);
-
-            Route::get("/classes/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getClasssesAttendanceRate']);
 
             Route::get("/student/module/{student_id}/{module_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getModuleAttendanceRate'])
                 ->whereNumber(['student_id', 'module_id']);
 
-            Route::get("/students/classe/module/{classe_id}/{module_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getClasseModuleAttendanceRate'])
+            Route::get("/student/year_segment/{student_id}/{year_segments?}",
+             [AbsenceController::class, 'getStudentAttendanceRateByYearSegment'])
+                ->whereNumber(['student_id']);
+
+
+            // classe
+            Route::get("/students/classe/{classe_id}/{timestamp1?}/{timestamp2?}", 
+
+                    [AbsenceController::class, 'getClassseStudentsAttendanceRate'])
+
+                ->whereNumber(['classe_id']);
+
+            Route::get("/classes/{timestamp1?}/{timestamp2?}", 
+
+                    [AbsenceController::class, 'getClasssesAttendanceRate']);
+                    
+
+            Route::get("/students/classe/module/{classe_id}/{module_id}/{timestamp1?}/{timestamp2?}", 
+
+                    [AbsenceController::class, 'getClasseModuleAttendanceRate'])
                 ->whereNumber(['classe_id', 'module_id']);
 
-            Route::get("/student/year_segment/{student_id}/{year_segments?}", [AbsenceController::class, 'getStudentAttendanceRateByYearSegment'])
-                ->whereNumber(['student_id']);
 
             // Route::get("/student/months/{student_id}/{months}/{month_count?}", [AbsenceController::class, 'getStudentAttendanceRateByMonth'])
             // ->whereNumber(['student_id', 'months']);;
         });
 
-        Route::post("/justify/absence/{absence_id}", [AbsenceController::class, 'justifyStudentAbsence'])
-        ->whereNumber(['absence_id']);
 
-        // // toutes les liste
+        // absences
+        Route::post("/justify/absence/{absence_id}", [AbsenceController::class, 'justifyStudentAbsence'])
+            ->whereNumber(['absence_id']);
+
+
+        // toutes les liste
         Route::prefix('list')->group(function () {
 
 
             Route::get("/modules", [ModuleController::class, 'getAllModules']);
 
+            //classes
             Route::get("/classes", [ClasseController::class, 'getAllClasses']);
 
             Route::get("/students/classe/{classe_id}", [ClasseController::class, 'getAllClasseStudents'])
                 ->whereNumber('classe_id');
 
-            Route::get("/teachers", [UserController::class, 'getAllTeachers']);
-
+            //student
             Route::get("/absences/student/{student_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getStudentAbsences'])
                 ->whereNumber(['student_id']);;
+
+            //teachers
+            Route::get("/teachers", [UserController::class, 'getAllTeachers']);
 
             Route::get("teachers/{classe_id}", [ClasseController::class, 'getClasseTeachers'])
                 ->whereNumber('classe_id');
 
+
+            //parent
             Route::get("/parent/children/{parent_id}", [UserController::class, 'getParentsChildren'])
                 ->whereNumber('parent_id');
         });

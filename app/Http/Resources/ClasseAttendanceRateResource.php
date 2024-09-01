@@ -13,11 +13,12 @@ class ClasseAttendanceRateResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray(Request $request)
     {
         $classeService = new ClasseService;
         $timestamp1 =  $request->route('timestamp1');
         $timestamp2 =  $request->route('timestamp2');
+   
 
         ['classeAttendanceRate' => $classeAttendanceRate] = $classeService->getClasseAttendanceRates($this, $timestamp1, $timestamp2);
 

@@ -16,9 +16,11 @@ class Retard extends Model
         'seance_id',
         "annee_id",
         "duree",
-        "module_id",
         "duree_raw",
-        
+        "module_id",
+        'seance_heure_debut',
+        'seance_heure_fin',
+
     ];
 
 
@@ -29,8 +31,6 @@ class Retard extends Model
     }
     public function seance(): BelongsTo
     {
-        return $this->belongsTo(Seance::class); 
+        return $this->belongsTo(Seance::class);
     }
-
-
 }

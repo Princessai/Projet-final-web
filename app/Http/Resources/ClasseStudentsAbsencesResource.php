@@ -3,10 +3,9 @@
 namespace App\Http\Resources;
 
 use Carbon\Carbon;
-use App\Models\Annee;
+
 use Illuminate\Http\Request;
-use App\Services\AnneeService;
-use App\Services\ClasseService;
+
 use App\Services\StudentService;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,9 +33,10 @@ class ClasseStudentsAbsencesResource extends JsonResource
     public function toArray(Request $request): array
 
     {
-        $classeService = new ClasseService;
+   
         $studentService = new StudentService;
-        $currentYear = (new AnneeService)->getCurrentYear();
+  
+
         $timestamp1 =  $request->route('timestamp1');
         $timestamp2 =  $request->route('timestamp2');
 
@@ -45,38 +45,49 @@ class ClasseStudentsAbsencesResource extends JsonResource
 
 
 
-        if ($timestamp1 === null && $timestamp2 === null) {
-            $baseQuery = $this->etudiantAbsences()->where('annee_id', $currentYear->id);
-            if ($this->module_id !== null) {
-                $baseQuery = $baseQuery->whereHas('seance', function ($query) {
+        // if ($timestamp1 === null && $timestamp2 === null) {
+        //     // $baseQuery = $this->etudiantAbsences()->where('annee_id', $currentYear->id);
+        //     // if ($this->module_id !== null) {
+        //     //     $baseQuery = $baseQuery->whereHas('seance', function ($query) {
 
-                    $query->where('module_id', $this->module_id);
-                });
-            }
+        //     //         $query->where('module_id', $this->module_id);
+        //     //     });
+        //     // }
 
-            $studentAbsences = $baseQuery->get();
-        } else if ($timestamp1 !== null && $timestamp2 !== null) {
+        //     // $studentAbsences = $baseQuery->get();
+        //     $missingHours = $this->missedHoursSum;
 
-            $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1, $timestamp2) {
-                if ($this->module_id !== null) {
-                    $query = $query->where('module_id', $this->module_id);
-                }
+        // } else if ($timestamp1 !== null && $timestamp2 !== null) {
 
-                $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-            })->get();
-        } else if ($timestamp1 !== null && $timestamp2 === null) {
+        //     // $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1, $timestamp2) {
+        //     //     if ($this->module_id !== null) {
+        //     //         $query = $query->where('module_id', $this->module_id);
+        //     //     }
 
-            $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1) {
+        //     //     $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
+        //     // })->get();
 
-                if ($this->module_id !== null) {
-                    $query = $query->where('module_id', $this->module_id);
-                }
-                $query->where('heure_debut', '>', $timestamp1);
-            })->get();
-        }
+        //     // $studentAbsences = $this->etudiantAbsences;
 
 
-        $missingHours = $classeService->getStudentMissedHours($studentAbsences);
+        // } else if ($timestamp1 !== null && $timestamp2 === null) {
+
+        //     // $studentAbsences = $this->etudiantAbsences()->whereHas('seance', function ($query) use ($timestamp1) {
+
+        //     //     if ($this->module_id !== null) {
+        //     //         $query = $query->where('module_id', $this->module_id);
+        //     //     }
+        //     //     $query->where('heure_debut', '>', $timestamp1);
+        //     // })->get();
+        // }
+
+
+        // $missingHours = $classeService->getStudentMissedHours($studentAbsences);
+
+
+
+        
+        $missingHours = $this->missedHoursSum;
 
         // $absencePercentage = ($missingHours * 100) / $this->nbre_heure_effectue;
 

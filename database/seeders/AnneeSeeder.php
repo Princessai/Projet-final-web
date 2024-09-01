@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use App\Models\Annee;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -13,6 +14,18 @@ class AnneeSeeder extends Seeder
      */
     public function run(): void
     {
-        Annee::factory()->create();
+        $years = require(base_path('data/annee.php'));
+        $yearsArr =[];
+        
+
+        foreach( $years as $year){
+         
+            $yearStart= Carbon::parse($year['start']);
+            $yearEnd= Carbon::parse($year['end']);
+         
+            $yearsArr[]=['date_debut'=>$yearStart,'date_fin'=>$yearEnd,'annee_scolaire'=>"$yearStart->year - $yearEnd->year"];
+        }
+
+        Annee::insert($yearsArr);
     }
 }
