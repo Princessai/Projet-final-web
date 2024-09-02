@@ -143,7 +143,7 @@ class TimetableSeeder extends Seeder
 
 
         // foreach ($classes as $classe) {
-        $timetable_offset =  $date_debut->subWeek()->startOfWeek(Carbon::MONDAY);
+        $timetable_offset =  $date_debut->subDays(2)->startOfWeek(Carbon::MONDAY);
         $timetable_offset_timestamp =  $timetable_offset->timestamp;
 
 

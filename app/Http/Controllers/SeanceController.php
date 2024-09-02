@@ -67,13 +67,13 @@ class SeanceController extends Controller
 
 
 
-        if ($seanceStart->greaterThan(now())) {
-            return apiError(message: 'the session has not started yet');
-        }
+        // if ($seanceStart->greaterThan(now())) {
+        //     return apiError(message: 'the session has not started yet');
+        // }
 
-        if ($seance->attendance) {
-            return apiError(message: 'the call is already done');
-        }
+        // if ($seance->attendance) {
+        //     return apiError(message: 'the call is already done');
+        // }
 
 
 
@@ -117,6 +117,8 @@ class SeanceController extends Controller
                         $query->where('etat', absenceStateEnum::notJustified->value);
                     }
                 )->find($student_id);
+               
+
 
                 // return $student;
 
@@ -126,15 +128,28 @@ class SeanceController extends Controller
 
                 $missedHours = $student->missedHoursSum;
                 $workedHours = $student->etudiantsClasses->first()->workedHoursSum;
-                $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc($missedHours, $workedHours);
+                //  return [$missedHours,$workedHours];
+                $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc((int) $missedHours, (int) $workedHours);
+
+                // return $unJustifiedpresencePercentage;
 
                 if ($unJustifiedpresencePercentage <= $minAttendancePercentage) {
+                    // return 'test';
+                    Droppe::updateOrInsert(
+                        [
+                            "module_id" => $seance->module_id,
+                            "user_id" => $student_id,
+                            "annee_id" =>  $currentYearId,
+                        ],
+                        ['isDropped' => true]
+                    );
 
-                    Droppe::create([
-                        "module_id" => $seance->module_id,
-                        "user_id" => $student_id,
-                        "annee_id" =>  $currentYearId,
-                    ]);
+                    // Droppe::create([
+                    //     "module_id" => $seance->module_id,
+                    //     "user_id" => $student_id,
+                    //     "annee_id" =>  $currentYearId,
+
+                    // ]);
                 }
             }
 

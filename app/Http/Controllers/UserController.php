@@ -196,6 +196,11 @@ class UserController extends Controller
                 $query->orderByPivot('id', 'desc')->take(1);
                 $query->with(['niveau', 'filiere']);
             }]);
+            $user->setRelation('etudiantsClasses',   $user->etudiantsClasses->first());
+            // $user->etudiantsClasses->first();
+
+
+
         }
       
         $response = [

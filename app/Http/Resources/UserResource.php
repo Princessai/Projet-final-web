@@ -64,7 +64,6 @@ class UserResource extends JsonResource
             }),
             "classe" => $this->when($this->relationLoaded('etudiantsClasses'), function () {
 
-
                 $etudiantCurrentClasse = $this->etudiantsClasses;
 
                 if ($etudiantCurrentClasse instanceof Collection) {
