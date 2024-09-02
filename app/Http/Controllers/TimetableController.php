@@ -318,9 +318,10 @@ class TimetableController extends Controller
         // }
 
         $yearTimetables =$classe->timetables;
-        if ($interval == null) {
-         
-            $response = new TimetableResource($yearTimetables);
+
+        if ($interval === null) {
+       
+            $response = new TimetableResource($yearTimetables->first());
         } else {
 
             $response = TimetableResource::collection($yearTimetables);

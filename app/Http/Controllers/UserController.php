@@ -197,7 +197,7 @@ class UserController extends Controller
                 $query->with(['niveau', 'filiere']);
             }]);
             $user->setRelation('etudiantsClasses',   $user->etudiantsClasses->first());
-            // $user->etudiantsClasses->first();
+      
 
 
 
