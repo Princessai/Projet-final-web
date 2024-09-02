@@ -9,7 +9,7 @@ class AbsenceResource extends JsonResource
 {
 
 
- /**
+    /**
      * Indicates if the resource's collection keys should be preserved.
      *
      * @var bool
@@ -22,19 +22,17 @@ class AbsenceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-      
+
         return  [
 
-            
-            "id"=> $this->id,
-            "etat"=>$this->etat,
-            "seance"=>  new SeanceResource($this->seance),
-            "coordinateur_id"=> $this->coordinateur_id,
-            "created_at"=> $this->created_at,
-            "annee_id"=>$this->annee_id,
+
+            "id" => $this->id,
+            "etat" => $this->etat,
+            "type_seance" => $this->when($this->relationLoaded('seance') && $this->seance->relationLoaded('typeSeance'), $this->seance->typeSeance),
+            "coordinateur_id" => $this->coordinateur_id,
+            "created_at" => $this->created_at,
+            "annee_id" => $this->annee_id,
 
         ];
-    
-     
     }
 }

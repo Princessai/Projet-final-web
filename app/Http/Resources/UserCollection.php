@@ -10,7 +10,7 @@ class UserCollection extends ResourceCollection
 
 
 
-    private $currentYear = null;
+    private $currentYearId = null;
     private $seance = null;
     private $roleLabel = null;
 
@@ -19,9 +19,9 @@ class UserCollection extends ResourceCollection
         $this->seance = $seance;
         return $this;
     }
-    public function setCurrentYear($currentYear)
+    public function setCurrentYear($currentYearId)
     {
-        $this->currentYear = $currentYear;
+        $this->currentYearId = $currentYearId;
         return $this;
     }
     public function setRoleLabel(string $roleLabel)
@@ -32,7 +32,7 @@ class UserCollection extends ResourceCollection
     public function toArray(Request $request)
     {
         return $this->collection->map(function ($user) {
-            return new UserResource($user, $this->seance, $this->currentYear, $this->roleLabel);
+            return new UserResource($user, $this->seance, $this->currentYearId, $this->roleLabel);
         });
     }
 }

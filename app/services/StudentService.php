@@ -29,7 +29,12 @@ class StudentService
 
         return $attendanceRate;
     }
+public function  calcAttendanceMark($attendancePercentage,$maxAttendanceMark){
 
+    $attendanceMark =round(($attendancePercentage * 20) / 100, 2);
+    if($maxAttendanceMark === null) return $attendanceMark;
+    return min($maxAttendanceMark, $attendanceMark);
+}
     public function getCurrentClasse($user, $currentYear=null)
     {
         // if($user instanceof Builder|| $user instanceof Model){

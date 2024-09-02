@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Droppe;
 use App\Models\Retard;
 use App\Models\Seance;
@@ -49,7 +50,7 @@ class SeanceController extends Controller
 
         $validated = $validator->validated();
 
-        $currentYear = (new AnneeService())->getCurrentYear();
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
 
         $SeanceService = new SeanceService;
 
@@ -64,54 +65,19 @@ class SeanceController extends Controller
 
         $seanceEnd = Carbon::parse($seance->heure_fin);
 
-        $seanceDuration = seanceDuration($seanceEnd, $seanceStart);
 
-        if ($seanceStart->greaterThan(now())) {
-            return apiError(message: 'the session has not started yet');
-        }
+
+        // if ($seanceStart->greaterThan(now())) {
+        //     return apiError(message: 'the session has not started yet');
+        // }
+        // return apiSuccess($seance);
         if ($seance->attendance) {
             return apiError(message: 'the call is already done');
         }
 
-        // $workedHours =$seance
-        // ->classe
-        // ->modules()
-        // ->wherePivot('annee_id',$currentYear->id)
-        // ->wherePivot('module_id',$seance->module_id)
-        // ->first()
-        // ->pivot
-        // ->nbre_heure_effectue;
 
 
-        // $pivotDataBaseQuery = DB::table('classe_module')
-        //     ->where([
-        //         'annee_id' => $currentYear->id,
-        //         'module_id' => $seance->module_id,
-        //         'classe_id' => $seance->classe->id
-        //     ]);
-
-        // $pivotData = $pivotDataBaseQuery->first();
-
-
-        // $workedHours = $pivotData->nbre_heure_effectue;
-
-        // $isThereModuleCourseHours= CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->exists();
-
-        // if (!$isThereModuleCourseHours) {
-        //     CourseHour::create([
-        //         'classe_module_id' => $pivotData->id,
-        //         'type_seance_id' => $seance->type_seance_id,
-        //         'nbre_heure_effectue' => $seanceDuration,
-        //     ]);
-        // } else {
-        //     CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->increment('nbre_heure_effectue', $seanceDuration);
-
-        // }
-
-
-
-        // $pivotDataBaseQuery->increment('nbre_heure_effectue', $seanceDuration);
-        $pivotData = $SeanceService->incrementOrDecrementWorkedHours($seance, $currentYear);
+        $pivotData = $SeanceService->incrementOrDecrementWorkedHours($seance,  $currentYearId);
 
         $workedHours = $pivotData->nbre_heure_effectue;
 
@@ -125,60 +91,14 @@ class SeanceController extends Controller
 
 
 
-        // $absences = $validated['absences'];
-        // $delays = $validated['delays'];
+
         $absences = [];
         $delays = [];
 
 
-        // $absences = collect($absences)->map(function ($data) use ($seance, $currentYear, $workedHoursPercentage, $minWorkedHoursPercentage, $workedHours, $minAttendancePercentage) {
-        //     $student_id = $data['id'];
-        //     $isDropped = $data['isDropped'];
-        //     if ($workedHoursPercentage > $minWorkedHoursPercentage && !$isDropped) {
-
-        //         $studentModuleAbscences = Absence::whereHas('seance', function ($query) use ($seance,) {
-
-        //             $query = $query->where('module_id', $seance->module_id);
-        //         })->where([
-        //             'annee_id' => $currentYear->id,
-        //             'user_id' => $student_id,
-        //             'etat' => absenceStateEnum::notJustified->value
-        //         ])->get();
-
-        //         $StudentService = new StudentService;
-
-        //         $ClasseService = new ClasseService;
-
-        //         $missedHours =  $ClasseService->getStudentMissedHours($studentModuleAbscences);
-
-        //         $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc($missedHours, $workedHours);
-
-        //         if ($unJustifiedpresencePercentage <= $minAttendancePercentage) {
-
-        //             Droppe::create([
-        //                 "module_id" => $seance->module_id,
-        //                 "user_id" => $student_id,
-        //                 "annee_id" => $currentYear->id,
-        //             ]);
-        //         }
 
 
 
-        //     }
-
-
-
-
-
-        //     return ['user_id' => $student_id, "seance_id" => $seance->id, "annee_id" => $currentYear->id];
-        // });
-        // $seance->absences()->createMany($absences);
-
-        // $delays = collect($delays)->map(function ($data) use ($seance, $currentYear) {
-        //     $student_id = $data['id'];
-
-        //     return ['user_id' => $student_id, "seance_id" => $seance->id, "annee_id" => $currentYear->id];
-        // });
 
 
         foreach ($validated['attendances'] as $data) {
@@ -190,32 +110,24 @@ class SeanceController extends Controller
             $attendanceTabName = null;
 
 
-            // $isAbsent = ($attendanceStatus === attendanceStateEnum::Absent->value) ? true : false;
+
 
 
             if ($attendanceStatus === attendanceStateEnum::Absent->value && $workedHoursPercentage > $minWorkedHoursPercentage && !$isDropped) {
 
-                // $studentModuleAbscences = Absence::whereHas('seance', function ($query) use ($seance,) {
-
-                //     $query = $query->where('module_id', $seance->module_id);
-                // })
-                //     ->where([
-
-                //         'annee_id' => $currentYear->id,
-                //         'user_id' => $student_id,
-                //         'etat' => absenceStateEnum::notJustified->value
-                //     ])->get();
 
                 $StudentService = new StudentService;
 
-                $ClasseService = new ClasseService;
+                $student = User::active(module_id: $seance->module_id, currentYear_id: $currentYearId)->find($student_id);
 
+                // return $student;
 
-                // $missedHours =  $ClasseService->getStudentMissedHours($studentModuleAbscences);
-                $missedHours =  $StudentService->getMissedHours(student_id: $student_id, currentYear_id: $currentYear->id, module_id: $seance->module_id, callback: function ($query) {
-                    $query->where('etat', absenceStateEnum::notJustified->value);
-                });
+                // $missedHours =  $StudentService->getMissedHours(student_id: $student_id, currentYear_id:  $currentYearId, module_id: $seance->module_id, callback: function ($query) {
+                //     $query->where('etat', absenceStateEnum::notJustified->value);
+                // });
 
+                $missedHours = $student->missedHoursSum;
+                $workedHours = $student->etudiantsClasses->first()->workedHoursSum;
                 $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc($missedHours, $workedHours);
 
                 if ($unJustifiedpresencePercentage <= $minAttendancePercentage) {
@@ -223,7 +135,7 @@ class SeanceController extends Controller
                     Droppe::create([
                         "module_id" => $seance->module_id,
                         "user_id" => $student_id,
-                        "annee_id" => $currentYear->id,
+                        "annee_id" =>  $currentYearId,
                     ]);
                 }
             }
@@ -238,15 +150,15 @@ class SeanceController extends Controller
             if ($attendanceTabName !== null) {
 
                 $$attendanceTabName[] = [
-                'user_id' => $student_id,
-                'module_id'=> $seance->module_id,
-                'seance_heure_fin'=>$seance->heure_fin,
-                'seance_heure_debut'=>$seance->heure_debut,
-                'duree'=>$seance->duree,
-                'duree_raw'=>$seance->duree_raw,
-                "seance_id" => $seance->id, 
-                "annee_id" => $currentYear->id
-            ];
+                    'user_id' => $student_id,
+                    'module_id' => $seance->module_id,
+                    'seance_heure_fin' => $seance->heure_fin,
+                    'seance_heure_debut' => $seance->heure_debut,
+                    'duree' => $seance->duree,
+                    'duree_raw' => $seance->duree_raw,
+                    "seance_id" => $seance->id,
+                    "annee_id" => $currentYearId
+                ];
             }
         }
 
@@ -271,13 +183,12 @@ class SeanceController extends Controller
         $seance = apiFindOrFail($seance, $seance_id, message: 'no such session');
 
         $ClasseService = new ClasseService;
-        $AnneeService = new AnneeService();
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
         $classe = $seance->classe;
-        $currentYear = $AnneeService->getCurrentYear();
-        $students =  $ClasseService->getClassCurrentStudent($classe, $currentYear);
+        $students =  $ClasseService->getClassCurrentStudent($classe, $currentYearId);
 
         $response = (new UserCollection($students))
-            ->setCurrentYear($currentYear)
+            ->setCurrentYear($currentYearId)
             ->setSeance($seance);
 
         return apiSuccess(data: $response);
@@ -367,10 +278,10 @@ class SeanceController extends Controller
                         'user_id' => $student_id,
                         'seance_id' => $seance->id,
                         'annee_id' => $currentYear->id,
-                        'duree' => $seance->duree,     
-                        'duree_raw'=>$seance->duree_raw,
-                        'seance_heure_fin'=>$seance->heure_fin,
-                        'seance_heure_debut'=>$seance->heure_debut,
+                        'duree' => $seance->duree,
+                        'duree_raw' => $seance->duree_raw,
+                        'seance_heure_fin' => $seance->heure_fin,
+                        'seance_heure_debut' => $seance->heure_debut,
                         'module_id' => $seance->module_id,
 
                     ]);
@@ -391,9 +302,9 @@ class SeanceController extends Controller
                     Absence::create([
                         'user_id' => $student_id,
                         'duree' => $seance->duree,
-                        'duree_raw'=>$seance->duree_raw,
-                        'seance_heure_fin'=>$seance->heure_fin,
-                        'seance_heure_debut'=>$seance->heure_debut,
+                        'duree_raw' => $seance->duree_raw,
+                        'seance_heure_fin' => $seance->heure_fin,
+                        'seance_heure_debut' => $seance->heure_debut,
                         'seance_id' => $seance->id,
                         'annee_id' => $currentYear->id,
                         'module_id' => $seance->module_id,

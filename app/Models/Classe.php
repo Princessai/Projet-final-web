@@ -8,6 +8,7 @@ use App\Models\Niveau;
 use App\Models\Seance;
 use App\Models\Timetable;
 use App\Models\ClasseModule;
+use App\Enums\seanceStateEnum;
 use App\Models\ClasseEtudiant;
 use App\Services\AnneeService;
 use App\Models\ClasseEnseignant;
@@ -71,13 +72,14 @@ class Classe extends Model
         return $this->hasMany(Seance::class); 
     }
 
-    public function scopeStudentCurrentClasse($query)
-    {   $currentYear = app (AnneeService::class)->getCurrentYear();
-        return $query->where('classe_etudiants.annee_id',$currentYear->id)->first;
+    public function scopeCurrentYearStudents($query)
+    {   $currentYearId = app (AnneeService::class)->getCurrentYear()->id;
+        return  $query->with('etudiants', function ($query) use ($currentYearId) {
+            $query->wherePivot('annee_id', $currentYearId);
+        });;
     }
 
-
-
+   
 
 
 

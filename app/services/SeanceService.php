@@ -39,7 +39,7 @@ class SeanceService
         return $attendanceStatus;
     }
 
-    public function incrementOrDecrementWorkedHours($seance, $currentYear, int $action=1)
+    public function incrementOrDecrementWorkedHours($seance, $currentYearId, int $action=1)
     {
 
 
@@ -49,14 +49,14 @@ class SeanceService
         
         $pivotDataBaseQuery = DB::table('classe_module')
             ->where([
-                'annee_id' => $currentYear->id,
+                'annee_id' => $currentYearId,
                 'module_id' => $seance->module_id,
                 'classe_id' => $seance->classe->id
             ]);
 
         $pivotData = $pivotDataBaseQuery->first();
 
-        $seanceDuration = seanceDuration($seance->heure_fin, $seance->heure_debut);
+        $seanceDuration = $seance->duree;
 
 
 

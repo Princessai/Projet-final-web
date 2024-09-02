@@ -17,16 +17,16 @@ class UserResource extends JsonResource
 {
 
     private $seance;
-    private $currentYear;
+    private $currentYearId;
     private $roleLabel;
 
-    public function __construct($resource, $seance = null, $currentYear = null, $roleLabel = null)
+    public function __construct($resource, $seance = null, $currentYearId = null, $roleLabel = null)
     {
         // Ensure you call the parent constructor
         parent::__construct($resource);
         $this->seance = $seance;
 
-        $this->currentYear = $currentYear;
+        $this->currentYearId = $currentYearId;
         $this->roleLabel = $roleLabel;
     }
 
@@ -69,7 +69,6 @@ class UserResource extends JsonResource
 
                 if ($etudiantCurrentClasse instanceof Collection) {
                     return ClasseResource::collection($etudiantCurrentClasse);
-                    
                 } else if ($etudiantCurrentClasse instanceof Model) {
                     return new ClasseResource($etudiantCurrentClasse);
                 }
@@ -78,8 +77,7 @@ class UserResource extends JsonResource
             "attendanceStatus" => $this->when(
                 $isSeanceSet && $this->seance->relationLoaded('absences') && $this->seance->relationLoaded('delays'),
                 function () {
-                    $annee_id = $this->currentYear->id;
-                    $module_id = $this->seance->module_id;
+               
                     $SeanceService = new SeanceService();
 
                     return $SeanceService->getStudentAttendanceStatus($this->id, $this->seance->absences, $this->seance->delays);
@@ -107,13 +105,13 @@ class UserResource extends JsonResource
                 }
             ),
             "isDropped" => $this->when($isSeanceSet && $this->seance->relationLoaded('module') && $this->seance->module->relationLoaded('droppedStudents'), function () {
-                $annee_id = $this->currentYear->id;
+                $annee_id = $this->currentYearId;
                 $module_id = $this->seance->module_id;
 
                 $this->seance->module
                     ->droppedStudents
                     ->contains(function ($droppedStudent,  $key) {
-                        return $droppedStudent->user_id == $this->id && $droppedStudent->annee_id == $this->currentYear->id;
+                        return $droppedStudent->user_id == $this->id && $droppedStudent->annee_id == $this->currentYearId;
                     });
 
                 return $etudiantCurrentClasse = $this->droppedStudentsModules()

@@ -23,17 +23,16 @@ class ClasseController extends Controller
 
     public function getAllClasseStudents(Request $request, $classe_id)
     {
-        $AnneeService = new AnneeService();
-        $ClasseService= new ClasseService();
-        $currentYear = $AnneeService->getCurrentYear();
-        // $classe  =  Classe::with(['etudiants'=>function($query) use($currentYear){
-        //     $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
+        $ClasseService = new ClasseService();
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
+        // $classe  =  Classe::with(['etudiants'=>function($query) use($currentYearId){
+        //     $query->wherePivot('classe_etudiants.annee_id', $currentYearId->id);
         // }]);
         // $classe = apiFindOrFail($classe, $classe_id, "no such class");
-      
-        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe_id,$currentYear)))
-        ->setCurrentYear($currentYear)
-        ->setRoleLabel(roleEnum::Etudiant->value);
+
+        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe_id, $currentYearId)))
+            ->setCurrentYear($currentYearId)
+            ->setRoleLabel(roleEnum::Etudiant->value);
 
         return apiSuccess(data: $response);
     }
@@ -49,43 +48,65 @@ class ClasseController extends Controller
         //         $query->where('classes.id', $classe_id);
         //     });
         // }
-   
+
         $classe = Classe::with([
 
-            'enseignants' => function($query) use($classe_id){
-                $query->wherePivot('classe_id',$classe_id);
+            'enseignants' => function ($query) use ($classe_id) {
+                $query->wherePivot('classe_id', $classe_id);
                 $query->with('role');
                 $query->with('enseignantModules', function ($query) use ($classe_id) {
-                        $query->whereHas('classes', function ($query) use ($classe_id) {
-                            $query->where('classes.id', $classe_id);
-                        });
-                    
+                    $query->whereHas('classes', function ($query) use ($classe_id) {
+                        $query->where('classes.id', $classe_id);
+                    });
                 });
-                   
-                }
+            }
 
-        
+
         ]);
 
         $classe = apiFindOrFail($classe, $classe_id, "no such class");
         // return $classe;
 
         $response = (new Usercollection($classe->enseignants))
-        ->setRoleLabel(roleEnum::Enseignant->value);
+            ->setRoleLabel(roleEnum::Enseignant->value);
         return apiSuccess(data: $response);
     }
 
-    public function getStudentsAttendanceRecord($seance_id)
+    public function pogetStudentsAttendanceRecord($seance_id)
     {
+        // .droppedStudents', 'classe.etudiants'
 
-        $seance =   Seance::with(['module.droppedStudents', 'classe.etudiants']);
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
+
+        $seance =   Seance::with([
+            'module' => function ($query) use ($currentYearId) {
+
+
+                $query->with('droppedStudents', function ($query) use ($currentYearId) {
+                    $query->wherePivot('annee_id', $currentYearId);
+                });
+            },
+            'classe' => function ($query) use ($currentYearId) {
+                $query->CurrentYearStudents();
+            
+                // with('etudiants', function ($query) use ($currentYearId) {
+                //     $query->wherePivot('annee_id', $currentYearId);
+                // });
+            }
+
+
+        ]);
+
         $seance = apiFindOrFail($seance, $seance_id, 'no such session');
         $classe = $seance->classe;
-        $AnneeService = new AnneeService();
-        $ClasseService= new ClasseService();
-        $currentYear= $AnneeService->getCurrentYear();
-        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe,$currentYear)))
-            ->setCurrentYear($currentYear)
+
+        // return $classe;
+
+       
+        $ClasseService = new ClasseService();
+
+        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe, $currentYearId)))
+            ->setCurrentYear($currentYearId)
             ->setSeance($seance);
 
         return apiSuccess(data: $response);

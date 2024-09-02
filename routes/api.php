@@ -38,7 +38,7 @@ Route::prefix('trackin')->group(function () {
 
 
         // worked hours
-        Route::get("/gethours/classe/year_segments/{classe_id}/{year_segments}", [CourseHourController::class, 'getClasseWorkedHours']);
+        Route::get("/gethours/classe/year_segments/{classe_id}/{year_segments?}", [CourseHourController::class, 'getClasseWorkedHours']);
 
         Route::get("/gethours/classes/year_segments/{year_segments}", [CourseHourController::class, 'getAllClassesWorkedHours']);
 

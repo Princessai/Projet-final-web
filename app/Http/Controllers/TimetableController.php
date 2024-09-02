@@ -199,7 +199,7 @@ class TimetableController extends Controller
                     if ($seanceState !== null && $oldSeanceState !== $seanceState) {
 
                         if ($oldSeanceState == seanceStateEnum::Done->value && $seanceState != seanceStateEnum::ComingSoon->value) {
-                            $SeanceService->incrementOrDecrementWorkedHours($oldSeance, $currentYear, -1); // decrement ici
+                            $SeanceService->incrementOrDecrementWorkedHours($oldSeance, $currentYear->id, -1); // decrement ici
                             $oldSeance->absences()->delete();
                             $oldSeance->delays()->delete();
                         }

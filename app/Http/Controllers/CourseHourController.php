@@ -11,6 +11,7 @@ use App\Enums\seanceStateEnum;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\CourseHourResource;
 use App\Models\TypeSeance;
+use App\Services\AnneeService;
 use App\Services\ClasseService;
 
 require(base_path('utilities\seeder\seanceDuration.php'));
@@ -23,7 +24,7 @@ function getYearSegmentIntVal($yearSegment)
 
 class CourseHourController extends Controller
 {
-    public function getClasseWorkedHours(Request $request, $classe_id, $year_segments)
+    public function getClasseWorkedHours(Request $request, $classe_id, $year_segments=null)
     {
 
         $regexPattern = '/,?\d+,?/i';
@@ -54,10 +55,14 @@ class CourseHourController extends Controller
 
 
         $classeService = new ClasseService;
-        $currentYear = Annee::latest()->first();
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
         $classe = Classe::with('seances');
         $classe = apiFindOrFail($classe, $classe_id, 'no such classe');
-        $yearSegments = YearSegment::where('annee_id', $currentYear->id)->whereIn('number', $selectedYearSegments)->get();
+        $baseQueryYearSegments=YearSegment::where('annee_id', $currentYearId);
+        if($year_segments!==null){
+            $baseQueryYearSegments= $baseQueryYearSegments->whereIn('number', $selectedYearSegments); 
+        }
+        $yearSegments = $baseQueryYearSegments->get();
 
 
         //     $seances=$classe->seances()->where([
@@ -109,7 +114,7 @@ class CourseHourController extends Controller
 
         //     }
         $typeSeances = TypeSeance::all();
-        $yearSegments = $classeService->getYearSegmentsWorkedHours($classe, $yearSegments, $currentYear, $typeSeances);
+        $yearSegments = $classeService->getYearSegmentsWorkedHours($classe, $yearSegments, $currentYearId, $typeSeances);
         $response = CourseHourResource::collection($yearSegments);
 
         return apiSuccess(data: $response);

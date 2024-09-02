@@ -42,9 +42,9 @@ class ClasseService
      
 
         if ($currentYear == null) {
-            $currentYear = (new AnneeService())->getCurrentYear();
+            $currentYear = app(AnneeService::class)->getCurrentYear();
         }
-        if(!($classe_id instanceof Builder)&&!($classe_id instanceof Model)){
+        if(is_numeric($classe_id)){
 
            $classeQuery= Classe::with(['etudiants'=>function($query) use($currentYear){
                 $query->with('role');
@@ -140,7 +140,6 @@ class ClasseService
 
       
         if ($timestamp1 === null && $timestamp2 === null) {
-            apiSuccess([property_exists($classe, 'workedHoursSum')])->send();
             // return $classe;
             // die();
             // if (property_exists($classe, 'workedHoursSum')) {
@@ -219,10 +218,10 @@ class ClasseService
 
         $yearSegmentsCopy =  recursiveClone($yearSegments);
 
-        $seances = $classe->seances()->where([
+        $seances = $classe->seances->where([
             'annee_id' => $currentYear->id,
             'etat' => seanceStateEnum::Done->value
-        ])->get();
+        ])->all();
 
 
 
@@ -300,7 +299,6 @@ class ClasseService
 
         $classe = $classe_id;
         if (is_numeric($classe_id)) {
-            apiSuccess('test')->send();
             $classe = new Classe();
         }
 
@@ -377,9 +375,10 @@ class ClasseService
 
 
             $classe = $baseQuery->withSum(['seances as workedHoursSum' => function ($query) use ($module_id, $timestamp2, $timestamp1) {
-
+                
+               
                 $baseWhereClause = ['etat' => seanceStateEnum::Done->value];
-
+               
 
 
                 if ($module_id !== null) {
@@ -396,6 +395,7 @@ class ClasseService
                 if ($timestamp1 !== null && $timestamp2 !== null) {
                     $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
                 };
+                
             }], 'duree')
                 // ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
 

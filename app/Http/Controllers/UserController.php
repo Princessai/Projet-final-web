@@ -46,7 +46,7 @@ class UserController extends Controller
         }
 
         $response = [
-            'role'=> $user->role,
+            'role' => $user->role,
             'token' => $user->createToken("token",  ['*'])->plainTextToken,
             // 'token' => $user->createToken("token",  ['*'], now()->addMinutes(15))->plainTextToken,
 
@@ -80,43 +80,39 @@ class UserController extends Controller
     public function getUserSeances(Request $request, $user_id, $timestamp = null)
     {
         $currentYear = app(AnneeService::class)->getCurrentYear();
-        $currentYearId =$currentYear->id;
+        $currentYearId = $currentYear->id;
 
         $currentTime = now()->addMinutes(15);
         $timestamp = ($timestamp === null) ? 0 : Carbon::createFromTimestamp($timestamp);
 
 
-        $user =User::with('role');
+        $user = User::with('role');
         $user = apiFindOrFail(query: $user, id: $user_id, message: 'no such  user');
 
         $userRole = $user->role;
 
         if ($userRole->label == roleEnum::Etudiant->value) {
             $studentService = new StudentService;
-            $user->loadMissing(['etudiantsClasses' => function($query) use($studentService, $currentYearId,$timestamp){
-                $query->orderByPivot('id', 'desc')->take(1);        
-                $query->with('seances',function($query) use($currentYearId,$timestamp){
+            $user->loadMissing(['etudiantsClasses' => function ($query) use ($studentService, $currentYearId, $timestamp) {
+                $query->orderByPivot('id', 'desc')->take(1);
+                $query->with('seances', function ($query) use ($currentYearId, $timestamp) {
 
                     if ($timestamp !== null) {
                         $query->where('heure_fin', '>=', $timestamp);
                     } else {
-                        $query->where('annee_id',$currentYearId);   
+                        $query->where('annee_id', $currentYearId);
                     }
-                   
+
                     $query->with(['typeSeance', 'module', 'salle'])
-                    ->orderBy('id', 'desc');
-
-                    
+                        ->orderBy('id', 'desc');
                 });
-
             }]);
-   
-        
+
+
             $studentClasse = $user->etudiantsClasses->first();
             $seances = $studentClasse->seances;
-
         } else {
-            $eagerLoadedRelation = ['typeSeance', 'classe.filiere','classe.niveau','module', 'salle'];
+            $eagerLoadedRelation = ['typeSeance', 'classe.filiere', 'classe.niveau', 'module', 'salle'];
             if ($timestamp !== null) {
                 $seances = Seance::with($eagerLoadedRelation)->where(['user_id' => $user->id])->where('heure_fin', '>=', $timestamp)->orderBy('id', 'desc')->get();
             } else {
@@ -125,7 +121,7 @@ class UserController extends Controller
         }
 
 
-   
+
         // ->transform(function($seance){
         //     return [
         //         "id" => $seance->id ,
@@ -164,17 +160,15 @@ class UserController extends Controller
     public function getParentsChildren(Request $request, $parent_id)
     {
 
-        $currentYear = (new AnneeService())->getCurrentYear();
-        // $user = User::with('parentEtudiants.etudiantsClasses');
-        $user = User::with(['parentEtudiants' => function ($query) use ($currentYear) {
-            $query->with('etudiantsClasses', function ($query){
+        $user = User::with(['parentEtudiants' => function ($query) {
+            $query->with('etudiantsClasses', function ($query) {
                 $query->orderByPivot('id', 'desc')->take(1);
             });
         }]);
 
-        
+
         $user = apiFindOrFail($user, $parent_id, "no such user");
-      
+
 
         if ($user->role->label != roleEnum::Parent->value) {
             return apiError(message: "the user $parent_id is not parent");
@@ -193,7 +187,13 @@ class UserController extends Controller
     public function loggedUserInfos(Request $request)
     {
         $user = $request->user()
-        ->load('role');
+            ->load('role');
+        $userRole = $user->role;
+        if ($userRole->label == roleEnum::Etudiant->value) {
+            $user->load(['etudiantsClasses'=> function($query) {
+                $query->orderByPivot('id', 'desc')->take(1);
+            }]);
+        }
         $response = new UserResource($user);
         return apiSuccess(data: $response);
     }

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 function apiSuccess($data=[], $message='success !', $statusCode = 200)
 {
@@ -30,7 +31,7 @@ function apiFindOrFail($query,$id, $message = 'something went wrong') {
     try {
 
         $data = $query->findOrFail($id);
-    } catch (\Throwable $th) {
+    } catch (ModelNotFoundException $th) {
         throw new HttpResponseException( apiError(message: $message ,statusCode:404));
 
     }
