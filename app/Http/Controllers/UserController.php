@@ -46,8 +46,8 @@ class UserController extends Controller
         }
 
         $response = [
-            'role' => $user->role,
             'token' => $user->createToken("token",  ['*'])->plainTextToken,
+            'role' => $user->role,
             // 'token' => $user->createToken("token",  ['*'], now()->addMinutes(15))->plainTextToken,
 
         ];
@@ -169,6 +169,7 @@ class UserController extends Controller
 
         $user = apiFindOrFail($user, $parent_id, "no such user");
 
+    
 
         if ($user->role->label != roleEnum::Parent->value) {
             return apiError(message: "the user $parent_id is not parent");
@@ -186,15 +187,22 @@ class UserController extends Controller
 
     public function loggedUserInfos(Request $request)
     {
+        $currentYear =app(AnneeService::class)->getCurrentYear();
         $user = $request->user()
             ->load('role');
         $userRole = $user->role;
         if ($userRole->label == roleEnum::Etudiant->value) {
             $user->load(['etudiantsClasses'=> function($query) {
                 $query->orderByPivot('id', 'desc')->take(1);
+                $query->with(['niveau', 'filiere']);
             }]);
         }
-        $response = new UserResource($user);
+      
+        $response = [
+            'currentYear'=>$currentYear,
+            'user'=>new UserResource($user)
+        ];
+
         return apiSuccess(data: $response);
     }
 

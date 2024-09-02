@@ -149,11 +149,17 @@ class User extends Authenticatable
     /**
      * Scope a query to only include active users.
      */
-    public function scopeActive(Builder|Model $query, $module_id = null, $currentYear_id = null, $timestamp1 = null, $timestamp2 = null): void
-    {
+    public function scopeEagerLoadStudentWorkedAdMissedHours(
+        Builder|Model $query,
+        $module_id = null,
+        $currentYear_id = null,
+        $timestamp1 = null,
+        $timestamp2 = null,
+        $callback = null
+    ): void {
 
-       
-        $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
+
+        $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
 
             if ($module_id !== null) {
                 $query->where('module_id', $module_id);
@@ -168,6 +174,10 @@ class User extends Authenticatable
             if ($timestamp1 !== null && $timestamp2 !== null) {
                 $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
             };
+
+            if ($callback !== null) {
+                $callback($query);
+            }
         }], 'duree');
 
         if ($timestamp1 === null && $timestamp2 === null) {
@@ -269,9 +279,5 @@ class User extends Authenticatable
 
             ;
         }
-
-
-
-
     }
 }

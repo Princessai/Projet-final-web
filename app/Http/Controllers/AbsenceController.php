@@ -304,7 +304,7 @@ class AbsenceController extends Controller
         // }
 
 
-        $student = User::active($module_id, $currentYear_id, $timestamp1, $timestamp2);
+        $student = User::eagerLoadStudentWorkedAdMissedHours($module_id, $currentYear_id, $timestamp1, $timestamp2);
 
         $student = apiFindOrFail($student, $student_id, "no such student");
 

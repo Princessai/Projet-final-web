@@ -19,8 +19,8 @@ class ClasseResource extends JsonResource
             'id' => $this->id,
             'label' => $this->label,
             'coordinateur' => new UserResource($this->whenLoaded('coordinateur')),
-            'filiere' => $this->filiere,
-            'niveau' => $this->niveau,
+            'filiere' => $this->whenLoaded('filiere'),
+            'niveau' => $this->whenLoaded('niveau'),
 
         ];
     }

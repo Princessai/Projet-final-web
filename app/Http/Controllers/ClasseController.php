@@ -11,7 +11,6 @@ use App\Services\ClasseService;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\ClasseResource;
 use App\Http\Resources\UserCollection;
-use Illuminate\Database\Eloquent\Builder;
 
 class ClasseController extends Controller
 {
@@ -72,9 +71,9 @@ class ClasseController extends Controller
         return apiSuccess(data: $response);
     }
 
-    public function pogetStudentsAttendanceRecord($seance_id)
+    public function getStudentsAttendanceRecord($seance_id)
     {
-        // .droppedStudents', 'classe.etudiants'
+
 
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
 
@@ -84,28 +83,22 @@ class ClasseController extends Controller
 
                 $query->with('droppedStudents', function ($query) use ($currentYearId) {
                     $query->wherePivot('annee_id', $currentYearId);
+                    $query->wherePivot('isDropped', true);
+                    
                 });
             },
             'classe' => function ($query) use ($currentYearId) {
                 $query->CurrentYearStudents();
-            
-                // with('etudiants', function ($query) use ($currentYearId) {
-                //     $query->wherePivot('annee_id', $currentYearId);
-                // });
             }
 
 
         ]);
 
         $seance = apiFindOrFail($seance, $seance_id, 'no such session');
+        // return $seance;
         $classe = $seance->classe;
 
-        // return $classe;
-
-       
-        $ClasseService = new ClasseService();
-
-        $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe, $currentYearId)))
+        $response = (new UserCollection($classe->etudiants))
             ->setCurrentYear($currentYearId)
             ->setSeance($seance);
 

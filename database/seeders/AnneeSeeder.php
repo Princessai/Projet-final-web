@@ -16,14 +16,19 @@ class AnneeSeeder extends Seeder
     {
         $years = require(base_path('data/annee.php'));
         $yearsArr =[];
-        
+        $now =now();
 
         foreach( $years as $year){
          
             $yearStart= Carbon::parse($year['start']);
             $yearEnd= Carbon::parse($year['end']);
          
-            $yearsArr[]=['date_debut'=>$yearStart,'date_fin'=>$yearEnd,'annee_scolaire'=>"$yearStart->year - $yearEnd->year"];
+            $yearsArr[]=[
+            'date_debut'=>$yearStart,
+            'date_fin'=>$yearEnd,
+            'annee_scolaire'=>"$yearStart->year - $yearEnd->year" ,
+            "created_at"=> $now ,
+            "updated_at"=>$now];
         }
 
         Annee::insert($yearsArr);

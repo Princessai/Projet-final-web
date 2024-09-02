@@ -59,11 +59,11 @@ class UserResource extends JsonResource
 
             "parent" => new UserResource($this->whenLoaded('etudiantParent'), roleLabel: roleEnum::Etudiant->value),
 
-            "role" => $this->when($this->relationLoaded('role') && $this->seance == null, $this->role),
+            "role" => $this->when($this->relationLoaded('role') && $this->seance == null, function (){
+               return $this->role;
+            }),
             "classe" => $this->when($this->relationLoaded('etudiantsClasses'), function () {
 
-                // $annee_id = $this->currentYear->id;
-                // $etudiantCurrentClasse = $this->etudiantsClasses()->wherePivot('annee_id', $annee_id)->first();
 
                 $etudiantCurrentClasse = $this->etudiantsClasses;
 
@@ -77,46 +77,20 @@ class UserResource extends JsonResource
             "attendanceStatus" => $this->when(
                 $isSeanceSet && $this->seance->relationLoaded('absences') && $this->seance->relationLoaded('delays'),
                 function () {
-               
+
                     $SeanceService = new SeanceService();
 
                     return $SeanceService->getStudentAttendanceStatus($this->id, $this->seance->absences, $this->seance->delays);
-
-                    // $attendanceStatus = attendanceStateEnum::Present->value;
-
-                    // $isAbsente = $this->seance->absences->contains(function ($absence,  $key) {
-                    //     return $absence->user_id == $this->id;
-                    // });
-
-                    // if ($isAbsente) {
-                    //     return $attendanceStatus = attendanceStateEnum::Absent->value;
-                    // }
-
-                    // $isLate = $this->seance->delays->contains(function ($absence,  $key) {
-
-                    //     return $absence->user_id == $this->id;
-                    // });
-
-                    // if ($isLate) {
-                    //     return $attendanceStatus = attendanceStateEnum::Late->value;
-                    // }
-
-                    // return $attendanceStatus;
                 }
             ),
             "isDropped" => $this->when($isSeanceSet && $this->seance->relationLoaded('module') && $this->seance->module->relationLoaded('droppedStudents'), function () {
-                $annee_id = $this->currentYearId;
-                $module_id = $this->seance->module_id;
 
-                $this->seance->module
+
+                return $this->seance->module
                     ->droppedStudents
                     ->contains(function ($droppedStudent,  $key) {
-                        return $droppedStudent->user_id == $this->id && $droppedStudent->annee_id == $this->currentYearId;
+                        return $droppedStudent->id == $this->id;
                     });
-
-                return $etudiantCurrentClasse = $this->droppedStudentsModules()
-                    ->wherePivot('annee_id', $annee_id)
-                    ->where('modules.id', $module_id)->exists();
             })
 
 
