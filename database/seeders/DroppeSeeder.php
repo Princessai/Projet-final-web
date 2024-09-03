@@ -73,7 +73,8 @@ class DroppeSeeder extends Seeder
                                     Droppe::create([
                                         'user_id' => $etudiantsAbsent->id,
                                         'module_id' => $classeModule->id,
-                                        'annee_id' => $annee_id
+                                        'annee_id' => $annee_id,
+                                        "classe_id"=>$classe->id
                                     ]);
                                 }
                                 dump("pourcentage de presence", $presencePercentage);

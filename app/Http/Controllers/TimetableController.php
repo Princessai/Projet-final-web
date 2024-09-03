@@ -265,7 +265,6 @@ class TimetableController extends Controller
         }
 
 
-        $validated = $validator->validated();
         $classe = Classe::with(['timetables'=>function($query) use($interval,$annee_id){
 
             $now = now();
@@ -287,9 +286,10 @@ class TimetableController extends Controller
 
                 default:
         
-                   $query->where('date_fin', '>=', $now)->orderBy('created_at')->first();
+                   $query->where('date_fin', '>=', $now)->orderBy('created_at')->take(1);
                     break;
             }   
+
             $query->with(['seances'=>['typeSeance','module', 'salle']]);
 
         }]);

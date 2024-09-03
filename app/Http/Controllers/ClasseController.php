@@ -79,11 +79,10 @@ class ClasseController extends Controller
 
         $seance =   Seance::with([
             'module' => function ($query) use ($currentYearId) {
-
-
                 $query->with('droppedStudents', function ($query) use ($currentYearId) {
                     $query->wherePivot('annee_id', $currentYearId);
                     $query->wherePivot('isDropped', true);
+               
                     
                 });
             },

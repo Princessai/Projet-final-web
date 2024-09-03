@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('droppes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('module_id')->constrained();
             $table->foreignId('user_id')->constrained();
-            $table->boolean('isDropped')->default(true);
+            $table->foreignId('module_id')->constrained();
+            $table->foreignId('classe_id')->constrained();
             $table->foreignId('annee_id')->constrained();
+            $table->boolean('isDropped')->default(true);
             $table->timestamps();
 
         });

@@ -62,10 +62,7 @@ class SeanceController extends Controller
         $seance = apiFindOrFail($seance, $seance_id, 'no such seance');
 
         $seanceStart = Carbon::parse($seance->heure_debut);
-
-        $seanceEnd = Carbon::parse($seance->heure_fin);
-
-
+   
 
         // if ($seanceStart->greaterThan(now())) {
         //     return apiError(message: 'the session has not started yet');
@@ -116,7 +113,8 @@ class SeanceController extends Controller
                     callback: function ($query) {
                         $query->where('etat', absenceStateEnum::notJustified->value);
                     }
-                )->find($student_id);
+                );
+                $student=apiFindOrFail( $student,$student_id,'no such student');
                
 
 
@@ -140,6 +138,7 @@ class SeanceController extends Controller
                             "module_id" => $seance->module_id,
                             "user_id" => $student_id,
                             "annee_id" =>  $currentYearId,
+                            "classe_id"=>  $seance->classe->id
                         ],
                         ['isDropped' => true]
                     );
@@ -215,6 +214,7 @@ class SeanceController extends Controller
 
 
         $classe = $seance->classe;
+        
 
         // $students =  $ClasseService->getClassCurrentStudent($classe, $currentYearId);
 

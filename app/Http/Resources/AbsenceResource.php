@@ -30,6 +30,8 @@ class AbsenceResource extends JsonResource
             "etat" => $this->etat,
             "type_seance" => $this->when($this->relationLoaded('seance') && $this->seance->relationLoaded('typeSeance'), $this->seance->typeSeance),
             "coordinateur_id" => $this->coordinateur_id,
+            "seance_heure_debut"=>$this->seance_heure_debut,
+            "seance_heure_fin"=>$this->seance_heure_fin,
             "created_at" => $this->created_at,
             "annee_id" => $this->annee_id,
 
