@@ -16,6 +16,7 @@ use App\Enums\seanceStateEnum;
 use App\Models\ClasseEtudiant;
 use App\Models\EtudiantParent;
 use App\Models\ClasseEnseignant;
+use App\Services\StudentService;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -146,10 +147,11 @@ class User extends Authenticatable
     }
 
 
+
     /**
      * Scope a query to only include active users.
      */
-    public function scopeEagerLoadStudentWorkedAdMissedHours(
+    public function scopeeagerLoadStudentWorkedAndMissedHours(
         Builder|Model $query,
         $module_id = null,
         $currentYear_id = null,
@@ -158,27 +160,35 @@ class User extends Authenticatable
         $callback = null
     ): void {
 
+        // $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
 
-        $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
+        //     if ($module_id !== null) {
+        //         $query->where('module_id', $module_id);
+        //     }
+        //     if ($timestamp1 === null && $timestamp2 === null) {
+        //         $query->where('annee_id', $currentYear_id);
+        //     }
+        //     if ($timestamp1 !== null && $timestamp2 === null) {
+        //         $query->where('seance_heure_debut', '>', $timestamp1);
+        //     }
 
-            if ($module_id !== null) {
-                $query->where('module_id', $module_id);
-            }
-            if ($timestamp1 === null && $timestamp2 === null) {
-                $query->where('annee_id', $currentYear_id);
-            }
-            if ($timestamp1 !== null && $timestamp2 === null) {
-                $query->where('seance_heure_debut', '>', $timestamp1);
-            }
+        //     if ($timestamp1 !== null && $timestamp2 !== null) {
+        //         $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
+        //     };
 
-            if ($timestamp1 !== null && $timestamp2 !== null) {
-                $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-            };
+        //     if ($callback !== null) {
+        //         $callback($query);
+        //     }
+        // }], 'duree');
 
-            if ($callback !== null) {
-                $callback($query);
-            }
-        }], 'duree');
+
+        $baseQuery = $query->eagerLoadStudentMissedHours(
+            $module_id,
+            $currentYear_id,
+            $timestamp1,
+            $timestamp2,
+            $callback
+        );
 
         if ($timestamp1 === null && $timestamp2 === null) {
 
@@ -279,5 +289,51 @@ class User extends Authenticatable
 
             ;
         }
+    }
+
+    public function scopeEagerLoadStudentMissedHours(
+        Builder|Model $query,
+        $module_id = null,
+        $currentYear_id = null,
+        $timestamp1 = null,
+        $timestamp2 = null,
+        $callback = null
+    ) {
+
+        $StudentService = new StudentService;
+
+        $StudentService->loadStudentmissedHoursSum(
+            $query,
+            $module_id,
+            $currentYear_id,
+            $timestamp1,
+            $timestamp2,
+            $callback,
+            loading: 'with'
+        );
+
+        
+        // $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
+
+        //     if ($module_id !== null) {
+        //         $query->where('module_id', $module_id);
+        //     }
+        //     if ($timestamp1 === null && $timestamp2 === null) {
+        //         $query->where('annee_id', $currentYear_id);
+        //     }
+        //     if ($timestamp1 !== null && $timestamp2 === null) {
+        //         $query->where('seance_heure_debut', '>', $timestamp1);
+        //     }
+
+        //     if ($timestamp1 !== null && $timestamp2 !== null) {
+        //         $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
+        //     };
+
+        //     if ($callback !== null) {
+        //         $callback($query);
+        //     }
+        // }], 'duree');
+
+
     }
 }

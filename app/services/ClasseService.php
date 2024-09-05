@@ -8,6 +8,7 @@ use App\Models\Classe;
 use App\Models\Absence;
 use App\Enums\seanceStateEnum;
 use App\Enums\absenceStateEnum;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -36,26 +37,37 @@ function isSeanceInYearSegments($seance, $yearSegments)
 
 class ClasseService
 {
+
+    public function loadClassCurrentStudent($query, $loading = 'with', $callback = null)
+    {
+        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
+        return  $query->$loading(['etudiants' => function ($query) use ($currentYearId, $callback) {
+            $query->wherePivot('annee_id', $currentYearId);
+            if ($callback !== null) {
+                $callback($query);
+            }
+        }]);
+    }
+
     public function getClassCurrentStudent($classe_id, $currentYear = null)
     {
 
-     
+
 
         if ($currentYear == null) {
             $currentYear = app(AnneeService::class)->getCurrentYear();
         }
-        if(is_numeric($classe_id)){
+        if (is_numeric($classe_id)) {
 
-           $classeQuery= Classe::with(['etudiants'=>function($query) use($currentYear){
+            $classeQuery = Classe::with(['etudiants' => function ($query) use ($currentYear) {
                 $query->with('role');
                 $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
             }]);
-           
-            $classe= apiFindOrFail($classeQuery,   $classe_id, "no such class");
-            return  $classe->etudiants;
 
+            $classe = apiFindOrFail($classeQuery,   $classe_id, "no such class");
+            return  $classe->etudiants;
         }
-       
+
 
         // return $classe->etudiants()->wherePivot('annee_id', $currentYear->id)->get();
     }
@@ -138,15 +150,15 @@ class ClasseService
         $timestamp1 = ($timestamp1 !== null && !($timestamp1 instanceof Carbon)) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
         $timestamp2 = ($timestamp2 !== null && !($timestamp2 instanceof Carbon)) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
 
-      
+
         if ($timestamp1 === null && $timestamp2 === null) {
             // return $classe;
             // die();
             // if (property_exists($classe, 'workedHoursSum')) {
-        
-             
+
+
             // } else {
-             
+
             //     $classe->modules->sum('pivot.nbre_heure_effectue');
 
 
@@ -294,8 +306,6 @@ class ClasseService
 
     public function loadWithWorkedHoursAndStudentsMissingHoursSum($classe_id, $currentYear_id, $module_id = null, $timestamp1 = null, $timestamp2 = null)
     {
-     
-
 
         $classe = $classe_id;
         if (is_numeric($classe_id)) {
@@ -375,10 +385,10 @@ class ClasseService
 
 
             $classe = $baseQuery->withSum(['seances as workedHoursSum' => function ($query) use ($module_id, $timestamp2, $timestamp1) {
-                
-               
+
+
                 $baseWhereClause = ['etat' => seanceStateEnum::Done->value];
-               
+
 
 
                 if ($module_id !== null) {
@@ -395,7 +405,6 @@ class ClasseService
                 if ($timestamp1 !== null && $timestamp2 !== null) {
                     $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
                 };
-                
             }], 'duree')
                 // ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
 
@@ -427,10 +436,22 @@ class ClasseService
 
 
         if (!is_numeric($classe_id)) {
-           return $classe;
+            return $classe;
         }
 
-     
+
         return $classe = apiFindOrFail($classe, $classe_id, "no such class");
+    }
+
+    public function getClasseModuleQuery($currentYearId, $module_id, $classe_id)
+    {
+
+        return $pivotDataBaseQuery = DB::table('classe_module')
+            ->where([
+                'annee_id' => $currentYearId,
+                'module_id' => $module_id,
+                'classe_id' => $classe_id
+            ]);
+
     }
 }

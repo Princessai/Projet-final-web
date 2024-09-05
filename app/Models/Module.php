@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Module extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'id',
+        'label',
+    ];
     public $timestamps = false;
     public function classes(): BelongsToMany
     {

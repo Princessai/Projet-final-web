@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\CourseHour;
 use InvalidArgumentException;
+use App\Services\ClasseService;
 use App\Enums\attendanceStateEnum;
 use Illuminate\Support\Facades\DB;
 
@@ -39,22 +40,24 @@ class SeanceService
         return $attendanceStatus;
     }
 
-    public function incrementOrDecrementWorkedHours($seance, $currentYearId, int $action=1)
+    public function incrementOrDecrementWorkedHours($seance, $currentYearId, int $action = 1)
     {
-
-
-        if ($action !== -1&& $action !== 1) {
-            throw new InvalidArgumentException("Parameter must be an integer between -1 or 1.");
+        if ($action !== -1 && $action !== 1) {
+            throw new InvalidArgumentException("Parameter must be -1 or 1.");
         }
-        
-        $pivotDataBaseQuery = DB::table('classe_module')
-            ->where([
-                'annee_id' => $currentYearId,
-                'module_id' => $seance->module_id,
-                'classe_id' => $seance->classe->id
-            ]);
 
+        $ClasseService = new ClasseService;
+
+        // $pivotDataBaseQuery = DB::table('classe_module')
+        //     ->where([
+        //         'annee_id' => $currentYearId,
+        //         'module_id' => $seance->module_id,
+        //         'classe_id' => $seance->classe->id
+        //     ]);
+
+        $pivotDataBaseQuery  = $ClasseService->getClasseModuleQuery($currentYearId, $seance->module_id, $seance->classe->id);
         $pivotData = $pivotDataBaseQuery->first();
+
 
         $seanceDuration = $seance->duree;
 
@@ -63,22 +66,19 @@ class SeanceService
         $isThereModuleCourseHours = CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id])->exists();
 
         if (!$isThereModuleCourseHours) {
-            if ($action === -1) $seanceDuration=0;
+            if ($action === -1) $seanceDuration = 0;
             CourseHour::create([
                 'classe_module_id' => $pivotData->id,
                 'type_seance_id' => $seance->type_seance_id,
                 'nbre_heure_effectue' => $seanceDuration,
             ]);
         } else {
-            $coursHoursBaseQuery=CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id]);
-            if ($action === 1){
+            $coursHoursBaseQuery = CourseHour::where(['classe_module_id' => $pivotData->id, 'type_seance_id' => $seance->type_seance_id]);
+            if ($action === 1) {
                 $coursHoursBaseQuery->increment('nbre_heure_effectue', $seanceDuration);
-            }
-
-            else if ($action === -1) {
+            } else if ($action === -1) {
                 $coursHoursBaseQuery->decrement('nbre_heure_effectue', $seanceDuration);
             }
-
         }
 
         if ($action === 1) {
@@ -86,7 +86,7 @@ class SeanceService
         } else if ($action === -1) {
             $pivotDataBaseQuery->decrement('nbre_heure_effectue', $seanceDuration);
         }
-
+        $pivotData->nbre_heure_effectue+=$seanceDuration;
         return   $pivotData ;
     }
 }

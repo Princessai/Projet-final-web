@@ -11,6 +11,7 @@ use App\Models\ClasseModule;
 use App\Enums\seanceStateEnum;
 use App\Models\ClasseEtudiant;
 use App\Services\AnneeService;
+use App\Services\ClasseService;
 use App\Models\ClasseEnseignant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,9 +24,9 @@ class Classe extends Model
     use HasFactory;
 
     public $timestamps = false;
- public function etudiants() {
-        return $this->belongsToMany(User::class,'classe_etudiants')->withPivot('annee_id', 'niveau_id');
-        
+    public function etudiants()
+    {
+        return $this->belongsToMany(User::class, 'classe_etudiants')->withPivot('annee_id', 'niveau_id');
     }
 
 
@@ -40,14 +41,19 @@ class Classe extends Model
 
     public function enseignants(): BelongsToMany // les enseignants de la classe 
     {
-        return $this->belongsToMany(User::class, 'classe_enseignant'); 
+        return $this->belongsToMany(User::class, 'classe_enseignant');
     }
     public function modules(): BelongsToMany // les modules de la classe 
     {
         // 'd_id' est la clé étrangère vers la table 'd' dans la table 'c'
-        return $this->belongsToMany(Module::class)->withPivot('id','nbre_heure_total',
-        'nbre_heure_effectue','statut_cours','annee_id')
-        ->using(ClasseModule::class);
+        return $this->belongsToMany(Module::class)->withPivot(
+            'id',
+            'nbre_heure_total',
+            'nbre_heure_effectue',
+            'statut_cours',
+            'annee_id'
+        )
+            ->using(ClasseModule::class);
     }
 
     public function timetables(): HasMany // tous les emplois du temps de la classe
@@ -69,21 +75,12 @@ class Classe extends Model
     }
     public function seances(): HasMany
     {
-        return $this->hasMany(Seance::class); 
+        return $this->hasMany(Seance::class);
     }
 
-    public function scopeCurrentYearStudents($query)
-    {   $currentYearId = app (AnneeService::class)->getCurrentYear()->id;
-        return  $query->with('etudiants', function ($query) use ($currentYearId) {
-            $query->wherePivot('annee_id', $currentYearId);
-        });;
+    public function scopeCurrentYearStudents($query, $callback = null)
+    {
+        $ClasseService = new ClasseService;
+        $ClasseService->loadClassCurrentStudent(query:$query, callback:$callback);
     }
-
-   
-
-
-
-
-
-
 }

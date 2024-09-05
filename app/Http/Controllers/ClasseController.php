@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\roleEnum;
 use App\Models\Classe;
+use App\Models\Module;
 use App\Models\Seance;
+use App\Enums\roleEnum;
 use Illuminate\Http\Request;
 use App\Services\AnneeService;
 use App\Services\ClasseService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\ClasseResource;
 use App\Http\Resources\UserCollection;
@@ -78,25 +80,37 @@ class ClasseController extends Controller
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
 
         $seance =   Seance::with([
-            'module' => function ($query) use ($currentYearId) {
-                $query->with('droppedStudents', function ($query) use ($currentYearId) {
-                    $query->wherePivot('annee_id', $currentYearId);
-                    $query->wherePivot('isDropped', true);
-               
-                    
+          
+            'classe'
+
+            => function ($query) use ($currentYearId) {
+                $query->select('id');
+                $query->CurrentYearStudents(callback:function($query){
+                    $query->select('users.id','name','lastname',
+                    'picture','phone_number','email');
                 });
-            },
-            'classe' => function ($query) use ($currentYearId) {
-                $query->CurrentYearStudents();
             }
 
 
         ]);
 
-        $seance = apiFindOrFail($seance, $seance_id, 'no such session');
-        // return $seance;
-        $classe = $seance->classe;
+        $seance = apiFindOrFail($seance, $seance_id, 'no such session' ,['id','module_id','classe_id']);
 
+        $classe = $seance->classe;
+     
+        $droppesStudent= DB::table('droppes')
+        ->where([
+        'isDropped'=> true,
+        'annee_id'=> $currentYearId,
+        'module_id'=>$seance->module_id,
+        'classe_id'=>$seance->classe->id
+
+        ])->get('user_id');
+    
+        $seanceModule =new Module(['id'=>$seance->module_id]);
+        $seanceModule->setRelation('droppedStudents',$droppesStudent);
+        $seance->setRelation('module', $seanceModule);
+      
         $response = (new UserCollection($classe->etudiants))
             ->setCurrentYear($currentYearId)
             ->setSeance($seance);

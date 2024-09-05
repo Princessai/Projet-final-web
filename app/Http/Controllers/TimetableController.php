@@ -16,8 +16,11 @@ use App\Services\SeanceService;
 use App\Http\Resources\SeanceResource;
 use App\Http\Requests\TimeTableRequest;
 use App\Http\Resources\TimetableResource;
+use App\Models\Droppe;
 use Illuminate\Support\Facades\Validator;
 
+
+include_once(base_path('utilities/seeder/seanceDuration.php'));
 
 class TimetableController extends Controller
 {
@@ -36,25 +39,25 @@ class TimetableController extends Controller
     {
 
 
-        // // $validator = Validator::make($request->all(), [
-        // //     'timetable' => 'required|array',
-        // //     'timetable.classe_id' => 'required|integer',
-        // //     'timetable.date_debut' => 'required|date',
-        // //     'timetable.date_fin' => 'required|date',
-        // //     'timetable.commentaire' => 'nullable|string',
-        // //     'timetable.params' => 'array',
-        // //     'seances' => 'required|array',
-        // //     'seances.*' => 'array',
-        // //     'seances.*.heure_debut' => 'required|date',
-        // //     'seances.*.date' => 'required|date',
-        // //     'seances.*.heure_fin' => 'required|date',
-        // //     'seances.*.salle_id' => 'required|integer',
-        // //     'seances.*.module_id' => 'required|integer',
-        // //     'seances.*.user_id' => 'required|integer',
-        // //     'seances.*.type_seance_id' => 'required|integer',
+        // $validator = Validator::make($request->all(), [
+        //     'timetable' => 'required|array',
+        //     'timetable.classe_id' => 'required|integer',
+        //     'timetable.date_debut' => 'required|date',
+        //     'timetable.date_fin' => 'required|date',
+        //     'timetable.commentaire' => 'nullable|string',
+        //     'timetable.params' => 'array',
+        //     'seances' => 'required|array',
+        //     'seances.*' => 'array',
+        //     'seances.*.heure_debut' => 'required|date',
+        //     'seances.*.date' => 'required|date',
+        //     'seances.*.heure_fin' => 'required|date',
+        //     'seances.*.salle_id' => 'required|integer',
+        //     'seances.*.module_id' => 'required|integer',
+        //     'seances.*.user_id' => 'required|integer',
+        //     'seances.*.type_seance_id' => 'required|integer',
 
 
-        // // ]);
+        // ]);
 
         // if ($validator->fails()) {
         //     return  apiError(errors: $validator->errors());
@@ -99,11 +102,13 @@ class TimetableController extends Controller
      */
     public function store(TimeTableRequest $request)
     {
-        $currentYear = (new AnneeService)->getCurrentYear();
+        $currentYear = app(AnneeService::class)->getCurrentYear();
 
 
-        $validatedData = $request->validated();;
+        $validatedData = $request->validated();
+
         $timetableData = $validatedData['timetable'];
+
         $seancesData = $validatedData['seances'];
 
         $newTimetable = Timetable::create([
@@ -114,22 +119,26 @@ class TimetableController extends Controller
             'annee_id' => $currentYear->id,
         ]);
 
+        
         $seancesData = collect($seancesData)->map(function ($seance) use ($currentYear, $timetableData, $newTimetable) {
+           
+            $duree = seanceDuration($seance['heure_fin'], $seance['heure_debut']);
+            $dureeRaw = seanceDuration($seance['heure_fin'], $seance['heure_debut'], false);
 
             $seance['classe_id'] = $timetableData['classe_id'];
             $seance['annee_id'] = $currentYear->id;
-            $seance['timetable_id'] = $newTimetable->id;
+            $seance['duree'] = $duree;
+            $seance['duree_raw'] = $dureeRaw;
+            // $seance['timetable_id'] = $newTimetable->id;
             $seance['etat'] = seanceStateEnum::ComingSoon->value;
-
 
             return $seance;
         });
 
 
 
-
-
         $newTimetable->seances()->createMany($seancesData);
+
         return apiSuccess(message: 'Timetable created successfully', data: new TimetableResource($newTimetable));
 
     }
@@ -147,7 +156,10 @@ class TimetableController extends Controller
      */
     public function edit(string $id)
     {
-        $timetable = apiFindOrFail(Timetable::with(['seances.classe.coordinateur','seances.module']), $id, 'no such timetable');
+        $timetable = apiFindOrFail(Timetable::with(['seances'=>[
+            'classe'=>['coordinateur']
+            ,'module','salle', 'typeSeance'
+        ]]), $id, 'no such timetable');
 
         $response = new TimetableResource($timetable);
 
@@ -161,15 +173,17 @@ class TimetableController extends Controller
     {
         $validatedData = $request->validated();
 
-
         $SeanceService = new SeanceService;
 
-        $currentYear =  (new AnneeService)->getCurrentYear();
+        $currentYear =  app(AnneeService::class)->getCurrentYear();
 
         if ($request->has('timetable')) {
             $timetable = new Timetable;
+
             $timetable = apiFindOrFail($timetable, $id, 'no such timetable');
+
             $timetableData = Arr::except($validatedData['timetable'], ['classe_id', 'id', 'annee_id']);
+
             $timetable->update($timetableData);
         }
 
@@ -179,10 +193,13 @@ class TimetableController extends Controller
 
             foreach ($seancesData as $key => $seance) {
 
+                $duree = seanceDuration($seance['heure_fin'], $seance['heure_debut']);
+                $dureeRaw = seanceDuration($seance['heure_fin'], $seance['heure_debut'], false);
+    
+
                 if (isset($seance['id'])) {
                     $seance_id = $seance['id'];
                 }
-
 
 
                 $crudAction = $seance['action'];
@@ -200,15 +217,27 @@ class TimetableController extends Controller
 
                         if ($oldSeanceState == seanceStateEnum::Done->value && $seanceState != seanceStateEnum::ComingSoon->value) {
                             $SeanceService->incrementOrDecrementWorkedHours($oldSeance, $currentYear->id, -1); // decrement ici
+                            
                             $oldSeance->absences()->delete();
+
                             $oldSeance->delays()->delete();
+
+                            Droppe::where([
+                                'annee_id' => $currentYear->id,
+                                'module_id' => $oldSeance->module_id,
+                                'updated_at' => $oldSeance->heure_debut,
+                                'isDropped' => true,
+                            ])->update(['isDropped' => false]);
                         }
                         if ($seanceState == seanceStateEnum::ComingSoon->value && $oldSeanceState == seanceStateEnum::Done->value) {
                             return apiError(errors: ["The seances.$key.state field can not have this value."]);
                         }
                     }
 
-                    if ($oldSeanceState == seanceStateEnum::Done->value) {
+                    // if ($oldSeanceState == seanceStateEnum::Done->value) {
+                    //     $seance = Arr::only($seance, ['etat']);
+                    // }
+                    if ($oldSeance->attendance == true) {
                         $seance = Arr::only($seance, ['etat']);
                     }
 
@@ -229,6 +258,8 @@ class TimetableController extends Controller
 
                     $seance = Arr::except($seance, ['etat']);
                     $seance['timetable_id'] = $id;
+                    $seance['duree'] = $duree;
+                    $seance['duree_raw'] = $dureeRaw;        
                     $seance['classe_id'] = $timetable->classe_id;
                     $seance['annee_id'] = $timetable->annee_id;
 

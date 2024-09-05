@@ -5,6 +5,7 @@ namespace App\Services;
 use Exception;
 use Carbon\Carbon;
 use Carbon\Callback;
+use App\Models\Droppe;
 use App\Models\Absence;
 use App\Services\AnneeService;
 use App\Enums\absenceStateEnum;
@@ -29,11 +30,11 @@ class StudentService
 
         return $attendanceRate;
     }
-public function  calcAttendanceMark($attendancePercentage,$maxAttendanceMark){
+    public function  calcAttendanceMark($attendancePercentage,$maxAttendanceMark){
 
-    $attendanceMark =round(($attendancePercentage * 20) / 100, 2);
-    if($maxAttendanceMark === null) return $attendanceMark;
-    return min($maxAttendanceMark, $attendanceMark);
+        $attendanceMark =round(($attendancePercentage * 20) / 100, 2);
+        if($maxAttendanceMark === null) return $attendanceMark;
+        return min($maxAttendanceMark, $attendanceMark);
 }
     public function getCurrentClasse($user, $currentYear=null)
     {
@@ -158,5 +159,63 @@ public function  calcAttendanceMark($attendancePercentage,$maxAttendanceMark){
         }
 
         return  $missingHoursCount;
+    }
+
+    public function updateOrInsertDroppedStudents($module_id, $student_id, $currentYearId, $classe_id, $seanceStart){
+
+        $droppeBaseAttributes =[
+            "module_id" => $module_id,
+            "user_id" => $student_id,
+            "annee_id" =>  $currentYearId,
+            "classe_id" =>  $classe_id,
+
+        ];
+
+        $droppeBaseQuery = Droppe::where($droppeBaseAttributes);
+
+        $beenDropped =$droppeBaseQuery->exists();
+
+        if($beenDropped){
+            $droppeBaseQuery->update(['updated_at'=>$seanceStart,'isDropped' => true ]);
+
+        }
+        else{
+      
+
+            $droppeBaseAttributes['isDropped']=true;
+            $droppeBaseAttributes['created_at']=$seanceStart;
+            $droppeBaseAttributes['updated_at']=$seanceStart;
+
+            Droppe::create($droppeBaseAttributes);
+        }
+
+    }
+
+    public function loadStudentmissedHoursSum($query, $module_id = null,$currentYear_id = null,$timestamp1 = null,
+    $timestamp2 = null,
+    $callback = null,string $loading='with'){
+        $loading.="Sum";
+           
+        $baseQuery =   $query->$loading(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
+
+            if ($module_id !== null) {
+                $query->where('module_id', $module_id);
+            }
+            if ($timestamp1 === null && $timestamp2 === null) {
+                $query->where('annee_id', $currentYear_id);
+            }
+            if ($timestamp1 !== null && $timestamp2 === null) {
+                $query->where('seance_heure_debut', '>', $timestamp1);
+            }
+
+            if ($timestamp1 !== null && $timestamp2 !== null) {
+                $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
+            };
+
+            if ($callback !== null) {
+                $callback($query);
+            }
+        }], 'duree');
+
     }
 }

@@ -26,10 +26,16 @@ function apiError($errors = [], $message = 'something went wrong', $statusCode =
     ], $statusCode);
 }
 
-function apiFindOrFail($query,$id, $message = 'something went wrong') {
+function apiFindOrFail($query,$id, $message = 'something went wrong',string|array|null $attributes =null) {
    
     try {
-
+        if($attributes!==null){
+            if(is_array($attributes)){
+                $query->select(...$attributes);
+            }
+            $query->select($attributes);
+          
+        }
         $data = $query->findOrFail($id);
     } catch (ModelNotFoundException $th) {
         throw new HttpResponseException( apiError(message: $message ,statusCode:404));

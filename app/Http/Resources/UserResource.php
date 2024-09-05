@@ -84,11 +84,10 @@ class UserResource extends JsonResource
             ),
             "isDropped" => $this->when($isSeanceSet && $this->seance->relationLoaded('module') && $this->seance->module->relationLoaded('droppedStudents'), function () {
 
-
                 return $this->seance->module
                     ->droppedStudents
                     ->contains(function ($droppedStudent,  $key) {
-                        return $droppedStudent->id == $this->id;
+                        return $droppedStudent->user_id == $this->id;
                     });
             })
 
