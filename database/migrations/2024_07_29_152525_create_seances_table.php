@@ -23,7 +23,7 @@ return new class extends Migration
             $table->float('duree_raw')->nullable();
             $table->foreignId('salle_id')->constrained();
             $table->foreignId('module_id')->constrained();
-            $table->foreignId('user_id')->constrained()->nullable();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('timetable_id')->constrained()->onDelete('cascade');
             $table->foreignId('type_seance_id')->constrained();
             $table->foreignId('classe_id')->constrained()->nullable();

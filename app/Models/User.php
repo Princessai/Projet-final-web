@@ -44,6 +44,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        "lastname",
+        "picture",
+        "phone_number",
+        "role_id"
+
     ];
 
     /**
@@ -312,7 +317,7 @@ class User extends Authenticatable
             loading: 'with'
         );
 
-        
+
         // $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
 
         //     if ($module_id !== null) {

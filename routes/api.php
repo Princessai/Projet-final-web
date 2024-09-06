@@ -4,12 +4,17 @@ use App\Models\CourseHour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ParentController;
 use App\Http\Controllers\SeanceController;
 use App\Http\Controllers\AbsenceController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\CourseHourController;
+use App\Http\Controllers\CoordinatorController;
 
 Route::prefix('trackin')->group(function () {
 
@@ -30,6 +35,12 @@ Route::prefix('trackin')->group(function () {
 
         // CRUD users
         Route::apiResource('user', UserController::class);
+        Route::apiResource('admin', AdminController::class);
+        Route::apiResource('parent', ParentController::class);
+        Route::apiResource('student', StudentController::class);
+        Route::apiResource('teacher', TeacherController::class);
+        Route::apiResource('coordinator', CoordinatorController::class);
+
 
         Route::get("/user/seances/{user_id}/{timestamp?}", [UserController::class, 'getUserSeances'])
             ->whereNumber(['user_id']);

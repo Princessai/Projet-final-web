@@ -238,9 +238,6 @@ class UserController extends Controller
 
 
 
-
-
-
         $baseRules = [
             'name' => 'required|string',
             'lastname' => 'required|string',
@@ -248,7 +245,6 @@ class UserController extends Controller
             'password' => ['required', Password::min(8)],
             'phone_number' => 'required',
             'picture' => 'nullable',
-
         ];
 
         $parentRules = ['parent' => 'nullable|array'];
