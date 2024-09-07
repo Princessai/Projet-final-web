@@ -33,6 +33,7 @@ class StudentController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(UserRequest $request)
+    public function store(UserRequest $request)
     {
 
         $currentYear = app(AnneeService::class)->getCurrentYear();

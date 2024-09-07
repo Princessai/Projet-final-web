@@ -33,14 +33,21 @@ class TeacherController extends Controller
 
         $UserService = new UserService;
 
+        $UserService = new UserService;
+
         $teacherData  = Arr::except($validatedData, ['modules', 'classes']);
 
         ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService
             ->generatePassword($teacherData, roleEnum::Etudiant);
 
         $teacherData['password'] =  $generatedPasswordHash;
+        ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService
+            ->generatePassword($teacherData, roleEnum::Etudiant);
+
+        $teacherData['password'] =  $generatedPasswordHash;
 
 
+        $newTeacher = $UserService->createUser($teacherData, roleEnum::Enseignant);
         $newTeacher = $UserService->createUser($teacherData, roleEnum::Enseignant);
 
 
@@ -59,6 +66,7 @@ class TeacherController extends Controller
 
 
         return apiSuccess(data: ['newTeacher' => $newTeacher, 'generatedPassword' => $generatedPassword], message: 'teacher created successfully !');
+        return apiSuccess(data: ['newTeacher' => $newTeacher, 'generatedPassword' => $generatedPassword], message: 'teacher created successfully !');
     }
 
     /**
@@ -66,6 +74,13 @@ class TeacherController extends Controller
      */
     public function show(string $id)
     {
+        $UserService = new UserService;
+
+        $teacher = User::with(['enseignantClasses', 'enseignantModules']);
+
+        $response = $UserService->showUser($teacher, $id);
+
+        return apiSuccess(data: $response);
         $UserService = new UserService;
 
         $teacher = User::with(['enseignantClasses', 'enseignantModules']);
@@ -87,9 +102,16 @@ class TeacherController extends Controller
 
         $UserService = new UserService;
 
+        $UserService = new UserService;
+
         $teacher = apiFindOrFail($teacher, $id, 'no such teacher');
 
         $teacherData = Arr::except($validatedData, ['role_id', 'modules', 'classes']);
+
+        if ($request->filled('picture')) {
+
+            $UserService->updatePicture(roleEnum::Enseignant, $teacher, $teacherData);
+        }
 
         if ($request->filled('picture')) {
 

@@ -22,6 +22,7 @@ class CoordinatorController extends Controller
      */
     public function store(Request $request)
     {
+        
         $currentYear = app(AnneeService::class)->getCurrentYear();
 
         $validatedData = $request->validated();
