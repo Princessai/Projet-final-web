@@ -747,7 +747,7 @@ class AbsenceController extends Controller
 
         $fileName = null;
 
-        if ($request->has('receipt')) {
+        if ($request->filled('receipt')) {
             $receipt = $request->file('receipt');
             $fileName = $receipt->store('receipts');
         }

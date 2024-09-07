@@ -15,7 +15,7 @@ class ClasseEnseignantSeeder extends Seeder
     public function run(): void
     {
 
-        // dump()
+      
         $classes = Classe::with([
             'modules' => [
                 'enseignants', // relation entre module et enseignant

@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('classe_etudiants', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('classe_id')->constrained();
-            $table->foreignId('user_id')->constrained();
-            $table->foreignId('annee_id')->constrained();
-            $table->foreignId('niveau_id')->constrained();
+            $table->foreignId('classe_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('annee_id')->constrained()->onDelete('cascade');
+            $table->foreignId('niveau_id')->constrained()->onDelete('cascade');
 
 
         });

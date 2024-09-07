@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\roleEnum;
+use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Http\Requests\UserRequest;
@@ -13,6 +15,7 @@ use Illuminate\Validation\Rules\Password;
 
 class TeacherController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
@@ -28,13 +31,17 @@ class TeacherController extends Controller
     {
         $validatedData = $request->validated();
 
+        $UserService = new UserService;
+
         $teacherData  = Arr::except($validatedData, ['modules', 'classes']);
 
-        $role_id = Role::where(['label' => roleEnum::Enseignant->value])->first()->id;
+        ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService
+            ->generatePassword($teacherData, roleEnum::Etudiant);
 
-        $teacherData['role_id'] =  $role_id;
+        $teacherData['password'] =  $generatedPasswordHash;
 
-        $newTeacher = User::create($teacherData);
+
+        $newTeacher = $UserService->createUser($teacherData, roleEnum::Enseignant);
 
 
         if (isset($validatedData['classes'])) {
@@ -51,7 +58,7 @@ class TeacherController extends Controller
 
 
 
-        return apiSuccess(data: $newTeacher, message: 'teacher created successfully !');
+        return apiSuccess(data: ['newTeacher' => $newTeacher, 'generatedPassword' => $generatedPassword], message: 'teacher created successfully !');
     }
 
     /**
@@ -59,7 +66,13 @@ class TeacherController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $UserService = new UserService;
+
+        $teacher = User::with(['enseignantClasses', 'enseignantModules']);
+
+        $response = $UserService->showUser($teacher, $id);
+
+        return apiSuccess(data: $response);
     }
 
     /**
@@ -72,9 +85,16 @@ class TeacherController extends Controller
 
         $teacher = new User;
 
+        $UserService = new UserService;
+
         $teacher = apiFindOrFail($teacher, $id, 'no such teacher');
 
         $teacherData = Arr::except($validatedData, ['role_id', 'modules', 'classes']);
+
+        if ($request->filled('picture')) {
+
+            $UserService->updatePicture(roleEnum::Enseignant, $teacher, $teacherData);
+        }
 
 
         if (isset($validatedData['classes'])) {

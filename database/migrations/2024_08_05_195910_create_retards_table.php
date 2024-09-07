@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('retards', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->unsignedBigInteger('module_id')->nullable();
             $table->timestamp('seance_heure_debut')->nullable();
             $table->timestamp('seance_heure_fin')->nullable();

@@ -10,17 +10,47 @@ use App\Enums\roleEnum;
 use Illuminate\Http\Request;
 use App\Services\AnneeService;
 use App\Services\StudentService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserCollection;
 use function PHPUnit\Framework\isNull;
-use App\Http\Resources\SeanceCollection;
 
+use App\Http\Resources\SeanceCollection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
+    public function forceDeleteUser($user_id, $roleLabel)
+    {
+
+        if($roleLabel == roleEnum::Etudiant->value){
+            $studentQuery = User::with(['etudiantParent' => function ($query) {
+                $query->select('id');
+                $query->withCount('parentEtudiants');
+            }]);
+    
+            $user = apiFindOrFail($studentQuery, $user_id, 'no such student');
+          
+        }
+
+
+
+        User::where('id', $user_id)->forceDelete();
+
+        if ($roleLabel == roleEnum::Etudiant->value && $user->etudiantParent != null) {
+       
+            $parentChildrenCount = $user->etudiantParent->parent_etudiants_count;
+            if ($parentChildrenCount == 1) {
+
+                User::where('id',$user->parent_id)->forceDelete();
+            }
+        }
+
+
+        return apiSuccess(message: "deleted successfully !");
+    }
 
     public function login(Request $request)
     {

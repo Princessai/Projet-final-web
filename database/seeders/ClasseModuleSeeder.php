@@ -21,7 +21,7 @@ class ClasseModuleSeeder extends Seeder
     {
         $modules = Module::all();
         $classes = Classe::all();
-        $annee = Annee::latest()->first();;
+        $annee = Annee::latest()->first();
    
         foreach ($modules as $module) {
 
@@ -36,7 +36,7 @@ class ClasseModuleSeeder extends Seeder
 
 
         $classesWithoutModules = Classe::doesntHave('modules')->get();
-        // dump('classes sans modulesss', $classesWithoutModules);
+
 
         foreach ($classesWithoutModules as $classesWithoutModule) {
             $randomModules = $modules->random(rand(3, $modules->count()));

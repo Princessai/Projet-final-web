@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use App\Services\UserService;
+use App\Services\AnneeService;
 
 class CoordinatorController extends Controller
 {
@@ -19,7 +22,17 @@ class CoordinatorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $currentYear = app(AnneeService::class)->getCurrentYear();
+
+        $validatedData = $request->validated();
+
+        $UserService = new UserService;
+
+        $coordinatorData  = Arr::except($validatedData, ['classes']);
+
+
+
+
     }
 
     /**

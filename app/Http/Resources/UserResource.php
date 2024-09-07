@@ -59,8 +59,8 @@ class UserResource extends JsonResource
 
             "parent" => new UserResource($this->whenLoaded('etudiantParent'), roleLabel: roleEnum::Etudiant->value),
 
-            "role" => $this->when($this->relationLoaded('role') && $this->seance == null, function (){
-               return $this->role;
+            "role" => $this->when($this->relationLoaded('role') && $this->seance == null, function () {
+                return $this->role;
             }),
             "classe" => $this->when($this->relationLoaded('etudiantsClasses'), function () {
 
@@ -73,6 +73,7 @@ class UserResource extends JsonResource
                 }
             }),
             "enseignantModules" =>  ModuleResource::collection($this->whenLoaded('enseignantModules')),
+            "enseignantClasses" =>  ModuleResource::collection($this->whenLoaded('enseignantClasses')),
             "attendanceStatus" => $this->when(
                 $isSeanceSet && $this->seance->relationLoaded('absences') && $this->seance->relationLoaded('delays'),
                 function () {

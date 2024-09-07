@@ -23,7 +23,7 @@ return new class extends Migration
             $table->float('duree_raw')->nullable(); 
             $table->timestamp('seance_heure_debut')->nullable();
             $table->timestamp('seance_heure_fin')->nullable();
-            $table->foreignId('user_id')->constrained(); // l'étudiant
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // l'étudiant
             $table->foreignId('seance_id')->constrained()->onDelete('cascade');
             $table->foreignId('annee_id')->constrained();
             $table->unsignedBigInteger('coordinateur_id')->nullable();
