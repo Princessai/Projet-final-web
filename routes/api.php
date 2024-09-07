@@ -33,6 +33,9 @@ Route::prefix('trackin')->group(function () {
 
         Route::get("/logged_user/infos", [UserController::class, 'loggedUserInfos']);
 
+        Route::get("/teacher/force-delete/{user_id}", [TeacherController::class, 'forceDeleteTeacher'])
+        ->whereNumber(['user_id']);
+
         // CRUD users
         Route::apiResource('user', UserController::class);
         Route::apiResource('admin', AdminController::class);
@@ -42,10 +45,10 @@ Route::prefix('trackin')->group(function () {
         Route::apiResource('coordinator', CoordinatorController::class);
 
 
+
+            
         Route::get("/user/seances/{user_id}/{timestamp?}", [UserController::class, 'getUserSeances'])
             ->whereNumber(['user_id']);
-
-
 
 
         // worked hours
@@ -95,26 +98,34 @@ Route::prefix('trackin')->group(function () {
             Route::get("/student/module/{student_id}/{module_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getModuleAttendanceRate'])
                 ->whereNumber(['student_id', 'module_id']);
 
-            Route::get("/student/year_segment/{student_id}/{year_segments?}",
-             [AbsenceController::class, 'getStudentAttendanceRateByYearSegment'])
+            Route::get(
+                "/student/year_segment/{student_id}/{year_segments?}",
+                [AbsenceController::class, 'getStudentAttendanceRateByYearSegment']
+            )
                 ->whereNumber(['student_id']);
 
 
             // classe
-            Route::get("/students/classe/{classe_id}/{timestamp1?}/{timestamp2?}", 
+            Route::get(
+                "/students/classe/{classe_id}/{timestamp1?}/{timestamp2?}",
 
-                    [AbsenceController::class, 'getClassseStudentsAttendanceRate'])
+                [AbsenceController::class, 'getClassseStudentsAttendanceRate']
+            )
 
                 ->whereNumber(['classe_id']);
 
-            Route::get("/classes/{timestamp1?}/{timestamp2?}", 
+            Route::get(
+                "/classes/{timestamp1?}/{timestamp2?}",
 
-                    [AbsenceController::class, 'getClasssesAttendanceRate']);
-                    
+                [AbsenceController::class, 'getClasssesAttendanceRate']
+            );
 
-            Route::get("/students/classe/module/{classe_id}/{module_id}/{timestamp1?}/{timestamp2?}", 
 
-                    [AbsenceController::class, 'getClasseModuleAttendanceRate'])
+            Route::get(
+                "/students/classe/module/{classe_id}/{module_id}/{timestamp1?}/{timestamp2?}",
+
+                [AbsenceController::class, 'getClasseModuleAttendanceRate']
+            )
                 ->whereNumber(['classe_id', 'module_id']);
 
 

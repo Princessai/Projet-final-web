@@ -19,7 +19,7 @@ class CoordinatorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        
     }
 
     /**

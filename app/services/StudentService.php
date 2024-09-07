@@ -36,7 +36,7 @@ class StudentService
         if($maxAttendanceMark === null) return $attendanceMark;
         return min($maxAttendanceMark, $attendanceMark);
 }
-    public function getCurrentClasse($user, $currentYear=null)
+    public function getCurrentClasse($user, $currentYearId=null)
     {
         // if($user instanceof Builder|| $user instanceof Model){
          
@@ -52,15 +52,15 @@ class StudentService
         //     });
         // }
         
-        $studentClasses = $this->getCurrentClasses($user, $currentYear);
+        $studentClasses = $this->getCurrentClasses($user, $currentYearId);
         return $studentClasses->last();
     }
 
 
-    public function getCurrentClasses($user, $currentYear)
+    public function getCurrentClasses($user, $currentYearId)
     {
         return  $studentClasses = $user->etudiantsClasses()
-            ->wherePivot('annee_id', $currentYear->id)->get();
+            ->wherePivot('annee_id', $currentYearId)->get();
     }
 
     public function getModuleAbsences($student, $module_id, $currentYear = null, $callback = null, $etat = null)

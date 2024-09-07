@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Http\Request;
+use App\Enums\crudActionEnum;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
@@ -32,24 +33,26 @@ class UserRequest extends FormRequest
 
         $requiredIfUpdate = Rule::requiredIf($request->routeIs('*.update'));
         $requiredIfStore = Rule::requiredIf($request->routeIs('*.store'));
+        $requiredIfClasseAction =  Rule::requiredIf(fn () => $request->routeIs('*.update') && $request->filled('classe_action'));
 
         $baseRules = [
             'name' => [$requiredIfStore, 'string'],
             'lastname' => [$requiredIfStore, 'string'],
-            'email' => [$requiredIfStore, 'email', 'unique:users'],
-            'password' => [$requiredIfStore, Password::min(8)],
+            'email' => [$requiredIfStore, 'email', 'unique:users,email'],
             'phone_number' => [$requiredIfStore],
-            'picture' => ['nullable'],
+            'picture' => ['nullable','file','mimes:jpg,jpeg','max:10240'],
         ];
 
         $specificUserRules = [];
         $route = $request->route();
 
-        if ($route->named('student.store')) {
+        if ($route->named('student.store')|| $route->named('student.update')) {
 
             $specificUserRules = [
                 'classe_id' => [$requiredIfStore, 'integer'],
+                'classe_action' => [$requiredIfClasseAction, Rule::enum(crudActionEnum::class)],
                 'parent' => [$requiredIfStore, 'array'],
+                // 'niveau_id' => [$requiredIfStore, 'integer'],
 
             ];
 
