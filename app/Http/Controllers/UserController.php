@@ -8,14 +8,15 @@ use App\Models\User;
 use App\Models\Seance;
 use App\Enums\roleEnum;
 use Illuminate\Http\Request;
+use App\Services\UserService;
 use App\Services\AnneeService;
 use App\Services\StudentService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserCollection;
-use function PHPUnit\Framework\isNull;
 
+use function PHPUnit\Framework\isNull;
 use App\Http\Resources\SeanceCollection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
@@ -25,14 +26,13 @@ class UserController extends Controller
     public function forceDeleteUser($user_id, $roleLabel)
     {
 
-        if($roleLabel == roleEnum::Etudiant->value){
+        if ($roleLabel == roleEnum::Etudiant->value) {
             $studentQuery = User::with(['etudiantParent' => function ($query) {
                 $query->select('id');
                 $query->withCount('parentEtudiants');
             }]);
-    
+
             $user = apiFindOrFail($studentQuery, $user_id, 'no such student');
-          
         }
 
 
@@ -40,11 +40,11 @@ class UserController extends Controller
         User::where('id', $user_id)->forceDelete();
 
         if ($roleLabel == roleEnum::Etudiant->value && $user->etudiantParent != null) {
-       
+
             $parentChildrenCount = $user->etudiantParent->parent_etudiants_count;
             if ($parentChildrenCount == 1) {
 
-                User::where('id',$user->parent_id)->forceDelete();
+                User::where('id', $user->parent_id)->forceDelete();
             }
         }
 
@@ -95,6 +95,7 @@ class UserController extends Controller
     {
 
         $role = Role::with(['roleUsers' => function ($query) {
+
             $query->with('enseignantModules');
         }])
             ->where('label', roleEnum::Enseignant->value)->first();
@@ -199,7 +200,7 @@ class UserController extends Controller
 
         $user = apiFindOrFail($user, $parent_id, "no such user");
 
-    
+
 
         if ($user->role->label != roleEnum::Parent->value) {
             return apiError(message: "the user $parent_id is not parent");
@@ -217,25 +218,21 @@ class UserController extends Controller
 
     public function loggedUserInfos(Request $request)
     {
-        $currentYear =app(AnneeService::class)->getCurrentYear();
+        $currentYear = app(AnneeService::class)->getCurrentYear();
         $user = $request->user()
             ->load('role');
         $userRole = $user->role;
         if ($userRole->label == roleEnum::Etudiant->value) {
-            $user->load(['etudiantsClasses'=> function($query) {
+            $user->load(['etudiantsClasses' => function ($query) {
                 $query->orderByPivot('id', 'desc')->take(1);
                 $query->with(['niveau', 'filiere']);
             }]);
             $user->setRelation('etudiantsClasses',   $user->etudiantsClasses->first());
-      
-
-
-
         }
-      
+
         $response = [
-            'currentYear'=>$currentYear,
-            'user'=>new UserResource($user)
+            'currentYear' => $currentYear,
+            'user' => new UserResource($user)
         ];
 
         return apiSuccess(data: $response);
@@ -318,6 +315,33 @@ class UserController extends Controller
     {
         //
     }
+
+
+    public function updateUserPicture(Request $request, $user_id)
+    {
+
+        $validator = Validator::make($request->all(),  [
+            'picture' => ['required', 'nullable', 'file', 'mimes:jpg,jpeg', 'max:10240']
+        ]);
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
+
+
+        $UserService = new UserService;
+
+        $userQuery = User::with('role');
+
+        $user = apiFindOrFail($userQuery, $user_id, 'no such user');
+
+        $filePath = $UserService->updatePicture(roleEnum::Etudiant, $user, 'picture');
+
+        $user->update(['picture'=> $filePath]);
+
+        return apiSuccess(data: $filePath, message: 'picture updated successfully !');
+    }
+
 
     /**
      * Remove the specified resource from storage.

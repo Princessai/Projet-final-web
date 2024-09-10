@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('nbre_heure_effectue')->default(0);
             // $table->boolean('statut')->default(false); // terminé ou non 
             $table->unsignedBigInteger('classe_module_id');
-            $table->foreign('classe_module_id')->references('id')->on('classe_module');
+            $table->foreign('classe_module_id')->references('id')->on('classe_module')->onDelete('cascade');
             $table->foreignId('type_seance_id')->constrained();
             
         });

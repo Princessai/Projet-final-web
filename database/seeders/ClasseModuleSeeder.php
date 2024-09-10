@@ -19,18 +19,47 @@ class ClasseModuleSeeder extends Seeder
      */
     public function run(): void
     {
-        $modules = Module::all();
+        $modules = Module::with('enseignants')->get();
         $classes = Classe::all();
         $annee = Annee::latest()->first();
-   
+        $classesTeachers = collect([]);
+
         foreach ($modules as $module) {
 
-            $randomClasseNumber =  rand(1,  ceil($classes->count()/2));
+            $randomClasseNumber =  rand(1,  ceil($classes->count() / 2));
 
             $randomClasses = $classes->random($randomClasseNumber);
+            $randomClassesArr = [];
+            $moduleTeachers = $module->enseignants;
+            foreach ($randomClasses as $classe) {
 
-            $module->classes()->attach($randomClasses,['annee_id'=>$annee->id]);
+                $randomModuleTeacher = $moduleTeachers->random(1)->first();
 
+                $randomClassesArr[$classe->id] = ['annee_id' => $annee->id, "user_id" => $randomModuleTeacher->id];
+
+                $isClasseTeacher = false;
+                if (isset($classesTeachers[$classe->id])) {
+                    $isClasseTeacher = $classesTeachers[$classe->id]->contains(function ($teacherId) use ($randomModuleTeacher) {
+                        return $teacherId == $randomModuleTeacher->id;
+                    });
+                }
+
+                if ($isClasseTeacher == false) {
+
+                    $classe->enseignants()->attach($randomModuleTeacher);
+
+                    if (isset($classesTeachers[$classe->id])) {
+                        $classesTeachers[$classe->id]->push($randomModuleTeacher->id);
+                    } else {
+                        $classesTeachers[$classe->id] = collect([$randomModuleTeacher->id]);
+                    }
+                }
+            }
+
+
+            // $module->classes()->attach($randomClasses,['annee_id'=>$annee->id]);
+            dump($randomClassesArr);
+            $module->classes()->attach($randomClassesArr);
         }
 
 
@@ -39,11 +68,38 @@ class ClasseModuleSeeder extends Seeder
 
 
         foreach ($classesWithoutModules as $classesWithoutModule) {
+
             $randomModules = $modules->random(rand(3, $modules->count()));
 
-            $classesWithoutModule->modules()->attach($randomModules,['annee_id'=>$annee->id]);
-        }
+            $randomModulesArr = [];
+            foreach ($randomModules as $randomModule) {
 
-    
+                $moduleTeachers = $randomModule->enseignants;
+                $randomModuleTeacher = $moduleTeachers->random(1)->first();
+                $randomModulesArr[$randomModule->id] = ['annee_id' => $annee->id, "user_id" => $randomModuleTeacher->id];
+
+
+                $isClasseTeacher = false;
+                if (isset($classesTeachers[$classe->id])) {
+                    $isClasseTeacher = $classesTeachers[$classe->id]->contains(function ($teacherId) use ($randomModuleTeacher) {
+                        return $teacherId == $randomModuleTeacher->id;
+                    });
+                }
+
+                if ($isClasseTeacher == false) {
+
+                    $classe->enseignants()->attach($randomModuleTeacher);
+
+                    if (isset($classesTeachers[$classe->id])) {
+                        $classesTeachers[$classe->id]->push($randomModuleTeacher->id);
+                    } else {
+                        $classesTeachers[$classe->id] = collect([$randomModuleTeacher->id]);
+                    }
+                }
+                
+            }
+
+            $classesWithoutModule->modules()->attach($randomModulesArr);
+        }
     }
 }

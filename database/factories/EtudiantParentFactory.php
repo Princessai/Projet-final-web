@@ -26,9 +26,9 @@ class EtudiantParentFactory extends Factory
 
     public function parentChild($parentId): Factory
 {
-    $roleEtudiantId=Role::where('label','etudiant' )->first()->id;
-    return $this->state(function (array $attributes) use($parentId,$roleEtudiantId) {
-        $child=User::factory()->userRole($roleEtudiantId)->create();
+    $roleEtudiant=Role::where('label','etudiant' )->first();
+    return $this->state(function (array $attributes) use($parentId,$roleEtudiant) {
+        $child=User::factory()->userRole($roleEtudiant)->create();
        
         return [
             'parent_id' => $parentId,

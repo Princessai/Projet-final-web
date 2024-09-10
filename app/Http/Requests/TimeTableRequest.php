@@ -89,7 +89,7 @@ class TimeTableRequest extends FormRequest
             'timetable.params' => 'array',
             'seances' => [$requiredIfStore, 'array'],
             'seances.*' => ['array', $requiredIfUpadteCreate, $requiredIfUpadteUorD],
-            'seances.*.action' => ['nullable', Rule::enum(crudActionEnum::class)],
+            'seances.*.action' => [$requiredIfUpdate, Rule::enum(crudActionEnum::class)],
             'seances.*.id' => ['integer'],
             'seances.*.heure_debut' => [$requiredIfStore, 'date'],
             'seances.*.date' => [$requiredIfStore, 'date'],
@@ -102,9 +102,7 @@ class TimeTableRequest extends FormRequest
             'seances.*.etat' => ['nullable', $ruleIn],
             'seances.*.classe_id' => 'integer',
             'seances.*.timetable_id' => 'integer',
-            // 'seances.*.classe_id' => $prohibitedIFUpdate,
-            // 'seances.*.timetable_id' => $prohibitedIFUpdate,
-
+        
 
 
         ];

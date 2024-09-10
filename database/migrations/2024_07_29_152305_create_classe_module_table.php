@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('classe_module', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('classe_id')->constrained();
+            $table->foreignId('classe_id')->constrained()->onDelete('cascade');
             $table->foreignId('module_id')->constrained();
             $table->foreignId('annee_id')->constrained();
+            $table->foreignId('user_id')->nullable()->constrained();
             $table->integer('nbre_heure_total')->default(0);
             $table->integer('nbre_heure_effectue')->default(0);
             $table->boolean('statut_cours')->default(false);

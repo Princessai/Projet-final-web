@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;;
 
-use App\Models\Role;
 use App\Models\Classe;
 use App\Models\Module;
 use App\Models\Seance;
@@ -10,21 +9,20 @@ use App\Enums\roleEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Enums\crudActionEnum;
-
 use App\Services\AnneeService;
+use Illuminate\Support\Fluent;
 use App\Services\ClasseService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\ClasseRequest;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\ClasseResource;
-
-
 use App\Http\Resources\UserCollection;
-use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Support\Arrayable;
 
-class ClasseController extends Controller
+use function PHPUnit\Framework\isEmpty;
+
+class ClasseControllerCopy2 extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -124,7 +122,7 @@ class ClasseController extends Controller
         }
 
         if (!empty($classeModulesArr)) {
-
+       
             $newClasse->modules()->attach($classeModulesArr);
         }
 
@@ -136,26 +134,7 @@ class ClasseController extends Controller
      */
     public function show(string $id)
     {
-        $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
-        
-        $classeQuery = Classe::with(['enseignants' => function ($query) use ($currentYearId, $id) {
-            $query->select('users.id');
-
-
-            $query->with('enseignantClasseModules', function ($query) use ($currentYearId, $id) {
-
-                $query->where('annee_id', $currentYearId);
-                $query->where('classe_id', $id);
-                $query->with('classeModule');
-                // $query->select("module_id","id","annee_id","classe_id");
-            });
-        }])->with('modules');
-
-        $classe = apiFindOrFail($classeQuery, $id, 'no such classe');
-
-        $response = ['classe' => new ClasseResource($classe)];
-        
-        return apiSuccess(data: $response);
+        //
     }
 
     /**
@@ -182,16 +161,12 @@ class ClasseController extends Controller
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
 
         $classeQuery = Classe::with(['modules' => function ($query) use ($currentYearId) {
-            $query->with('enseignants');
             $query->wherePivot('annee_id', $currentYearId);
         }]);
 
         $classe = apiFindOrFail($classeQuery, $id, 'no such class');
 
-
         $classeModules = $classe->modules;
-
-        $classeTeachers = $classe->enseignants;
 
 
 
@@ -216,9 +191,7 @@ class ClasseController extends Controller
                 $teacherAction = $teacher['action'];
 
                 if ($teacherAction  == crudActionEnum::Delete->value) {
-                    $teacherModules = [];
                     $detachTeachers[] = $teacherId;
-
 
                     foreach ($classeModules as $module) {
                         if ($module->pivot->user_id == $teacherId) {
@@ -229,142 +202,78 @@ class ClasseController extends Controller
 
 
 
-                // if ($teacherAction  == crudActionEnum::Update->value) {
-
-
-                //     if (!empty($teacher['modules'])) {
-
-                //         foreach ($teacherModules as $teacherModuleKey => $module) {
-
-                //             $moduleAction = $module['action'];
-                //             $moduleId = $module['id'];
-
-
-                //             if ($moduleAction == crudActionEnum::Delete->value) {
-
-                //                 $detachTeacherModules[] = $moduleId;
-                //             }
-
-                //             if ($moduleAction == crudActionEnum::Create->value) {
-                //                 $isModuleWithoutTeacher = false;
-
-                //                 $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, $teacherId, &$isModuleWithoutTeacher) {
-                //                     if ($module->id == $moduleId) {
-                //                         if ($module->pivot->user_id !== null) return true;
-                //                         $isModuleWithoutTeacher = true;
-                //                     }
-                //                     // $module->id == $moduleId && $module->pivot->user_id !== null;
-
-                //                 });
-
-                //                 $isTeacherModulesInRequest = in_array($moduleId, $teacherModulesInRequest);
-
-
-                //                 if ($isAlreadyClasseModule || $isTeacherModulesInRequest) {
-                //                     $errors = ["teachers" => "teachers.$teacherkey.modules.$teacherModuleKey is duplicated."];
-                //                     return  apiError(errors: $errors);
-                //                 }
-
-
-
-                //                 if ($isModuleWithoutTeacher == true) {
-                //                     $newAffectedTeacherModule[$moduleId] = $teacherId;
-                //                 } else {
-                //                     $attachTeacherModules[$moduleId] = [
-                //                         'annee_id' => $currentYearId,
-                //                         'user_id' => $teacherId
-                //                     ];
-                //                 }
-
-                //                 $teacherModulesInRequest[] = $moduleId;
-                //             }
-                //         }
-                //     }
-                // }
-
-                if ($teacherAction  == crudActionEnum::Create->value) {
-                    $isClasseTeacher = $classeTeachers->contains(function ($teacher) use ($teacherId) {
-                        return $teacher->id == $teacherId;
-                    });
-                    if ($isClasseTeacher) {
-                        $errors = ["teachers" => "teachers.$teacherkey is duplicated."];
-                        return  apiError(errors: $errors);
-                    }
-                    $attachTeachers[] = $teacherId;
-                }
 
                 if ($teacherAction  == crudActionEnum::Update->value) {
-                    $isClasseTeacher = $classeTeachers->contains(function ($teacher) use ($teacherId) {
-                        return $teacher->id == $teacherId;
-                    });
-                    if (!$isClasseTeacher) {
-                        $attachTeachers[] = $teacherId;
+                
+
+                    if (!empty($teacher['modules'])) {
+
+                        foreach ($teacherModules as $teacherModuleKey => $module) {
+
+                            $moduleAction = $module['action'];
+                            $moduleId = $module['id'];
+
+
+                            if ($moduleAction == crudActionEnum::Delete->value) {
+
+                                $detachTeacherModules[] = $moduleId;
+                            }
+
+                            if ($moduleAction == crudActionEnum::Create->value) {
+                                $isModuleWithoutTeacher = false;
+
+                                $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, $teacherId, &$isModuleWithoutTeacher) {
+                                    if ($module->id == $moduleId) {
+                                        if ($module->pivot->user_id !== null) return true;
+                                        $isModuleWithoutTeacher = true;
+                                    }
+                                    // $module->id == $moduleId && $module->pivot->user_id !== null;
+
+                                });
+
+                                $isTeacherModulesInRequest = in_array($moduleId, $teacherModulesInRequest);
+
+
+                                if ($isAlreadyClasseModule || $isTeacherModulesInRequest) {
+                                    $errors = ["teachers" => "teachers.$teacherkey.modules.$teacherModuleKey is duplicated."];
+                                    return  apiError(errors: $errors);
+                                }
+
+
+
+                                if ($isModuleWithoutTeacher == true) {
+                                    $newAffectedTeacherModule[$moduleId] = $teacherId;
+                                } else {    
+                                    $attachTeacherModules[$moduleId] = [
+                                        'annee_id' => $currentYearId,
+                                        'user_id' => $teacherId
+                                    ];
+                                }
+
+                                $teacherModulesInRequest[] = $moduleId;
+
+                            }
+                        }
                     }
+
+
                 }
 
+                if ($teacherAction  == crudActionEnum::Create->value) {
+                    $attachTeachers[] = $teacherId;
 
-                // if (!empty($teacherModules)) {
+                    if (!empty($teacherModules)) {
 
-                //     foreach ($teacherModules as $teacherModuleKey => $module) {
+                        foreach ($teacherModules as $teacherModuleKey => $module) {
 
-                //         $moduleId = $module['id'];
-
-
-
-
-                //         $isModuleWithoutTeacher = false;
-
-                //         $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, $teacherId, &$isModuleWithoutTeacher) {
-                //             if ($module->id == $moduleId) {
-                //                 if ($module->pivot->user_id !== null) return true;
-                //                 $isModuleWithoutTeacher = true;
-                //             }
-                //         });
-
-                //         $isTeacherModulesInRequest = in_array($moduleId, $teacherModulesInRequest);
-
-
-                //         if ($isAlreadyClasseModule || $isTeacherModulesInRequest) {
-                //             $errors = ["teachers" => "teachers.$teacherkey.modules.$teacherModuleKey is duplicated."];
-                //             return  apiError(errors: $errors);
-                //         }
-
-
-
-                //         if ($isModuleWithoutTeacher == true) {
-                //             $newAffectedTeacherModule[$moduleId] = $teacherId;
-                //         } else {
-
-                //             $attachTeacherModules[$moduleId] = [
-                //                 'annee_id' => $currentYearId,
-                //                 'user_id' => $teacherId
-                //             ];
-                //         }
-
-                //         $teacherModulesInRequest[] = $moduleId;
-                //     }
-                // }
+                            $moduleId = $module['id'];
 
 
 
 
-                if (!empty($teacherModules)) {
-
-                    foreach ($teacherModules as $teacherModuleKey => $module) {
-
-                        $moduleId = $module['id'];
-
-                        $moduleAction = $module['action'];
-
-                        if ($teacherAction  == crudActionEnum::Update->value && $moduleAction == crudActionEnum::Delete->value) {
-
-                            $detachTeacherModules[] = $moduleId;
-                        }
-
-                        if ($teacherAction  == crudActionEnum::Create->value || $moduleAction == crudActionEnum::Create->value) {
                             $isModuleWithoutTeacher = false;
 
-                            $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, &$isModuleWithoutTeacher) {
+                            $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, $teacherId, &$isModuleWithoutTeacher) {
                                 if ($module->id == $moduleId) {
                                     if ($module->pivot->user_id !== null) return true;
                                     $isModuleWithoutTeacher = true;
@@ -384,7 +293,7 @@ class ClasseController extends Controller
                             if ($isModuleWithoutTeacher == true) {
                                 $newAffectedTeacherModule[$moduleId] = $teacherId;
                             } else {
-
+                            
                                 $attachTeacherModules[$moduleId] = [
                                     'annee_id' => $currentYearId,
                                     'user_id' => $teacherId
@@ -393,6 +302,50 @@ class ClasseController extends Controller
 
                             $teacherModulesInRequest[] = $moduleId;
                         }
+                    }
+                }
+
+
+                
+                if (!empty($teacherModules)) {
+
+                    foreach ($teacherModules as $teacherModuleKey => $module) {
+
+                        $moduleId = $module['id'];
+
+
+
+
+                        $isModuleWithoutTeacher = false;
+
+                        $isAlreadyClasseModule = $classeModules->contains(function ($module) use ($moduleId, $teacherId, &$isModuleWithoutTeacher) {
+                            if ($module->id == $moduleId) {
+                                if ($module->pivot->user_id !== null) return true;
+                                $isModuleWithoutTeacher = true;
+                            }
+                        });
+
+                        $isTeacherModulesInRequest = in_array($moduleId, $teacherModulesInRequest);
+
+
+                        if ($isAlreadyClasseModule || $isTeacherModulesInRequest) {
+                            $errors = ["teachers" => "teachers.$teacherkey.modules.$teacherModuleKey is duplicated."];
+                            return  apiError(errors: $errors);
+                        }
+
+
+
+                        if ($isModuleWithoutTeacher == true) {
+                            $newAffectedTeacherModule[$moduleId] = $teacherId;
+                        } else {
+                        
+                            $attachTeacherModules[$moduleId] = [
+                                'annee_id' => $currentYearId,
+                                'user_id' => $teacherId
+                            ];
+                        }
+
+                        $teacherModulesInRequest[] = $moduleId;
                     }
                 }
             }
@@ -428,7 +381,6 @@ class ClasseController extends Controller
                         return apiError(errors: $errors);
                     }
 
-
                     if ($isModuleWithoutTeacher == false) {
 
                         $attachModules[$moduleId] =  [
@@ -436,8 +388,6 @@ class ClasseController extends Controller
                             'user_id' => null
                         ];
                     }
-
-                    $teacherModulesInRequest[] = $moduleId;
                 }
 
 
@@ -455,18 +405,12 @@ class ClasseController extends Controller
             $classe->update($classeData);
         }
 
-        if (!empty($attachModules)) {
-            $classe->modules()->attach($attachModules);
-        }
-        if (!empty($detachModules)) {
-            $classe->modules()->detach($detachModules);
-        }
 
-        if (!empty($detachTeachers)) {
-            $classe->enseignants()->detach($detachTeachers);
-        }
+        $classe->modules()->attach($attachModules);
+        $classe->modules()->detach($detachModules);
 
 
+        $classe->enseignants()->detach($detachTeachers);
 
 
 
@@ -476,21 +420,17 @@ class ClasseController extends Controller
                 'classe_id' => $classe->id,
             ])->whereIn('module_id', $detachTeacherModules)->update(['user_id' => null]);
 
-        if (!empty($attachTeachers)) {
-            $classe->enseignants()->attach($attachTeachers);
-        }
 
-        if (!empty($attachTeacherModules)) {
-            $classe->modules()->attach($attachTeacherModules);
-        }
+        $classe->enseignants()->attach($attachTeachers);
+
+        $classe->modules()->attach($attachTeacherModules);
 
         foreach ($newAffectedTeacherModule  as $moduleId => $teacherId) {
             DB::table('classe_module')
                 ->where([
                     'annee_id' => $currentYearId,
                     'classe_id' => $classe->id,
-                    'module_id' => $moduleId
-                ])->update(['user_id' => $teacherId]);
+                ])->where('module_id', $moduleId)->update(['user_id' => $teacherId]);
         }
 
         return apiSuccess(data: $classe, message: "class updated successfully !");
@@ -501,14 +441,7 @@ class ClasseController extends Controller
      */
     public function destroy(string $id)
     {
-        Classe::destroy($id);
-
-        DB::table('classe_enseignant')
-            ->where([
-                'classe_id' => $id,
-            ])->delete();
-
-        return apiSuccess(message: 'class deleted successfully !');
+        //
     }
 
 

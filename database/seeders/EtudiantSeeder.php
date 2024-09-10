@@ -19,27 +19,25 @@ class EtudiantSeeder extends Seeder
     {
         $roles = Role::all();
         $annee_scolaires = Annee::all();
-        $roleEtudiantId = $roles->where("label", "etudiant")->first()->id;
+        $roleEtudiant = $roles->where("label", "etudiant")->first();
 
         $classes = Classe::all();
         
 
-        $classeSequences = [];
         foreach($annee_scolaires as $annee_scolaire) {
          
             foreach ($classes as $classe) {
     
-                $etudiants = User::factory()->userRole($roleEtudiantId)->count(rand(10,20))->create();
+                $etudiants = User::factory()->userRole($roleEtudiant)->count(rand(10,20))->create();
               
                 foreach ($etudiants as $etudiant) {
                     $etudiant->etudiantsClasses()->attach($classe->id, ['annee_id' => $annee_scolaire->id,'niveau_id' => $classe->niveau_id]);
                     
                 }
     
-                // $classeSequences[] = ["classe_id" => $classe->id];
+              
             }
         }
 
-        // User::factory()->userRole($roleEtudiantId)->count(20)->sequence(...$classeSequences)->create();
     }
 }

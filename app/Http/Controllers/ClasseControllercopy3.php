@@ -24,7 +24,7 @@ use App\Http\Resources\UserCollection;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 
-class ClasseController extends Controller
+class ClasseControllercopy3 extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -137,25 +137,26 @@ class ClasseController extends Controller
     public function show(string $id)
     {
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
-        
-        $classeQuery = Classe::with(['enseignants' => function ($query) use ($currentYearId, $id) {
+    
+        $role=Role::where('label',roleEnum::Enseignant->value)->with("roleUsers.enseignantModules")->first();
+        $teachers = $role->roleUsers;
+        $modules= Module::all();
+        $classeQuery =Classe::with(['enseignants'=>function($query) use($currentYearId,$id){
             $query->select('users.id');
+            
 
-
-            $query->with('enseignantClasseModules', function ($query) use ($currentYearId, $id) {
-
-                $query->where('annee_id', $currentYearId);
-                $query->where('classe_id', $id);
+            $query->with('enseignantClasseModules',function($query)use($currentYearId,$id){
+           
+                $query->where('annee_id',$currentYearId);
+                $query->where('classe_id',$id);
                 $query->with('classeModule');
                 // $query->select("module_id","id","annee_id","classe_id");
             });
         }])->with('modules');
-
-        $classe = apiFindOrFail($classeQuery, $id, 'no such classe');
-
-        $response = ['classe' => new ClasseResource($classe)];
         
-        return apiSuccess(data: $response);
+        $classe=apiFindOrFail($classeQuery, $id,'no such classe');
+     
+        return ['Teachers'=> new  UserCollection($teachers),'modules'=>$modules,'classe'=> new ClasseResource($classe)];
     }
 
     /**
@@ -182,16 +183,12 @@ class ClasseController extends Controller
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
 
         $classeQuery = Classe::with(['modules' => function ($query) use ($currentYearId) {
-            $query->with('enseignants');
             $query->wherePivot('annee_id', $currentYearId);
         }]);
 
         $classe = apiFindOrFail($classeQuery, $id, 'no such class');
 
-
         $classeModules = $classe->modules;
-
-        $classeTeachers = $classe->enseignants;
 
 
 
@@ -226,6 +223,7 @@ class ClasseController extends Controller
                         }
                     }
                 }
+
 
 
 
@@ -283,25 +281,8 @@ class ClasseController extends Controller
                 // }
 
                 if ($teacherAction  == crudActionEnum::Create->value) {
-                    $isClasseTeacher = $classeTeachers->contains(function ($teacher) use ($teacherId) {
-                        return $teacher->id == $teacherId;
-                    });
-                    if ($isClasseTeacher) {
-                        $errors = ["teachers" => "teachers.$teacherkey is duplicated."];
-                        return  apiError(errors: $errors);
-                    }
                     $attachTeachers[] = $teacherId;
                 }
-
-                if ($teacherAction  == crudActionEnum::Update->value) {
-                    $isClasseTeacher = $classeTeachers->contains(function ($teacher) use ($teacherId) {
-                        return $teacher->id == $teacherId;
-                    });
-                    if (!$isClasseTeacher) {
-                        $attachTeachers[] = $teacherId;
-                    }
-                }
-
 
                 // if (!empty($teacherModules)) {
 
@@ -489,7 +470,7 @@ class ClasseController extends Controller
                 ->where([
                     'annee_id' => $currentYearId,
                     'classe_id' => $classe->id,
-                    'module_id' => $moduleId
+                    'module_id'=> $moduleId
                 ])->update(['user_id' => $teacherId]);
         }
 
@@ -504,11 +485,10 @@ class ClasseController extends Controller
         Classe::destroy($id);
 
         DB::table('classe_enseignant')
-            ->where([
-                'classe_id' => $id,
-            ])->delete();
+        ->where([ 
+            'classe_id' => $id,
+        ])->delete();
 
-        return apiSuccess(message: 'class deleted successfully !');
     }
 
 

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('commentaire')->nullable();
             $table->timestamp('date_debut')->nullable();
             $table->timestamp('date_fin')->nullable();
-            $table->foreignId('classe_id')->constrained();
+            $table->foreignId('classe_id')->constrained()->onDelete('cascade');
             $table->foreignId('annee_id')->constrained();
 
             $table->timestamps();

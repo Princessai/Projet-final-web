@@ -16,7 +16,7 @@ class EnseignantSeeder extends Seeder
     public function run(): void
     {
         $modules = Module::all();
-        $roleEnseignantId = Role::where('label', 'enseignant')->first()->id;
+        $roleEnseignant = Role::where('label', 'enseignant')->first();
         foreach ($modules as $module) {
             $randomModuleNumber = rand(1, 3);
        
@@ -52,7 +52,7 @@ class EnseignantSeeder extends Seeder
 
            
 
-            $enseignant = User::factory()->userRole($roleEnseignantId)->create();
+            $enseignant = User::factory()->userRole($roleEnseignant)->create();
             $enseignant->enseignantModules()->attach($randomModules);
 
         }

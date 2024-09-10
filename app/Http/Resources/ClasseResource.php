@@ -21,6 +21,7 @@ class ClasseResource extends JsonResource
             'coordinateur' => new UserResource($this->whenLoaded('coordinateur')),
             'filiere' => $this->whenLoaded('filiere'),
             'niveau' => $this->whenLoaded('niveau'),
+            'teachers' => new UserCollection($this->whenLoaded('enseignants')),
 
         ];
     }

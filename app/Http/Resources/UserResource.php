@@ -12,6 +12,7 @@ use App\Http\Resources\ModuleResource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\EnseignantClasseModulesResource;
 
 class UserResource extends JsonResource
 {
@@ -45,16 +46,22 @@ class UserResource extends JsonResource
 
         $isSeanceSet = !is_null($this->seance);
 
+        if ($this->picture != null) {
+           
+
+            $this->picture =  asset("storage$this->picture");
+
+        }
 
 
         return [
 
             "id" => $this->id,
-            "name" => $this->name,
-            "lastname" => $this->lastname,
+            "name" =>  $this->whenNotNull($this->name),
+            "lastname" => $this->whenNotNull($this->lastname),
             "picture" => $this->picture,
             "phone_number" => $this->phone_number,
-            "email" => $this->email,
+            "email" => $this->whenNotNull($this->email),
             "parent_id" => $this->when($isStudent && !$this->relationLoaded('etudiantParent'), $this->parent_id),
 
             "parent" => new UserResource($this->whenLoaded('etudiantParent'), roleLabel: roleEnum::Etudiant->value),
@@ -73,7 +80,14 @@ class UserResource extends JsonResource
                 }
             }),
             "enseignantModules" =>  ModuleResource::collection($this->whenLoaded('enseignantModules')),
-            "enseignantClasses" =>  ModuleResource::collection($this->whenLoaded('enseignantClasses')),
+            "enseignantClasses" =>  ClasseResource::collection($this->whenLoaded('enseignantClasses')),
+            "coordinateurClasses" =>  ClasseResource::collection($this->whenLoaded('coordinateurClasses')),
+            // "enseignantClasseModules"=>EnseignantClasseModulesResource::collection($this->whenLoaded('enseignantClasseModules')),
+            "enseignantClasseModules" => $this->when($this->relationLoaded('enseignantClasseModules'), function () {
+                return $this->enseignantClasseModules->reduce(function ($carry,  $item) {
+                    return $carry->push($item->classeModule->id);
+                }, collect([]));
+            }),
             "attendanceStatus" => $this->when(
                 $isSeanceSet && $this->seance->relationLoaded('absences') && $this->seance->relationLoaded('delays'),
                 function () {

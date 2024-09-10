@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\CourseHour;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -36,6 +36,8 @@ Route::prefix('trackin')->group(function () {
         Route::get("/teacher/force-delete/{user_id}/{role_label}", [UserController::class, 'forceDeleteUser'])
         ->whereNumber(['user_id']);
 
+
+        
         // CRUD users
         Route::apiResource('user', UserController::class);
         Route::apiResource('admin', AdminController::class);
@@ -43,6 +45,11 @@ Route::prefix('trackin')->group(function () {
         Route::apiResource('student', StudentController::class);
         Route::apiResource('teacher', TeacherController::class);
         Route::apiResource('coordinator', CoordinatorController::class);
+        Route::apiResource('classe', ClasseController::class);
+
+
+        Route::post("/update/users/picture/{user_id}", [UserController::class, 'updateUserPicture'])
+        ->whereNumber(['user_id']);;
 
 
 

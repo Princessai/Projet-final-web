@@ -29,6 +29,7 @@ class UserService
             $picture = $request->file('picture');
             $fileName = $picture->store($roleEnum->value . 's');
             $data['picture'] = $fileName;
+            apiSuccess($fileName)->send();
         }
 
 
@@ -65,26 +66,26 @@ class UserService
         return ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash];
     }
 
-    public function updatePicture(roleEnum $roleEnum, User $user, &$userData)
+    public function updatePicture(roleEnum $roleEnum, User $user, string $input)
     {
 
 
         $request = request();
 
-        if ($request->filled('picture')) {
+        $picture = $request->file($input);
 
-            $picture = $request->file('picture');
-            $fileName = $picture->store($roleEnum->value . 's');
-            $userData['picture'] = $fileName;
+        $dirName = $roleEnum->value.'s';
 
-            $oldPicture = $user->picture;
+        $filePath = $picture->store("public/users/$dirName");
 
-            if ($oldPicture != null) {
-                Storage::delete($oldPicture);
-            }
 
-            return $fileName;
+        $oldPicture = $user->picture;
+
+        if ($oldPicture != null) {
+            Storage::delete($oldPicture);
         }
+
+        return $filePath;
     }
 
     public function showUser($userQuery, $user_id)

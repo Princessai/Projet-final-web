@@ -31,11 +31,11 @@ class ClasseFactory extends Factory
     public function configure(): static
     {
 
-      
+
         return $this->afterMaking(function (Classe $classe) {
             
-            $roleCoordinateurId= Role::where("label","coordinateur")->first()->id;
-            $coordinateur=User::factory()->userRole($roleCoordinateurId,true)->create();
+            $roleCoordinateur= Role::where("label","coordinateur")->first();
+            $coordinateur=User::factory()->userRole($roleCoordinateur,true)->create();
             $classe->coordinateur_id=$coordinateur->id;
             
             

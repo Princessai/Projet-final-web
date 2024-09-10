@@ -225,12 +225,17 @@ class TimetableSeeder extends Seeder
                         if ($randomTypeseances->label == "presentiel") {
 
                             dump($classe->label);
-                            // dump($classeModuleRandom->label);
-                            $seanceManager = $classeModuleRandom->enseignants()->whereHas('enseignantClasses', function ($query) use ($classe) {
-                                $query->where('classes.id', $classe->id);
-                            })->first();
+                            // // dump($classeModuleRandom->label);
+                            // $seanceManager = $classeModuleRandom->enseignants()->whereHas('enseignantClasses', function ($query) use ($classe) {
+                            //     $query->where('classes.id', $classe->id);
+                            // })->first();
+                            dump('pivot______t',$classeModuleRandom->pivot->user_i);
+                            $seanceManagerId= $classeModuleRandom->pivot->user_id;
+           
+
+
                         } else {
-                            $seanceManager = $classe->coordinateur;
+                            $seanceManagerId = $classe->coordinateur->id;
                         }
                         dump('value of $date_debut in loop ' . $date_debut);
                         dump('value of $timetable_offset in loop ' . $timetable_offset);
@@ -317,7 +322,7 @@ class TimetableSeeder extends Seeder
                                             "module_id" => $classeModuleRandom->id,
                                             "classe_id" => $classe->id,
                                             "annee_id" => $annee_scolaire_id,
-                                            "user_id" => $seanceManager->id,
+                                            "user_id" => $seanceManagerId,
                                             "timetable_id" => $timetable->id,
                                             "type_seance_id" => $randomTypeseances->id
                                         ]);
@@ -417,7 +422,7 @@ class TimetableSeeder extends Seeder
                                         "module_id" => $classeModuleRandom->id,
                                         "classe_id" => $classe->id,
                                         "annee_id" => $annee_scolaire_id,
-                                        "user_id" => $seanceManager->id,
+                                        "user_id" => $seanceManagerId,
                                         "timetable_id" => $timetable->id,
                                         "type_seance_id" => $randomTypeseances->id
                                     ]);
@@ -493,7 +498,7 @@ class TimetableSeeder extends Seeder
                                             "module_id" => $classeModuleRandom->id,
                                             "classe_id" => $classe->id,
                                             "annee_id" => $annee_scolaire_id,
-                                            "user_id" => $seanceManager->id,
+                                            "user_id" => $seanceManagerId,
                                             "timetable_id" => $timetable->id,
                                             "type_seance_id" => $randomTypeseances->id
                                         ]);
@@ -527,7 +532,7 @@ class TimetableSeeder extends Seeder
                                 "module_id" => $classeModuleRandom->id,
                                 "classe_id" => $classe->id,
                                 "annee_id" => $annee_scolaire_id,
-                                "user_id" => $seanceManager->id,
+                                "user_id" => $seanceManagerId,
                                 "timetable_id" => $timetable->id,
                                 "type_seance_id" => $randomTypeseances->id
                             ]);

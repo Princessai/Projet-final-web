@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->foreign('parent_id')->references('id')->on('users');
 
-            $table->unsignedBigInteger('classe_id')->nullable();
+            // $table->unsignedBigInteger('classe_id')->nullable();
             // $table->foreign('classe_id')->references('id')->on('classes');
 
             $table->foreignId('role_id')->constrained();

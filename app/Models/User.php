@@ -113,6 +113,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Module::class, 'enseignant_module');
     }
 
+    public function enseignantClasseModules()
+    {
+        return $this->hasMany(ClasseModule::class);
+    }
+
     public function etudiantParent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'parent_id',);
@@ -142,7 +147,7 @@ class User extends Authenticatable
 
     public function coordinateurClasses(): HasMany
     {
-        return $this->hasMany(Classe::class);
+        return $this->hasMany(Classe::class, 'coordinateur_id');
     }
     public function etudiantAbsences(): HasMany
     {

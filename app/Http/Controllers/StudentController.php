@@ -12,12 +12,14 @@ use Illuminate\Http\Request;
 use App\Enums\crudActionEnum;
 use App\Services\UserService;
 use App\Services\AnneeService;
+use Illuminate\Validation\Rule;
 use App\Services\StudentService;
 use App\Http\Requests\UserRequest;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
 {
@@ -32,19 +34,45 @@ class StudentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    
+
     public function store(UserRequest $request)
     {
 
+
+
+
         $currentYear = app(AnneeService::class)->getCurrentYear();
+        
+
+        $baseRules = $request->rules($request);
+
+        $specificUserRules = [
+            'classe_id' => ["required", 'integer'],
+            'parent' => ["required", 'array'],
+
+        ];
+
+        foreach ($baseRules as $field => $baseRule) {
+            $specificUserRules["parent.$field"] = $baseRule;
+        }
+
+        $specificUserRules['parent.email'] = ['required', 'email'];
+
+
+        $validator = Validator::make($request->all(),  $specificUserRules);
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
 
         $validatedData = $request->validated();
+        $validatedData += $validator->validated();
 
         $UserService = new UserService;
 
         $studentData  = Arr::except($validatedData, ['parent', 'classe_id']);
 
-        $parentId = null;
+   
 
         $classeId = $validatedData['classe_id'];
 
@@ -52,17 +80,24 @@ class StudentController extends Controller
 
         $classe = apiFindOrFail($classe, $classeId, 'no such class');
 
-
+        $parentId = null;
         if (isset($validatedData['parent'])) {
+
             $parentData = $validatedData['parent'];
+            $parentExist = User::where(['email' => $parentData['email']])->first();
 
-            ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService->generatePassword($parentData, roleEnum::Parent);
+            if ($parentExist === null) {
+                ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService->generatePassword($parentData, roleEnum::Parent);
 
-            $parentData['password'] =  $generatedPasswordHash;
+                $parentData['password'] =  $generatedPasswordHash;
 
-            $newParent = $UserService->createUser($parentData, roleEnum::Parent);
-            $parentId = $newParent->id;
-            $newParent->generatedPassword = $generatedPassword;
+                $newParent = $UserService->createUser($parentData, roleEnum::Parent);
+                $parentId = $newParent->id;
+                $newParent->generatedPassword = $generatedPassword;
+            } else {
+                $newParent =$parentExist;
+                $parentId = $parentExist->id;
+            }
         }
 
         $studentData['parent_id'] = $parentId;
@@ -101,7 +136,6 @@ class StudentController extends Controller
         $response = $UserService->showUser($student, $id);
 
         return apiSuccess(data: $response);
-
     }
 
     /**
@@ -109,9 +143,35 @@ class StudentController extends Controller
      */
     public function update(UserRequest $request, string $id)
     {
-        $validatedData = $request->validated();
+
 
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
+        $baseRules = $request->rules($request);
+
+        $specificUserRules = [
+            'classe_id' => ["required", 'integer'],
+            'classe_action' => [Rule::requiredIf(fn() =>  $request->filled('classe_id')), Rule::enum(crudActionEnum::class)],
+            'parent' => ['array'],
+
+        ];
+
+        foreach ($baseRules as $field => $baseRule) {
+            $specificUserRules["parent.$field"] = $baseRule;
+        }
+
+        $specificUserRules['parent.email'] = ['required', 'email'];
+
+
+        $validator = Validator::make($request->all(),  $specificUserRules);
+
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
+
+        $validatedData = $request->validated();
+        $validatedData += $validator->validated();
+
 
         $UserService = new UserService;
 
@@ -120,13 +180,7 @@ class StudentController extends Controller
         $studentData = Arr::except($validatedData, ['classe_id', 'parent', 'role_id', 'classe_action']);
 
 
-        if (isset($validatedData['picture'])) {
-
-            if ($request->filled('picture')) {
-
-                $UserService->updatePicture(roleEnum::Etudiant, $student, $studentData);
-            }
-        }
+      
 
         if (isset($validatedData['classe_id'])) {
 
@@ -150,6 +204,30 @@ class StudentController extends Controller
             }
         }
 
+        if (isset($validatedData['parent'])) {
+            $parentId =null;
+            $parentData = $validatedData['parent'];
+            $parent=$student->etudiantParent;
+            if($parent===null){
+               
+                ['plainText' => $generatedPassword, 'hash' => $generatedPasswordHash] = $UserService->generatePassword($parentData, roleEnum::Parent);
+
+                $parentData['password'] =  $generatedPasswordHash;
+
+                $newParent = $UserService->createUser($parentData, roleEnum::Parent);
+                $parentId = $newParent->id;
+                $newParent->generatedPassword = $generatedPassword;
+                $student->setRelation('etudiantParent', $newParent);
+            }
+            $studentData['parent_id'] = $parentId;
+
+            
+           
+        }
+
+       
+
+
         $student->update($studentData);
 
 
@@ -161,33 +239,10 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        $studentQuery = User::with(['etudiantParent' => function ($query) {
-            // $query->select('id');
-            $query->withCount('parentEtudiants');
-        }]);
-
-        $student = apiFindOrFail($studentQuery, $id, 'no such student');
-
-        // DB::table('classe_etudiants')
-        //     ->where('user_id', $id)
-        //     ->delete();
+      
 
         User::destroy($id);
-      
-      
-        // if ($student->etudiantParent != null) {
-       
 
-        //     $parentChildrenCount = $student->etudiantParent->parent_etudiants_count;
-
-      
-        //     if ($parentChildrenCount == 1) {
-
-        //         User::destroy($student->parent_id);
-        //     }
-        // }
-
-
-        return apiSuccess(data: $student, message: 'student removed successfully !');
+        return apiSuccess(message: 'student removed successfully !');
     }
 }

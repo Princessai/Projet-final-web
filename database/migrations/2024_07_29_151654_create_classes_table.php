@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string('label');
-            $table->unsignedBigInteger('coordinateur_id');
-            $table->foreign('coordinateur_id')->references('id')->on('users');
+            $table->unsignedBigInteger('coordinateur_id')->nullable();
+            $table->foreign('coordinateur_id')->references('id')->on('users')->onDelete('set null');
             $table->foreignId('niveau_id')->constrained();
             $table->foreignId('filiere_id')->constrained();
 

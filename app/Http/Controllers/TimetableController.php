@@ -115,13 +115,13 @@ class TimetableController extends Controller
             'classe_id' => $timetableData['classe_id'],
             'date_debut' => $timetableData['date_debut'],
             'date_fin' => $timetableData['date_fin'],
-            'commentaire' => $timetableData['commentaire'],
+            'commentaire' => $timetableData['commentaire']??null,
             'annee_id' => $currentYear->id,
         ]);
 
-        
+
         $seancesData = collect($seancesData)->map(function ($seance) use ($currentYear, $timetableData, $newTimetable) {
-           
+
             $duree = seanceDuration($seance['heure_fin'], $seance['heure_debut']);
             $dureeRaw = seanceDuration($seance['heure_fin'], $seance['heure_debut'], false);
 
@@ -140,7 +140,6 @@ class TimetableController extends Controller
         $newTimetable->seances()->createMany($seancesData);
 
         return apiSuccess(message: 'Timetable created successfully', data: new TimetableResource($newTimetable));
-
     }
 
     /**
@@ -156,9 +155,11 @@ class TimetableController extends Controller
      */
     public function edit(string $id)
     {
-        $timetable = apiFindOrFail(Timetable::with(['seances'=>[
-            'classe'=>['coordinateur']
-            ,'module','salle', 'typeSeance'
+        $timetable = apiFindOrFail(Timetable::with(['seances' => [
+            'classe' => ['coordinateur'],
+            'module',
+            'salle',
+            'typeSeance'
         ]]), $id, 'no such timetable');
 
         $response = new TimetableResource($timetable);
@@ -177,47 +178,55 @@ class TimetableController extends Controller
 
         $currentYear =  app(AnneeService::class)->getCurrentYear();
 
-        if ($request->has('timetable')) {
+        if ($request->filled('timetable') && !empty($timetableData)) {
             $timetable = new Timetable;
+            $timetableData = Arr::except($request->input('timetable'), ['classe_id', 'id', 'annee_id']);
 
             $timetable = apiFindOrFail($timetable, $id, 'no such timetable');
-
-            $timetableData = Arr::except($validatedData['timetable'], ['classe_id', 'id', 'annee_id']);
 
             $timetable->update($timetableData);
         }
 
-        if ($request->has('seances')) {
+        if ($request->filled('seances')) {
 
             $seancesData = $validatedData['seances'];
 
             foreach ($seancesData as $key => $seance) {
-
-                $duree = seanceDuration($seance['heure_fin'], $seance['heure_debut']);
-                $dureeRaw = seanceDuration($seance['heure_fin'], $seance['heure_debut'], false);
-    
+                $crudAction = $seance['action'];
 
                 if (isset($seance['id'])) {
                     $seance_id = $seance['id'];
                 }
 
+                if ($crudAction == crudActionEnum::Create->value) {
+                    $duree = seanceDuration($seance['heure_fin'], $seance['heure_debut']);
+                    $dureeRaw = seanceDuration($seance['heure_fin'], $seance['heure_debut'], false);
+                }
 
-                $crudAction = $seance['action'];
 
                 if ($crudAction == crudActionEnum::Update->value) {
-                    $seanceState =  $seance['etat'];
+
+
                     $seance = Arr::except($seance, ['timetable_id', 'classe_id']);
 
                     $oldSeance = apiFindOrFail(new Seance, $seance_id, 'no such seance');
 
                     $oldSeanceState = $oldSeance->etat;
 
+                    $seanceStart = isset($seance['heure_debut']) ? $seance['heure_debut'] : $oldSeance->heure_debut;
+                    $seanceEnd = isset($seance['heure_fin']) ? $seance['heure_fin'] : $oldSeance->heure_fin;
+                    $duree = seanceDuration($seanceEnd,  $seanceStart);
+                    $dureeRaw = seanceDuration($seanceEnd, $seanceStart, false);
+                    $seance['duree'] = $duree;
+                    $seance['duree_raw'] = $dureeRaw;
 
-                    if ($seanceState !== null && $oldSeanceState !== $seanceState) {
+
+                    if (isset($seance['etat']) && $oldSeanceState !== $seance['etat']) {
+                        $seanceState =  $seance['etat'];
 
                         if ($oldSeanceState == seanceStateEnum::Done->value && $seanceState != seanceStateEnum::ComingSoon->value) {
                             $SeanceService->incrementOrDecrementWorkedHours($oldSeance, $currentYear->id, -1); // decrement ici
-                            
+
                             $oldSeance->absences()->delete();
 
                             $oldSeance->delays()->delete();
@@ -234,10 +243,9 @@ class TimetableController extends Controller
                         }
                     }
 
-                    // if ($oldSeanceState == seanceStateEnum::Done->value) {
-                    //     $seance = Arr::only($seance, ['etat']);
-                    // }
+
                     if ($oldSeance->attendance == true) {
+
                         $seance = Arr::only($seance, ['etat']);
                     }
 
@@ -258,8 +266,12 @@ class TimetableController extends Controller
 
                     $seance = Arr::except($seance, ['etat']);
                     $seance['timetable_id'] = $id;
+
+
                     $seance['duree'] = $duree;
-                    $seance['duree_raw'] = $dureeRaw;        
+                    $seance['duree_raw'] = $dureeRaw;
+
+
                     $seance['classe_id'] = $timetable->classe_id;
                     $seance['annee_id'] = $timetable->annee_id;
 
@@ -296,36 +308,35 @@ class TimetableController extends Controller
         }
 
 
-        $classe = Classe::with(['timetables'=>function($query) use($interval,$annee_id){
+        $classe = Classe::with(['timetables' => function ($query) use ($interval, $annee_id) {
 
             $now = now();
             switch (true) {
                 case $interval === '0':
-                   $query->where('annee_id', $annee_id);
+                    $query->where('annee_id', $annee_id);
                     break;
 
                 case $interval === "1":
-            
-                $query->where('date_fin', '>=', $now);
+
+                    $query->where('date_fin', '>=', $now);
 
                     break;
 
                 case $interval === "-1":
-                
-                  $query->where('date_fin', '<', $now);
+
+                    $query->where('date_fin', '<', $now);
                     break;
 
                 default:
-        
-                   $query->where('date_fin', '>=', $now)->orderBy('created_at')->take(1);
+
+                    $query->where('date_fin', '>=', $now)->orderBy('created_at')->take(1);
                     break;
-            }   
+            }
 
-            $query->with(['seances'=>['typeSeance','module', 'salle']]);
-
+            $query->with(['seances' => ['typeSeance', 'module', 'salle']]);
         }]);
-        $classe = apiFindOrFail($classe,$classe_id);
-  
+        $classe = apiFindOrFail($classe, $classe_id);
+
 
         //     case $interval === '0':
         //         $yearTimetables = $classe->timetables()->where('annee_id', $annee_id)->get();
@@ -348,10 +359,10 @@ class TimetableController extends Controller
         //         break;
         // }
 
-        $yearTimetables =$classe->timetables;
+        $yearTimetables = $classe->timetables;
 
         if ($interval === null) {
-       
+
             $response = new TimetableResource($yearTimetables->first());
         } else {
 

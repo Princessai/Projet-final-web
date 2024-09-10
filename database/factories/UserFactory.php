@@ -6,13 +6,17 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Classe;
 use App\Models\Module;
+use App\Enums\roleEnum;
 use Illuminate\Support\Str;
 use App\Models\ClasseEtudiant;
 use App\Models\EtudiantParent;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Validation\Rules\Enum;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
- 
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\File;
+
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -44,19 +48,59 @@ class UserFactory extends Factory
         ];
     }
 
-    public function userRole($roleId, $disableDefaultConfig = false): static
+    public function userRole(Role $role, $disableDefaultConfig = false): static
     {
-        $roles = Role::all();
-        return $this->state(fn (array $attributes) => [
-
-            'role_id' => $roleId,
 
 
-        ])->afterMaking(function (User $user) use ($roles, $disableDefaultConfig) {
-            $roleEtudiantId = $roles->where("label", "etudiant")->first()->id;
-            $roleParentId = $roles->where("label", "parent")->first()->id;
+        return $this->state(function (array $attributes) use ($role) {
+            $roleLabel = $role->label;
+            $filePicturePath = null;
+
+            $directoryName =  $roleLabel . 's';
+
+            $files = Storage::files('/public/users/' . $directoryName);
+            if (!empty($files)) {
+
+
+
+                $randomPicture = fake()->randomElement($files);
+
+                dump('randomPicture', $randomPicture);
+
+                $pictureExtension = File::extension($randomPicture);
+
+                $uuid = Str::uuid();
+                $pictureName = $uuid . '.' . $pictureExtension;
+
+                $filePicturePath = "/public/users/$directoryName/$pictureName";
+                if ($roleLabel == roleEnum::Parent->value) {
+                    dump('parent', $filePicturePath);
+                }
+
+                Storage::copy($randomPicture, $filePicturePath);
+
+
+            }
+
+
+
+            return [
+                'picture' => $filePicturePath,
+                'role_id' => $role->id,
+
+            ];
+        })->afterMaking(function (User $user) use ($role, $disableDefaultConfig) {
+
+            // $roleEtudiantId = $roles->where("label", "etudiant")->first()->id;
+            // $roleParent =$roles->where("label", "parent")->first();
+            // $roleParentId = $roleParent->id;
+
             if ($disableDefaultConfig) return;
-            if ($user->role_id == $roleEtudiantId) {
+            if ($role->label == roleEnum::Etudiant->value) {
+
+                $roleParent = Role::where("label", "parent")->first();
+                $roleParentId = $roleParent->id;
+
                 $randomCase = rand(1, 3);
                 if ($randomCase == 1) {
                     $user->parent_id = null;
@@ -65,75 +109,17 @@ class UserFactory extends Factory
                     $randomParent = User::where('role_id', $roleParentId)->inRandomOrder()->first();
                     $user->parent_id = $randomParent->id;
                 } else {
-                    $randomParent = User::factory()->userRole($roleParentId, true)->create();
+                    $randomParent = User::factory()->userRole($roleParent, true)->create();
                     $user->parent_id = $randomParent->id;
                 }
             }
-        })->afterCreating(function (User $user) use ($disableDefaultConfig, $roles) {
-
-            // $roles=Role::whereIn('label', ["parent",'etudiant'])->get();
-
-            $roleParentId = $roles->where("label", "parent")->first()->id;
-            $roleEtudiantId = $roles->where("label", "etudiant")->first()->id;
-            $roleEnseignantId = $roles->where("label", "enseignant")->first()->id;
-            if ($disableDefaultConfig) return;
-            
-            // if ($user->role_id == $roleParentId) {
-
-            //     $randomParentChildrenCount = rand(1, 4);
-            //     //     EtudiantParent::factory()
-            //     //    ->parentChild($user->id)
-            //     //    ->count($randomParentChildrenCount)
-            //     //    ->create();              
-
-            //     User::factory()
-            //         ->userRole($roleEtudiantId, true)
-            //         ->count($randomParentChildrenCount)
-            //         ->for($user, 'etudiantParent')
-            //         ->create();
-            // }
-        
         });
     }
 
 
-    // public function configure(): static
-    // {
-    //     dump('init_config');
-
-    //     // return $this->afterMaking(function (User $user) {
-
-
-    //     // })->afterCreating(function (User $user) {
-
-    //     //     // $roles=Role::whereIn('label', ["parent",'etudiant'])->get();
-    //     //     $roles=Role::all();
-    //     //     $roleParentId= $roles->where("label","parent")->first()->id;
-    //     //     $roleEtudiantId= $roles->where("label","etudiant")->first()->id;
-    //     //     $roleCoordinateurId= $roles->where("label","coordinateur")->first()->id;
-
-    //     //     if($user->role_id==$roleParentId){
-    //     //         dump('config',$this->disableDefaultConfig);
-    //     //         // dump($this->disableDefaultConfig);
-    //     //         if($this->disableDefaultConfig)return;
-    //     //         $randomParentChildrenCount = 1;
-    //     //         EtudiantParent::factory()
-    //     //        ->parentChild($user->id)
-    //     //        ->count($randomParentChildrenCount)
-    //     //        ->create();
-
-    //     //    }
-
-
-
-    //     // });
-    // }
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
         ]);
     }

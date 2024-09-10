@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Classe;
 use App\Models\Droppe;
 use App\Models\Seance;
+use App\Models\ClasseModule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,7 @@ class Module extends Model
     public function classes(): BelongsToMany
     {
         return $this->belongsToMany(Classe::class)->withPivot('id','nbre_heure_total',
-        'nbre_heure_effectue','statut_cours','annee_id')->using(ClasseModule::class);
+        'nbre_heure_effectue','statut_cours','annee_id','user_id')->using(ClasseModule::class);
     }
 
     public function droppedStudents(): BelongsToMany // les étudiants droppés d'un module
@@ -38,6 +39,11 @@ class Module extends Model
     public function seances(): HasMany
     {
         return $this->hasMany(Seance::class);
+    }
+
+    public function classesModules(): HasMany
+    {
+        return $this->hasMany(ClasseModule::class);
     }
 
 

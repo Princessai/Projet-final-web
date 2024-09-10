@@ -25,6 +25,13 @@ class Classe extends Model
 
 
     public $timestamps = false;
+
+    protected $fillable = [
+        'label',
+        'coordinateur_id',
+        'niveau_id',
+        'filiere_id'
+    ];
     public function etudiants()
     {
         return $this->belongsToMany(User::class, 'classe_etudiants')->withPivot('annee_id', 'niveau_id');
@@ -52,7 +59,8 @@ class Classe extends Model
             'nbre_heure_total',
             'nbre_heure_effectue',
             'statut_cours',
-            'annee_id'
+            'annee_id',
+            'user_id'
         )
             ->using(ClasseModule::class);
     }
