@@ -85,15 +85,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Niveau::class, 'classe_etudiants');
     }
-    // public function etudiantClasse(): HasOne  // un etudiant n'a qu'une seule classe
-    // {
-    //     return $this->hasOne(ClasseEtudiant::class);
-    // }
-
-    // public function classeEnseignant(): HasMany
-    // {
-    //     return $this->hasMany(ClasseEnseignant::class);
-    // }
+ 
 
     public function enseignantClasses(): BelongsToMany
     {
@@ -172,26 +164,7 @@ class User extends Authenticatable
         $callback = null
     ): void {
 
-        // $baseQuery =   $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
-
-        //     if ($module_id !== null) {
-        //         $query->where('module_id', $module_id);
-        //     }
-        //     if ($timestamp1 === null && $timestamp2 === null) {
-        //         $query->where('annee_id', $currentYear_id);
-        //     }
-        //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         $query->where('seance_heure_debut', '>', $timestamp1);
-        //     }
-
-        //     if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-        //     };
-
-        //     if ($callback !== null) {
-        //         $callback($query);
-        //     }
-        // }], 'duree');
+   
 
 
         $baseQuery = $query->eagerLoadStudentMissedHours(

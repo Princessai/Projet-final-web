@@ -5,11 +5,13 @@ namespace App\Http\Resources;
 use App\Models\Annee;
 use App\Enums\roleEnum;
 use Illuminate\Http\Request;
+use App\Services\UserService;
 use App\Services\SeanceService;
 use App\Enums\attendanceStateEnum;
 use App\Http\Resources\ClasseResource;
 use App\Http\Resources\ModuleResource;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\EnseignantClasseModulesResource;
@@ -41,16 +43,17 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
 
     {
+
+        $UserService =  new UserService;
+        $roleEnum = roleEnum::tryFrom($this->roleLabel);
         $isStudent = $this->roleLabel == roleEnum::Etudiant->value;
-
-
         $isSeanceSet = !is_null($this->seance);
 
         if ($this->picture != null) {
-           
 
-            $this->picture =  asset("storage$this->picture");
+            ["dirName" => $dirName] = $UserService->UserDirPictureConfig($roleEnum);
 
+            $this->picture = asset("storage/users/$dirName/$this->picture");
         }
 
 

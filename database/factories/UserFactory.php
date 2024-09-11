@@ -59,13 +59,13 @@ class UserFactory extends Factory
             $directoryName =  $roleLabel . 's';
 
             $files = Storage::files('/public/users/' . $directoryName);
-            if (!empty($files)) {
 
+            if (!empty($files)) {
 
 
                 $randomPicture = fake()->randomElement($files);
 
-                dump('randomPicture', $randomPicture);
+                // dump('randomPicture', $randomPicture);
 
                 $pictureExtension = File::extension($randomPicture);
 
@@ -74,7 +74,7 @@ class UserFactory extends Factory
 
                 $filePicturePath = "/public/users/$directoryName/$pictureName";
                 if ($roleLabel == roleEnum::Parent->value) {
-                    dump('parent', $filePicturePath);
+                    // dump('parent', $filePicturePath);
                 }
 
                 Storage::copy($randomPicture, $filePicturePath);
@@ -85,7 +85,7 @@ class UserFactory extends Factory
 
 
             return [
-                'picture' => $filePicturePath,
+                'picture' => $pictureName,
                 'role_id' => $role->id,
 
             ];

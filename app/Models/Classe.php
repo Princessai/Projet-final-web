@@ -38,14 +38,7 @@ class Classe extends Model
     }
 
 
-    // public function classesEtudiants(): HasMany // les lignes correspondantes dans la table classe Etudiant (les associations entre les étudiants et les différentes classes)
-    // {
-    //     return $this->hasMany(ClasseEtudiant::class);
-    // }
-    // public function enseignant(): HasMany
-    // {
-    //     return $this->hasMany(ClasseEnseignant::class);
-    // }
+   
 
     public function enseignants(): BelongsToMany // les enseignants de la classe 
     {

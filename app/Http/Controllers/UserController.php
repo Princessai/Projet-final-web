@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Seance;
 use App\Enums\roleEnum;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\UserService;
 use App\Services\AnneeService;
@@ -14,8 +15,8 @@ use App\Services\StudentService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
-use App\Http\Resources\UserCollection;
 
+use App\Http\Resources\UserCollection;
 use function PHPUnit\Framework\isNull;
 use App\Http\Resources\SeanceCollection;
 use Illuminate\Support\Facades\Validator;
@@ -333,13 +334,21 @@ class UserController extends Controller
 
         $userQuery = User::with('role');
 
+
+
         $user = apiFindOrFail($userQuery, $user_id, 'no such user');
+        $role = $user->role;
+        $request = request();
+        $picture = $request->file('picture');
+        $roleEnum = roleEnum::tryFrom($role->label);
+        ["dirName"=>$dirName]= $UserService->UserDirPictureConfig($roleEnum);
 
-        $filePath = $UserService->updatePicture(roleEnum::Etudiant, $user, 'picture');
+        ["fileName" => $pictureName] = $UserService->updatePicture($roleEnum, $user, 'picture');
 
-        $user->update(['picture'=> $filePath]);
+        $user->update(['picture' => $pictureName]);
+        $fileUrl = asset("storage/users/$dirName/$pictureName");
 
-        return apiSuccess(data: $filePath, message: 'picture updated successfully !');
+        return apiSuccess(data: $fileUrl , message: 'picture updated successfully !');
     }
 
 

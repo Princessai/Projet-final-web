@@ -761,7 +761,7 @@ class AbsenceController extends Controller
 
         $student = $absence->etudiant;
 
-  
+
 
         $module_id = $absence->seance->module_id;
 
@@ -795,9 +795,9 @@ class AbsenceController extends Controller
         $pivotDataBaseQuery =  $ClasseService->getClasseModuleQuery($currentYear->id, $module_id, $studentClasse->id);
 
         $pivotData = $pivotDataBaseQuery->first();
-   
 
-    
+
+
         $totalModuleHours = $pivotData->nbre_heure_total;
 
         $workedHours = $pivotData->nbre_heure_effectue;
@@ -819,10 +819,10 @@ class AbsenceController extends Controller
             //     student_id: $student->id,
             //     currentYear_id: $currentYear->id,
             //     module_id: $module_id,
-                // callback: function ($seanceQuery) use ($seance_id) {
-                //     $seanceQuery->where('seance_id', '!=', $seance_id)
-                //         ->Where('etat', absenceStateEnum::notJustified->value);
-                // }
+            // callback: function ($seanceQuery) use ($seance_id) {
+            //     $seanceQuery->where('seance_id', '!=', $seance_id)
+            //         ->Where('etat', absenceStateEnum::notJustified->value);
+            // }
             // );
 
             $missedHours = $student->missedHoursSum;
@@ -836,7 +836,7 @@ class AbsenceController extends Controller
                     'user_id' => $student->id,
                     'module_id' => $module_id,
                     'annee_id' => $currentYear->id
-                ])->update(['isDropped' => false, 'updated_at' => $absence->seance_heure_debut ]);
+                ])->update(['isDropped' => false, 'updated_at' => $absence->seance_heure_debut]);
             }
         }
 
@@ -844,5 +844,72 @@ class AbsenceController extends Controller
         $absence->update(['etat' => absenceStateEnum::justified->value, 'receipt' => $fileName, 'coordinateur_id' => $coordinateur_id]);
 
         return apiSuccess(message: 'absence justified successfully !');
+    }
+
+    public  function  getStudentAttendanceRateByweeks($student_id, $annee_id, $timestamp1, $timestamp2)
+    {
+
+        $StudentService = new StudentService;
+
+        $studentQuery = User::with(['etudiantsClasses' => function ($query) use ($student_id, $annee_id) {
+            
+            $query->wherePivot('annee_id', $annee_id);
+            
+            $query->with(['timetables' => function ($query) use ($student_id, $annee_id) {
+
+
+                $dbRawDuree = DB::raw('SUM(seances.duree) as workedHoursSum');
+                $dbRawAbsences = DB::raw('SUM(absences.duree) as missedHoursSum');
+
+                $query->select(
+                    'timetables.id',
+                    'timetables.date_debut',
+                    'timetables.date_fin',
+                    'timetables.classe_id',
+                    $dbRawDuree,
+                    $dbRawAbsences,
+                )
+                    ->join('seances', function ($join) use ($annee_id) {
+
+                        $join->on('timetables.id', '=', 'seances.timetable_id');
+                        $join->where(['etat' => seanceStateEnum::Done->value, 'seances.annee_id' => $annee_id]);
+                    })->leftJoin('absences', function ($join) use ($student_id, $annee_id) {
+
+                        $join->on('seances.id', '=', 'absences.seance_id');
+                        $join->where(['absences.user_id' => $student_id, 'absences.annee_id' => $annee_id]);
+                    })->groupBy('timetable_id');
+            }]);
+        }]);
+
+
+        $student = apiFindOrFail($studentQuery, $student_id);
+
+        $classes = $student->etudiantsClasses;
+
+        $response = [];
+
+        foreach ($classes as $classe) {
+
+            $timetables = $classe->timetables;
+
+
+            foreach ($timetables as $timetable) {
+                $workedHoursSum = $timetable->workedHoursSum;
+
+                $missedHoursSum = $timetable->missedHoursSum;
+
+                $attendanceRate = $StudentService->AttendancePercentageCalc($missedHoursSum, $workedHoursSum);
+
+                $response[] = [
+                    "attendanceRate" => $attendanceRate,
+                    "date_debut" => $timetable->date_debut,
+                    "date_fin" => $timetable->date_fin,
+                    "classe" => $classe->label
+                ];
+            }
+        }
+
+
+        return apiSuccess(data: $response);
     }
 }

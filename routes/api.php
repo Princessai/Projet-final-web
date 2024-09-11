@@ -49,7 +49,7 @@ Route::prefix('trackin')->group(function () {
 
 
         Route::post("/update/users/picture/{user_id}", [UserController::class, 'updateUserPicture'])
-        ->whereNumber(['user_id']);;
+        ->whereNumber(['user_id']);
 
 
 
@@ -135,9 +135,11 @@ Route::prefix('trackin')->group(function () {
             )
                 ->whereNumber(['classe_id', 'module_id']);
 
+        Route::get("/student/weeks/{student_id}/{annee_id}/{timestamp1?}/{timestamp2?}", 
+        [AbsenceController::class, 'getStudentAttendanceRateByweeks']);
 
             // Route::get("/student/months/{student_id}/{months}/{month_count?}", [AbsenceController::class, 'getStudentAttendanceRateByMonth'])
-            // ->whereNumber(['student_id', 'months']);;
+            // ->whereNumber(['student_id', 'months']);
         });
 
 

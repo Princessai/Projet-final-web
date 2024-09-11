@@ -10,27 +10,18 @@ use Illuminate\Support\Arr;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+
+
 
 class UserService
 {
 
     public function createUser($data, roleEnum $roleEnum)
     {
-        // $role = roleEnum::tryFrom($roleLabel);
 
-        // if ($role === null) {
-        //     throw new \Exception(message: 'role does not exist');
-        // }
-        $request = request();
 
-        $fileName = null;
-
-        if ($request->filled('picture')) {
-            $picture = $request->file('picture');
-            $fileName = $picture->store($roleEnum->value . 's');
-            $data['picture'] = $fileName;
-            apiSuccess($fileName)->send();
-        }
 
 
         $role_id = Role::where(['label' => $roleEnum->value])->first()->id;
@@ -74,18 +65,32 @@ class UserService
 
         $picture = $request->file($input);
 
-        $dirName = $roleEnum->value.'s';
 
-        $filePath = $picture->store("public/users/$dirName");
+
+        $pictureExtension = $picture->getClientOriginalExtension();
+        $uuid = Str::uuid();
+        $pictureName = $uuid . '.' . $pictureExtension;
+        ["dirPath" => $dirPath] = $this->UserDirPictureConfig($roleEnum);
+        // $dirName = $roleEnum->value . 's';
+        // $dirPath= storage_path("app/public/users/$dirName");
+        $picture->move($dirPath, $pictureName);
 
 
         $oldPicture = $user->picture;
 
         if ($oldPicture != null) {
-            Storage::delete($oldPicture);
+            Storage::delete("$dirPath/$oldPicture");
         }
+        $filePath = "$dirPath/$pictureName";
 
-        return $filePath;
+        return ["fileName" => $pictureName, "filePath" => $filePath];
+    }
+
+    public function UserDirPictureConfig(roleEnum $roleEnum)
+    {
+        $dirName = $roleEnum->value . 's';
+        $dirPath = storage_path("app/public/users/$dirName");
+        return ["dirName" => $dirName, "dirPath" => $dirPath];
     }
 
     public function showUser($userQuery, $user_id)
