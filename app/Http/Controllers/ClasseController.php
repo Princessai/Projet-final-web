@@ -617,7 +617,6 @@ class ClasseController extends Controller
             ->setCurrentYear($currentYearId)
             ->setSeance($seance)
             ->setRoleLabel(roleEnum::Etudiant->value);
-            
 
         return apiSuccess(data: $response);
     }
