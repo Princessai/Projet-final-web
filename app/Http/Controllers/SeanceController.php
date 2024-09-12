@@ -65,13 +65,13 @@ class SeanceController extends Controller
         $seanceStart = Carbon::parse($seance->heure_debut);
 
 
-        // if ($seanceStart->greaterThan(now())) {
-        //     return apiError(message: 'the session has not started yet');
-        // }
+        if ($seanceStart->greaterThan(now())) {
+            return apiError(message: 'the session has not started yet');
+        }
 
-        // if ($seance->attendance) {
-        //     return apiError(message: 'the call is already done');
-        // }
+        if ($seance->attendance) {
+            return apiError(message: 'the call is already done');
+        }
 
 
 
