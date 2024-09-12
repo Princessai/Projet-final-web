@@ -59,7 +59,7 @@ class UserFactory extends Factory
             $directoryName =  $roleLabel . 's';
 
             $files = Storage::files('/public/users/' . $directoryName);
-
+            $pictureName=null;
             if (!empty($files)) {
 
 
@@ -97,8 +97,8 @@ class UserFactory extends Factory
 
             if ($disableDefaultConfig) return;
             if ($role->label == roleEnum::Etudiant->value) {
-
-                $roleParent = Role::where("label", "parent")->first();
+                dump('studennnnnnt');
+                $roleParent = Role::where("label", roleEnum::Parent->value)->first();
                 $roleParentId = $roleParent->id;
 
                 $randomCase = rand(1, 3);
@@ -108,10 +108,13 @@ class UserFactory extends Factory
 
                     $randomParent = User::where('role_id', $roleParentId)->inRandomOrder()->first();
                     $user->parent_id = $randomParent->id;
+                    dump('parentx',$randomParent);
                 } else {
                     $randomParent = User::factory()->userRole($roleParent, true)->create();
                     $user->parent_id = $randomParent->id;
+                    dump('parentxx',$randomParent);
                 }
+              
             }
         });
     }

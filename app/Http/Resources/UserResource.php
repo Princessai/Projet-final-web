@@ -45,7 +45,16 @@ class UserResource extends JsonResource
     {
 
         $UserService =  new UserService;
-        $roleEnum = roleEnum::tryFrom($this->roleLabel);
+        $roleLabel = null;
+        if($this->roleLabel!==null){
+            $roleLabel=$this->roleLabel;
+        }
+        if($this->relationLoaded('role')){
+            $roleLabel=$this->role->label;
+        }
+        
+        
+        $roleEnum = roleEnum::tryFrom($roleLabel);
         $isStudent = $this->roleLabel == roleEnum::Etudiant->value;
         $isSeanceSet = !is_null($this->seance);
 

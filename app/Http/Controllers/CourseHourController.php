@@ -163,7 +163,7 @@ class CourseHourController extends Controller
         $typeSeances = TypeSeance::all();
         $response = [];
         foreach ($classes as $classe) {
-            $yearSegmentsCopy = $classeService->getYearSegmentsWorkedHours($classe, $yearSegments, $currentYear, $typeSeances);  
+            $yearSegmentsCopy = $classeService->getYearSegmentsWorkedHours($classe, $yearSegments, $currentYear->id, $typeSeances);  
             $response[] =   ['classe_id'=> $classe->id, 'yearSegments' => CourseHourResource::collection($yearSegmentsCopy)];
         }
 

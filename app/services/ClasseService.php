@@ -49,19 +49,19 @@ class ClasseService
         }]);
     }
 
-    public function getClassCurrentStudent($classe_id, $currentYear = null)
+    public function getClassCurrentStudent($classe_id, $currentYearId = null)
     {
 
 
 
-        if ($currentYear == null) {
+        if ($currentYearId == null) {
             $currentYear = app(AnneeService::class)->getCurrentYear();
         }
         if (is_numeric($classe_id)) {
 
-            $classeQuery = Classe::with(['etudiants' => function ($query) use ($currentYear) {
+            $classeQuery = Classe::with(['etudiants' => function ($query) use ($currentYearId) {
                 $query->with('role');
-                $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
+                $query->wherePivot('classe_etudiants.annee_id', $currentYearId);
             }]);
 
             $classe = apiFindOrFail($classeQuery,   $classe_id, "no such class");
@@ -224,14 +224,14 @@ class ClasseService
         return ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate, 'workedHours' => $nbre_heure_effectue];
     }
 
-    public function getYearSegmentsWorkedHours($classe, $yearSegments, $currentYear, $typeSeances)
+    public function getYearSegmentsWorkedHours($classe, $yearSegments, $currentYearId, $typeSeances)
     {
 
 
         $yearSegmentsCopy =  recursiveClone($yearSegments);
 
         $seances = $classe->seances->where([
-            'annee_id' => $currentYear->id,
+            'annee_id' => $currentYearId,
             'etat' => seanceStateEnum::Done->value
         ])->all();
 

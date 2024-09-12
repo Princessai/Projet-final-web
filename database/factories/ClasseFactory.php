@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\roleEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Classe;
@@ -34,7 +35,7 @@ class ClasseFactory extends Factory
 
         return $this->afterMaking(function (Classe $classe) {
             
-            $roleCoordinateur= Role::where("label","coordinateur")->first();
+            $roleCoordinateur= Role::where("label",roleEnum::Coordinateur->value)->first();
             $coordinateur=User::factory()->userRole($roleCoordinateur,true)->create();
             $classe->coordinateur_id=$coordinateur->id;
             

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\roleEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\EtudiantParent;
@@ -26,7 +27,7 @@ class EtudiantParentFactory extends Factory
 
     public function parentChild($parentId): Factory
 {
-    $roleEtudiant=Role::where('label','etudiant' )->first();
+    $roleEtudiant=Role::where('label', roleEnum::Etudiant->value )->first();
     return $this->state(function (array $attributes) use($parentId,$roleEtudiant) {
         $child=User::factory()->userRole($roleEtudiant)->create();
        

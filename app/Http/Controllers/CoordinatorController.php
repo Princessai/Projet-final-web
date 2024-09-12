@@ -154,6 +154,6 @@ class CoordinatorController extends Controller
     {
         User::destroy($id);
 
-        return apiSuccess(message: 'coordinateur removed successfully !');
+        return apiSuccess(message: 'coordinator removed successfully !');
     }
 }

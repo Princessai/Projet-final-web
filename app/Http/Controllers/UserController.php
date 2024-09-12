@@ -65,6 +65,8 @@ class UserController extends Controller
             return  apiError(errors: $validator->errors());
         }
 
+        $currentYear=app(AnneeService::class)->getCurrentYear();
+
         $validated = $validator->validated();
         $user = User::with('role')->where(['email' => $validated['email']])->first();
 
@@ -76,9 +78,13 @@ class UserController extends Controller
             return apiError(message: 'wrong password', errors: ["password" => "wrong password"], statusCode: 401);
         }
 
+        $userRole =$user->role;
         $response = [
+        
+            'user'=>new UserResource($user,roleLabel:$userRole->label),
             'token' => $user->createToken("token",  ['*'])->plainTextToken,
-            'role' => $user->role,
+            'currentYear'=>$currentYear
+       
             // 'token' => $user->createToken("token",  ['*'], now()->addMinutes(15))->plainTextToken,
 
         ];

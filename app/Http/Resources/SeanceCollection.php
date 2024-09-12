@@ -28,7 +28,7 @@ class SeanceCollection extends ResourceCollection
         ->groupBy(function ( $item, int $key) {
            
             if($item['heure_fin'] >= $this->currentTime) {
-                return 'comminnning';
+                return 'comming';
             }
       
             return 'passed';

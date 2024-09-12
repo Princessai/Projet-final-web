@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\roleEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Module;
@@ -16,7 +17,7 @@ class EnseignantSeeder extends Seeder
     public function run(): void
     {
         $modules = Module::all();
-        $roleEnseignant = Role::where('label', 'enseignant')->first();
+        $roleEnseignant = Role::where('label', roleEnum::Enseignant->value)->first();
         foreach ($modules as $module) {
             $randomModuleNumber = rand(1, 3);
        

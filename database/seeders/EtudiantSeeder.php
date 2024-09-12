@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\roleEnum;
 use App\Models\Annee;
 use App\Models\Role;
 use App\Models\User;
@@ -19,7 +20,8 @@ class EtudiantSeeder extends Seeder
     {
         $roles = Role::all();
         $annee_scolaires = Annee::all();
-        $roleEtudiant = $roles->where("label", "etudiant")->first();
+
+        $roleEtudiant = $roles->where("label", roleEnum::Etudiant->value)->first();
 
         $classes = Classe::all();
         
