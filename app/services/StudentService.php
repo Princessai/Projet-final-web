@@ -149,10 +149,11 @@ class StudentService
 
         foreach ($studentAbsences as $studentAbsence) {
             $seance = $studentAbsence->seance;
-            $startHour =  Carbon::parse($seance->heure_debut);
-            $endHour =  Carbon::parse($seance->heure_fin);
+            // $startHour =  Carbon::parse($seance->heure_debut);
+            // $endHour =  Carbon::parse($seance->heure_fin);
 
-            $duree = seanceDuration($endHour, $startHour);
+            // $duree = seanceDuration($endHour, $startHour);
+            $duree = $seance->duree;
 
 
             $missingHoursCount += $duree;

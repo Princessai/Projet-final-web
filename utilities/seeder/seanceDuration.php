@@ -1,7 +1,10 @@
 <?php
 
 use Carbon\Carbon;
-function seanceDuration($seance_end,$seance_start,$ceil=true) {
+function roundUpToStep($num, $step = 1) {
+    return ceil($num / $step) * $step;
+  }
+function seanceDuration($seance_end,$seance_start,$step=1,$ceil=true) {
     if(!$seance_end instanceof Carbon){
         $seance_end = Carbon::parse($seance_end);
     }
@@ -13,6 +16,6 @@ function seanceDuration($seance_end,$seance_start,$ceil=true) {
     if($ceil===false){
         return $duration;
     }
-   
-     return  ceil($duration);;
+    
+     return roundUpToStep($duration,$step) ;
  }

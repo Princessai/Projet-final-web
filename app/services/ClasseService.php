@@ -42,10 +42,11 @@ class ClasseService
     {
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
         return  $query->$loading(['etudiants' => function ($query) use ($currentYearId, $callback) {
-            $query->wherePivot('annee_id', $currentYearId);
             if ($callback !== null) {
                 $callback($query);
             }
+            $query->wherePivot('annee_id', $currentYearId);
+          
         }]);
     }
 
@@ -79,9 +80,10 @@ class ClasseService
         $missingHoursCount = 0;
 
         foreach ($seancesClasses as $seance) {
-            $startHour =  Carbon::parse($seance->heure_debut);
-            $endHour =  Carbon::parse($seance->heure_fin);
-            $duree = seanceDuration($endHour, $startHour);
+            // $startHour =  Carbon::parse($seance->heure_debut);
+            // $endHour =  Carbon::parse($seance->heure_fin);
+            // $duree = seanceDuration($endHour, $startHour);
+            $duree = $seance->duree;
             $nbre_heure_effectue += $duree;
 
             $studentAbsence = $seance->absences()->where('user_id', $student_id)->first();
@@ -100,10 +102,11 @@ class ClasseService
 
         foreach ($studentAbsences as $studentAbsence) {
             $seance = $studentAbsence->seance;
-            $startHour =  Carbon::parse($seance->heure_debut);
-            $endHour =  Carbon::parse($seance->heure_fin);
+            // $startHour =  Carbon::parse($seance->heure_debut);
+            // $endHour =  Carbon::parse($seance->heure_fin);
 
-            $duree = seanceDuration($endHour, $startHour);
+            // $duree = seanceDuration($endHour, $startHour);
+            $duree = $seance->duree;
 
 
             $missingHoursCount += $duree;
@@ -132,9 +135,11 @@ class ClasseService
         $nbre_heure_effectue = 0;
 
         foreach ($seancesClasses as $seance) {
-            $startHour =  Carbon::parse($seance->heure_debut);
-            $endHour =  Carbon::parse($seance->heure_fin);
-            $duree = seanceDuration($endHour, $startHour);
+            // $startHour =  Carbon::parse($seance->heure_debut);
+            // $endHour =  Carbon::parse($seance->heure_fin);
+            // $duree = seanceDuration($endHour, $startHour);
+            $duree = $seance->duree;
+         
             $nbre_heure_effectue += $duree;
         }
 
@@ -249,9 +254,10 @@ class ClasseService
 
 
 
-            $seanceStart = Carbon::parse($seance->heure_debut);
-            $seanceEnd = Carbon::parse($seance->heure_fin);
-            $seanceDuration = seanceDuration($seanceEnd, $seanceStart);
+            // $seanceStart = Carbon::parse($seance->heure_debut);
+            // $seanceEnd = Carbon::parse($seance->heure_fin);
+            // $seanceDuration = seanceDuration($seanceEnd, $seanceStart);
+            $seanceDuration = $seance->duree;
 
             $seanceType = $typeSeances->where('id', $seance->type_seance_id)->first();
 

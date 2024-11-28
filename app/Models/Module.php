@@ -45,6 +45,10 @@ class Module extends Model
     {
         return $this->hasMany(ClasseModule::class);
     }
+    public function absences(): HasMany
+    {
+        return $this->hasMany(Absence::class);
+    }
 
 
 }

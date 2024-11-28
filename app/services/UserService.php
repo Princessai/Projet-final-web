@@ -97,7 +97,7 @@ class UserService
     {
 
         $user = apiFindOrFail($userQuery, $user_id, 'no such user');
-
-        return $response = new  UserResource($user);
+        $userRole = $user->role;
+        return $response = new  UserResource($user, roleLabel: $userRole);
     }
 }

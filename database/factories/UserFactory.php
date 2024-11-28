@@ -97,7 +97,7 @@ class UserFactory extends Factory
 
             if ($disableDefaultConfig) return;
             if ($role->label == roleEnum::Etudiant->value) {
-                dump('studennnnnnt');
+               
                 $roleParent = Role::where("label", roleEnum::Parent->value)->first();
                 $roleParentId = $roleParent->id;
 
@@ -108,11 +108,11 @@ class UserFactory extends Factory
 
                     $randomParent = User::where('role_id', $roleParentId)->inRandomOrder()->first();
                     $user->parent_id = $randomParent->id;
-                    dump('parentx',$randomParent);
+                  
                 } else {
                     $randomParent = User::factory()->userRole($roleParent, true)->create();
                     $user->parent_id = $randomParent->id;
-                    dump('parentxx',$randomParent);
+                  
                 }
               
             }

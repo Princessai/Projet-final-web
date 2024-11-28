@@ -19,24 +19,26 @@ class SeanceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // return [$this->enseignant];
         return [
 
 
 
-                "id" => $this->id ,
-                "etat" =>  $this->etat,
-                "date" => $this->date ,
-                "attendance" => $this->attendance ,
-                "heure_debut" =>  $this->heure_debut,
-                "heure_fin" =>  $this->heure_fin,
-                "duree" =>  $this->duree,
-                "salle" =>  $this->salle,
-                "module" => new ModuleResource($this->whenLoaded('module')) ,
-                
-                "timetable_id" =>  $this->timetable_id,
-                "type_seance" => $this->typeSeance,
-                "classe" => new ClasseResource($this->whenLoaded('classe'))  ,
-                "annee_id" => $this->annee_id 
+            "id" => $this->id,
+            "etat" =>  $this->etat,
+            "date" => $this->date,
+            "attendance" => $this->attendance,
+            "heure_debut" =>  $this->heure_debut,
+            "heure_fin" =>  $this->heure_fin,
+            "duree" =>  $this->duree,
+            "duree_raw" =>  $this->duree_raw,
+            "salle" =>  $this->salle,
+            "module" => new ModuleResource($this->whenLoaded('module')),
+            "manager" => $this->whenLoaded('enseignant', ["name" => $this->enseignant->name, "lastname" => $this->enseignant->lastname]),
+            "timetable_id" =>  $this->timetable_id,
+            "type_seance" => $this->typeSeance,
+            "classe" => new ClasseResource($this->whenLoaded('classe')),
+            "annee_id" => $this->annee_id
 
         ];
     }

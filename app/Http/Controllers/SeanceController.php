@@ -253,6 +253,7 @@ class SeanceController extends Controller
             'classe' => function ($query) {
                 $query->select('id');
                 $query->CurrentYearStudents(callback: function ($query) {
+                    $query->with('role');
                     $query->select(
                         'users.id',
                         'name',
@@ -260,7 +261,9 @@ class SeanceController extends Controller
                         'picture',
                         'phone_number',
                         'email',
+                        'role_id'
                     );
+                  
                 });
             },
             'absences',
@@ -286,6 +289,7 @@ class SeanceController extends Controller
         $seance->setRelation('module', $seanceModule);
 
         $classe = $seance->classe;
+ 
 
 
 

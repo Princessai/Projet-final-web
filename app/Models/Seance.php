@@ -59,7 +59,7 @@ class Seance extends Model
 
     public function enseignant(): BelongsTo
     {
-        return $this->BelongsTo(User::class); // user de type enseignant
+        return $this->BelongsTo(User::class, "user_id"); // user de type enseignant
     }
 
     public function module(): BelongsTo

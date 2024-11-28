@@ -65,7 +65,7 @@ class UserController extends Controller
             return  apiError(errors: $validator->errors());
         }
 
-        $currentYear=app(AnneeService::class)->getCurrentYear();
+        $currentYear = app(AnneeService::class)->getCurrentYear();
 
         $validated = $validator->validated();
         $user = User::with('role')->where(['email' => $validated['email']])->first();
@@ -78,13 +78,13 @@ class UserController extends Controller
             return apiError(message: 'wrong password', errors: ["password" => "wrong password"], statusCode: 401);
         }
 
-        $userRole =$user->role;
+        $userRole = $user->role;
         $response = [
-        
-            'user'=>new UserResource($user,roleLabel:$userRole->label),
+
+            'user' => new UserResource($user, roleLabel: $userRole->label),
             'token' => $user->createToken("token",  ['*'])->plainTextToken,
-            'currentYear'=>$currentYear
-       
+            'currentYear' => $currentYear
+
             // 'token' => $user->createToken("token",  ['*'], now()->addMinutes(15))->plainTextToken,
 
         ];
@@ -347,14 +347,14 @@ class UserController extends Controller
         $request = request();
         $picture = $request->file('picture');
         $roleEnum = roleEnum::tryFrom($role->label);
-        ["dirName"=>$dirName]= $UserService->UserDirPictureConfig($roleEnum);
+        ["dirName" => $dirName] = $UserService->UserDirPictureConfig($roleEnum);
 
         ["fileName" => $pictureName] = $UserService->updatePicture($roleEnum, $user, 'picture');
 
         $user->update(['picture' => $pictureName]);
         $fileUrl = asset("storage/users/$dirName/$pictureName");
 
-        return apiSuccess(data: $fileUrl , message: 'picture updated successfully !');
+        return apiSuccess(data: $fileUrl, message: 'picture updated successfully !');
     }
 
 

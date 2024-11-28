@@ -34,4 +34,8 @@ class Absence extends Model
     {
         return $this->belongsTo(Seance::class);
     }
+    public function module(): BelongsTo 
+    {
+        return $this->belongsTo(Module::class);
+    }
 }

@@ -538,6 +538,9 @@ class AbsenceController extends Controller
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
         $student =  User::with(
             ['etudiantAbsences' => function ($query) use ($timestamp1, $timestamp2, $currentYearId) {
+                
+                $query->with('module');
+                
                 if ($timestamp1 === null && $timestamp2 === null) {
                     $query->where("annee_id", $currentYearId);
                 }

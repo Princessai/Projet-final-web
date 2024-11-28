@@ -19,9 +19,9 @@ class SeanceCollection extends ResourceCollection
     public function toArray(Request $request)
     {
 
+         
 
-
-        return $this->collection->map(function($seance){
+        $collection = $this->collection->map(function($seance){
           
             return  new SeanceResource($seance);
         })
@@ -33,6 +33,15 @@ class SeanceCollection extends ResourceCollection
       
             return 'passed';
         });
+       if(!$collection->has('comming')){
+        $collection->put('comming', []);
+       }
+
+       if(!$collection->has('passed')){
+        $collection->put('passed', []);
+       }
+
+       return $collection;
 
     }
 }

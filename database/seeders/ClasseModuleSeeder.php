@@ -58,7 +58,7 @@ class ClasseModuleSeeder extends Seeder
 
 
             // $module->classes()->attach($randomClasses,['annee_id'=>$annee->id]);
-            dump($randomClassesArr);
+       
             $module->classes()->attach($randomClassesArr);
         }
 
