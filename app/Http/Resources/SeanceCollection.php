@@ -25,9 +25,12 @@ class SeanceCollection extends ResourceCollection
           
             return  new SeanceResource($seance);
         })
-        ->groupBy(function ( $item, int $key) {
-           
-            if($item['heure_fin'] >= $this->currentTime) {
+        ->groupBy(function ( $item, int $key): string {
+            
+            $heure_fin = Carbon::parse($item['heure_fin'])->addMinutes(10);
+            // apiSuccess($heure_fin)->send();
+            // die();
+            if($heure_fin >= $this->currentTime) {
                 return 'comming';
             }
       

@@ -19,7 +19,7 @@ class SeanceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // return [$this->enseignant];
+        // return [$this->relationLoaded('enseignant')];
         return [
 
 
@@ -34,7 +34,11 @@ class SeanceResource extends JsonResource
             "duree_raw" =>  $this->duree_raw,
             "salle" =>  $this->salle,
             "module" => new ModuleResource($this->whenLoaded('module')),
-            "manager" => $this->whenLoaded('enseignant', ["name" => $this->enseignant->name, "lastname" => $this->enseignant->lastname]),
+
+            "manager" => $this->whenLoaded('enseignant',function(){
+                return ["name" => $this->enseignant->name, "lastname" => $this->enseignant->lastname];
+            } ),
+            
             "timetable_id" =>  $this->timetable_id,
             "type_seance" => $this->typeSeance,
             "classe" => new ClasseResource($this->whenLoaded('classe')),

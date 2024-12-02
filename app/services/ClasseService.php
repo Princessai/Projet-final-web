@@ -86,7 +86,7 @@ class ClasseService
             $duree = $seance->duree;
             $nbre_heure_effectue += $duree;
 
-            $studentAbsence = $seance->absences()->where('user_id', $student_id)->first();
+            $studentAbsence = $seance->absences->firstWhere('user_id', $student_id);
 
             if (!is_null($studentAbsence)) {
 
@@ -207,7 +207,7 @@ class ClasseService
         $classeStudents = $classe->etudiants;
         // $classeStudentsCount = $classeStudents->count();
         $classeStudentsCount = (int)$classe->etudiants_count;
-        $strudentAttendanceRate = [];
+        $studentAttendanceRate = [];
         $classeStudentsAttendanceRate = 0;
         $nbre_heure_effectue = (int) $classe->workedHoursSum;
 
@@ -221,12 +221,12 @@ class ClasseService
             //  return apiSuccess( $attendanceRate );
             $classeStudentsAttendanceRate += $attendanceRate;
 
-            $strudentAttendanceRate[] =  $apiResource;
+            $studentAttendanceRate[] =  $apiResource;
         }
 
         $classeAttendanceRate = round($classeStudentsAttendanceRate / $classeStudentsCount, 2);
 
-        return ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate, 'workedHours' => $nbre_heure_effectue];
+        return ['studentAttendanceRate' => $studentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate, 'workedHours' => $nbre_heure_effectue];
     }
 
     public function getYearSegmentsWorkedHours($classe, $yearSegments, $currentYearId, $typeSeances)
@@ -319,11 +319,13 @@ class ClasseService
         }
 
 
-        $baseQuery =   $classe->withCount([
+        $baseQuery =   $classe
+        ->withCount([
             'etudiants' => function ($query) use ($currentYear_id, $module_id) {
                 $query->where('classe_etudiants.annee_id', $currentYear_id);
             }
-        ])->with(['etudiants' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
+        ])
+        ->with(['etudiants' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
             $query->wherePivot('classe_etudiants.annee_id', $currentYear_id);
             $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1) {
 
@@ -446,7 +448,9 @@ class ClasseService
         }
 
 
-        return $classe = apiFindOrFail($classe, $classe_id, "no such class");
+
+         $classe = apiFindOrFail($classe, $classe_id, "no such class");
+         return  $classe;
     }
 
     public function getClasseModuleQuery($currentYearId, $module_id, $classe_id)

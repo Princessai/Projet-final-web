@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\roleEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -24,9 +25,9 @@ class UserCollection extends ResourceCollection
         $this->currentYearId = $currentYearId;
         return $this;
     }
-    public function setRoleLabel(string $roleLabel)
+    public function setRoleLabel(roleEnum $roleLabel)
     {
-        $this->roleLabel = $roleLabel;
+        $this->roleLabel = $roleLabel->value;
         return $this;
     }
     public function toArray(Request $request)

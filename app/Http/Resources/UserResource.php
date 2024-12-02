@@ -28,7 +28,6 @@ class UserResource extends JsonResource
         // Ensure you call the parent constructor
         parent::__construct($resource);
         $this->seance = $seance;
-
         $this->currentYearId = $currentYearId;
         $this->roleLabel = $roleLabel;
     }

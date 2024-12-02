@@ -509,7 +509,7 @@ class ClasseControllercopy3 extends Controller
 
         $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe_id, $currentYearId)))
             ->setCurrentYear($currentYearId)
-            ->setRoleLabel(roleEnum::Etudiant->value);
+            ->setRoleLabel(roleEnum::Etudiant);
 
         return apiSuccess(data: $response);
     }
@@ -545,7 +545,7 @@ class ClasseControllercopy3 extends Controller
         // return $classe;
 
         $response = (new Usercollection($classe->enseignants))
-            ->setRoleLabel(roleEnum::Enseignant->value);
+            ->setRoleLabel(roleEnum::Enseignant);
         return apiSuccess(data: $response);
     }
 

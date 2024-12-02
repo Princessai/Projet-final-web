@@ -529,7 +529,7 @@ class ClasseController extends Controller
 
         $response = (new UserCollection($ClasseService->getClassCurrentStudent($classe_id, $currentYearId)))
             ->setCurrentYear($currentYearId)
-            ->setRoleLabel(roleEnum::Etudiant->value);
+            ->setRoleLabel(roleEnum::Etudiant);
 
         return apiSuccess(data: $response);
     }
@@ -549,7 +549,7 @@ class ClasseController extends Controller
         $classe = Classe::with([
 
             'enseignants' => function ($query) use ($classe_id) {
-                $query->wherePivot('classe_id', $classe_id);
+                // $query->wherePivot('classe_id', $classe_id);
                 $query->with('role');
                 $query->with('enseignantModules', function ($query) use ($classe_id) {
                     $query->whereHas('classes', function ($query) use ($classe_id) {
@@ -565,7 +565,7 @@ class ClasseController extends Controller
         // return $classe;
 
         $response = (new Usercollection($classe->enseignants))
-            ->setRoleLabel(roleEnum::Enseignant->value);
+            ->setRoleLabel(roleEnum::Enseignant);
         return apiSuccess(data: $response);
     }
 
@@ -616,7 +616,7 @@ class ClasseController extends Controller
         $response = (new UserCollection($classe->etudiants))
             ->setCurrentYear($currentYearId)
             ->setSeance($seance)
-            ->setRoleLabel(roleEnum::Etudiant->value);
+            ->setRoleLabel(roleEnum::Etudiant);
 
         return apiSuccess(data: $response);
     }

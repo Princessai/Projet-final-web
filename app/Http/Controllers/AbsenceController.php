@@ -36,11 +36,29 @@ class AbsenceController extends Controller
         $StudentService = new StudentService;
         $ClasseService = new ClasseService;
         if ($timestamp1 === null && $timestamp2 === null) {
-
-            $student = User::with(['etudiantsClasses.modules']);
+            $student = User::with(['etudiantsClasses' => function ($query) use ($currentYear) {
+                $query->wherePivot('annee_id', $currentYear->id);
+                $query->with(['modules' => function ($query) use ($currentYear) {
+                    $query->wherePivot('annee_id', $currentYear->id);
+                }]);
+            }]);
             $student = $StudentService->getMissedHours($student, $currentYear->id);
         } else {
-            $student = User::with(['etudiantsClasses.seances.absences']);
+            $student = User::with(['etudiantsClasses' => function ($query) use ($currentYear, $timestamp1, $timestamp2) {
+                $query->wherePivot('annee_id', $currentYear->id);
+                $query->with(['seances' => function ($query) use ($timestamp1, $timestamp2) {
+                    $query->where('etat', seanceStateEnum::Done->value);
+                   
+
+                    if ($timestamp1 === null && $timestamp2 === null) {
+                        $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
+                    }
+                    if ($timestamp1 !== null && $timestamp2 === null) {
+                        $query->where('heure_debut', '>', $timestamp1);
+                    }
+                    $query->with('absences');
+                }]);
+            }]);
         }
 
 
@@ -52,7 +70,7 @@ class AbsenceController extends Controller
 
 
 
-        $studentClasse = $student->etudiantsClasses()->wherePivot('annee_id', $currentYear->id)->first();
+        $studentClasse = $student->etudiantsClasses->first();
 
 
         $missingHoursCount = 0;
@@ -71,7 +89,7 @@ class AbsenceController extends Controller
             $missingHoursCount = (int) $student->missingHoursSum;
 
 
-            $classesModules = $studentClasse->modules()->wherePivot('annee_id', $currentYear->id)->get();
+            $classesModules = $studentClasse->modules;
             // foreach ($classesModules as $classesModule) {
 
             //     $nbre_heure_effectue += $classesModule->pivot->nbre_heure_effectue;
@@ -88,7 +106,7 @@ class AbsenceController extends Controller
             // $timestamp1 = Carbon::createFromTimestamp($timestamp1)->toDateTimeString();
             // $timestamp2 = Carbon::createFromTimestamp($timestamp2)->toDateTimeString();
 
-            $seancesClasses = $studentClasse->seances()->where('etat', seanceStateEnum::Done->value)->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
+            $seancesClasses = $studentClasse->seances;
             // $seancesClasses = $studentClasse->seances()->where('heure_debut','>' ,$timestamp1);
 
             // foreach ($seancesClasses as $seance) {
@@ -113,7 +131,7 @@ class AbsenceController extends Controller
 
         if ($timestamp1 !== null && $timestamp2 === null) {
 
-            $seancesClasses = $studentClasse->seances()->where('etat', seanceStateEnum::Done->value)->where('heure_debut', '>', $timestamp1)->get();
+            $seancesClasses = $studentClasse->seances;
 
             // return apiSuccess(data: $seancesClasses);
 
@@ -216,9 +234,9 @@ class AbsenceController extends Controller
 
         // $classeAttendanceRate = round($classeStudentsAttendanceRate / $classeStudentsCount, 2);
 
-        ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate] = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2);
+        $data =['studentAttendanceRate' => $studentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate] = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2);
 
-        return apiSuccess(data: ['strudentAttendanceRate' => $strudentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate]);
+        return apiSuccess(data: $data);
     }
 
     public function getClasssesAttendanceRate()
@@ -538,9 +556,9 @@ class AbsenceController extends Controller
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
         $student =  User::with(
             ['etudiantAbsences' => function ($query) use ($timestamp1, $timestamp2, $currentYearId) {
-                
+
                 $query->with('module');
-                
+
                 if ($timestamp1 === null && $timestamp2 === null) {
                     $query->where("annee_id", $currentYearId);
                 }
@@ -636,11 +654,12 @@ class AbsenceController extends Controller
                 $query->where('annee_id', $currentYearId);
 
                 $query->with('seances', function ($query) use ($currentYearId) {
-                    $query->with('absences');
-                    $query->where([
-                        'annee_id' => $currentYearId,
-                        'etat' => seanceStateEnum::Done->value
-                    ]);
+                      $query->where([
+                          'annee_id' => $currentYearId,
+                          'etat' => seanceStateEnum::Done->value
+                        ]);
+                        $query->with('absences');
+                  
                 });
             }
         ]);
@@ -687,15 +706,9 @@ class AbsenceController extends Controller
             if ($seancesYearSegments->isEmpty()) continue;
 
 
-
-            $seanceStart = Carbon::parse($seance->heure_debut);
-            $seanceEnd = Carbon::parse($seance->heure_fin);
             $seanceDuration = $seance->duree;
 
-
-
             $currentSeanceYearSegment = $seancesYearSegments->first();
-
 
 
             if (isset($currentSeanceYearSegment->workedHours)) {
@@ -855,9 +868,9 @@ class AbsenceController extends Controller
         $StudentService = new StudentService;
 
         $studentQuery = User::with(['etudiantsClasses' => function ($query) use ($student_id, $annee_id) {
-            
+
             $query->wherePivot('annee_id', $annee_id);
-            
+
             $query->with(['timetables' => function ($query) use ($student_id, $annee_id) {
 
 

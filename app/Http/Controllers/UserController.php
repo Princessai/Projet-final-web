@@ -112,7 +112,7 @@ class UserController extends Controller
 
 
         $response = (new UserCollection($role->roleUsers))
-            ->setRoleLabel(roleEnum::Enseignant->value);
+            ->setRoleLabel(roleEnum::Enseignant);
         return apiSuccess(data: $response);
     }
     public function getUserSeances(Request $request, $user_id, $timestamp = null)
@@ -120,7 +120,7 @@ class UserController extends Controller
         $currentYear = app(AnneeService::class)->getCurrentYear();
         $currentYearId = $currentYear->id;
 
-        $currentTime = now()->addMinutes(15);
+        $currentTime = now();
         $timestamp = ($timestamp === null) ? 0 : Carbon::createFromTimestamp($timestamp);
 
 
@@ -198,28 +198,27 @@ class UserController extends Controller
     public function getParentsChildren(Request $request, $parent_id)
     {
 
-        $user = User::with(['parentEtudiants' => function ($query) {
-            $query->with('etudiantsClasses', function ($query) {
+        $children = User::with(['etudiantsClasses' => function ($query) {
+            // $query->with('etudiantsClasses', function ($query) {
                 $query->orderByPivot('id', 'desc')->take(1);
-            });
-        }]);
+            // });
+        }])->where(['parent_id'=>$parent_id])->get();
 
 
-        $user = apiFindOrFail($user, $parent_id, "no such user");
+        // $user = apiFindOrFail($user, $parent_id, "no such user");
 
 
+        // if ($user->role->label != roleEnum::Parent->value) {
+           
+        //     return apiError(message: "the user $parent_id is not parent");
+        // }
 
-        if ($user->role->label != roleEnum::Parent->value) {
-            return apiError(message: "the user $parent_id is not parent");
-        }
+        // $parent = $user;
 
-        $parent = $user;
-
-
-        $children = $parent->parentEtudiants;
-        // return $children;
-
-        $response = new Usercollection($children);
+        // $children = $parent->parentEtudiants;
+      
+        $response = (new Usercollection($children))
+        ->setRoleLabel(roleEnum::Etudiant);
         return apiSuccess(data: $response);
     }
 
