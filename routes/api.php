@@ -24,9 +24,9 @@ Route::prefix('trackin')->group(function () {
     // groupe de routes authentifiés
     Route::middleware(['auth:sanctum'])->group(function () {
 
-        Route::get('/user', function (Request $request) {
-            return $request->user();
-        });
+        // Route::get('/user', function (Request $request) {
+        //     return $request->user();
+        // });
 
 
         Route::get("/logout", [UserController::class, 'logout']);
@@ -64,15 +64,16 @@ Route::prefix('trackin')->group(function () {
         Route::get("/gethours/classes/year_segments/{year_segments}", [CourseHourController::class, 'getAllClassesWorkedHours']);
 
 
-        // crud emploi du temps
-        // Route::prefix("/timetable")->group(function () {
-        //     Route::get("/create", [TimetableController::class, 'createTimetable'])
-        //     ->whereNumber(['classe_id']);
-        // });
+        Route::prefix("/timetable")->group(function () {
+            // class timetable
+            Route::get("/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
+                ->whereNumber(['classe_id', 'annee_id']);
 
-        // class timetable
-        Route::get("/timetable/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
-            ->whereNumber(['classe_id', 'annee_id']);
+                Route::get("/{timetable_id}", [TimetableController::class, 'getTimetable'])
+                ->whereNumber(['timetable_id']);
+
+        });
+
         // CRUD timetable
         Route::resource('timetable', TimetableController::class);
 
