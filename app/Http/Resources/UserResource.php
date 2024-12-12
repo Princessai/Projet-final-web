@@ -75,11 +75,13 @@ class UserResource extends JsonResource
             "picture" => $this->picture,
             "phone_number" => $this->phone_number,
             "email" => $this->whenNotNull($this->email),
-            "parent_id" => $this->when($isStudent && !$this->relationLoaded('etudiantParent'), $this->parent_id),
+            "parent_id" => $this->when($isStudent 
+            && !$this->relationLoaded('etudiantParent'), $this->parent_id),
 
             "parent" => new UserResource($this->whenLoaded('etudiantParent'), roleLabel: roleEnum::Etudiant->value),
 
-            "role" => $this->when($this->relationLoaded('role') && $this->seance == null, function () {
+            "role" => $this->when($this->relationLoaded('role') 
+            && $this->seance == null, function () {
                 return $this->role;
             }),
             "classe" => $this->when($this->relationLoaded('etudiantsClasses'), function () {

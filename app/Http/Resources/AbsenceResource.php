@@ -28,7 +28,8 @@ class AbsenceResource extends JsonResource
 
             "id" => $this->id,
             "etat" => $this->etat,
-            "type_seance" => $this->when($this->relationLoaded('seance') && $this->seance->relationLoaded('typeSeance'), $this->seance->typeSeance->label),
+            "type_seance" => $this->when($this->relationLoaded('seance') 
+            && $this->seance->relationLoaded('typeSeance'), $this->seance->typeSeance->label),
             "module" => $this->whenLoaded('module', function(){
                 return $this->module->label;
             }),

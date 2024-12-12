@@ -20,26 +20,27 @@ class StudentService
     public function AttendancePercentageCalc($missedHours, $workedHours)
 
     {
-        if($workedHours == 0){
+        if ($workedHours == 0) {
             throw new NoWorkedHoursException('division by zero no  courses have been done.');
         }
 
         $absencePercentage = ($missedHours * 100) / $workedHours;
-        
+
         $attendanceRate = round(100 - $absencePercentage, 2);
 
         return $attendanceRate;
     }
-    public function  calcAttendanceMark($attendancePercentage,$maxAttendanceMark){
+    public function  calcAttendanceMark($attendancePercentage, $maxAttendanceMark)
+    {
 
-        $attendanceMark =round(($attendancePercentage * 20) / 100, 2);
-        if($maxAttendanceMark === null) return $attendanceMark;
+        $attendanceMark = round(($attendancePercentage * 20) / 100, 2);
+        if ($maxAttendanceMark === null) return $attendanceMark;
         return min($maxAttendanceMark, $attendanceMark);
-}
-    public function getCurrentClasse($user, $currentYearId=null)
+    }
+    public function getCurrentClasse($user, $currentYearId = null)
     {
         // if($user instanceof Builder|| $user instanceof Model){
-         
+
         //    return $user->with('etudiantsClasses', function ($query)use($currentYear){
 
         //     if( $currentYear===null){
@@ -51,7 +52,7 @@ class StudentService
 
         //     });
         // }
-        
+
         $studentClasses = $this->getCurrentClasses($user, $currentYearId);
         return $studentClasses->last();
     }
@@ -122,12 +123,7 @@ class StudentService
                 if ($callback !== null) {
                     $callback($baseInnerQuery);
                 }
-
-
-               
             }], 'duree');
-
-            
         }
 
         $baseWhereClause = ['annee_id' => $currentYear_id, 'user_id' => $student_id];
@@ -162,9 +158,10 @@ class StudentService
         return  $missingHoursCount;
     }
 
-    public function updateOrInsertDroppedStudents($module_id, $student_id, $currentYearId, $classe_id, $seanceStart){
+    public function updateOrInsertDroppedStudents($module_id, $student_id, $currentYearId, $classe_id, $seanceStart)
+    {
 
-        $droppeBaseAttributes =[
+        $droppeBaseAttributes = [
             "module_id" => $module_id,
             "user_id" => $student_id,
             "annee_id" =>  $currentYearId,
@@ -174,29 +171,32 @@ class StudentService
 
         $droppeBaseQuery = Droppe::where($droppeBaseAttributes);
 
-        $beenDropped =$droppeBaseQuery->exists();
+        $beenDropped = $droppeBaseQuery->exists();
 
-        if($beenDropped){
-            $droppeBaseQuery->update(['updated_at'=>$seanceStart,'isDropped' => true ]);
+        if ($beenDropped) {
+            $droppeBaseQuery->update(['updated_at' => $seanceStart, 'isDropped' => true]);
+        } else {
 
-        }
-        else{
-      
 
-            $droppeBaseAttributes['isDropped']=true;
-            $droppeBaseAttributes['created_at']=$seanceStart;
-            $droppeBaseAttributes['updated_at']=$seanceStart;
+            $droppeBaseAttributes['isDropped'] = true;
+            $droppeBaseAttributes['created_at'] = $seanceStart;
+            $droppeBaseAttributes['updated_at'] = $seanceStart;
 
             Droppe::create($droppeBaseAttributes);
         }
-
     }
 
-    public function loadStudentmissedHoursSum($query, $module_id = null,$currentYear_id = null,$timestamp1 = null,
-    $timestamp2 = null,
-    $callback = null,string $loading='with'){
-        $loading.="Sum";
-           
+    public function loadStudentmissedHoursSum(
+        $query,
+        $module_id = null,
+        $currentYear_id = null,
+        $timestamp1 = null,
+        $timestamp2 = null,
+        $callback = null,
+        string $loading = 'with'
+    ) {
+        $loading .= "Sum";
+
         $baseQuery =   $query->$loading(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear_id, $module_id, $timestamp2, $timestamp1, $callback) {
 
             if ($module_id !== null) {
@@ -217,6 +217,5 @@ class StudentService
                 $callback($query);
             }
         }], 'duree');
-
     }
 }

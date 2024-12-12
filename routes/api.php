@@ -24,9 +24,9 @@ Route::prefix('trackin')->group(function () {
     // groupe de routes authentifiés
     Route::middleware(['auth:sanctum'])->group(function () {
 
-        Route::get('/user', function (Request $request) {
-            return $request->user();
-        });
+        // Route::get('/user', function (Request $request) {
+        //     return $request->user();
+        // });
 
 
         Route::get("/logout", [UserController::class, 'logout']);
@@ -34,10 +34,10 @@ Route::prefix('trackin')->group(function () {
         Route::get("/logged_user/infos", [UserController::class, 'loggedUserInfos']);
 
         Route::get("/teacher/force-delete/{user_id}/{role_label}", [UserController::class, 'forceDeleteUser'])
-        ->whereNumber(['user_id']);
+            ->whereNumber(['user_id']);
 
 
-        
+
         // CRUD users
         Route::apiResource('user', UserController::class);
         Route::apiResource('admin', AdminController::class);
@@ -49,11 +49,11 @@ Route::prefix('trackin')->group(function () {
 
 
         Route::post("/update/users/picture/{user_id}", [UserController::class, 'updateUserPicture'])
-        ->whereNumber(['user_id']);
+            ->whereNumber(['user_id']);
 
 
 
-            
+
         Route::get("/user/seances/{user_id}/{timestamp?}", [UserController::class, 'getUserSeances'])
             ->whereNumber(['user_id']);
 
@@ -64,15 +64,15 @@ Route::prefix('trackin')->group(function () {
         Route::get("/gethours/classes/year_segments/{year_segments}", [CourseHourController::class, 'getAllClassesWorkedHours']);
 
 
-        // crud emploi du temps
-        // Route::prefix("/timetable")->group(function () {
-        //     Route::get("/create", [TimetableController::class, 'createTimetable'])
-        //     ->whereNumber(['classe_id']);
-        // });
+        Route::prefix("/timetable")->group(function () {
+            // class timetable
+            Route::get("/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
+                ->whereNumber(['classe_id', 'annee_id']);
 
-        // class timetable
-        Route::get("/timetable/{classe_id}/{annee_id}/{interval?}", [TimetableController::class, 'getClasseTimetables'])
-            ->whereNumber(['classe_id', 'annee_id']);
+            Route::get("/{timetable_id}", [TimetableController::class, 'getTimetable'])
+                ->whereNumber(['timetable_id']);
+        });
+
         // CRUD timetable
         Route::resource('timetable', TimetableController::class);
 
@@ -105,6 +105,9 @@ Route::prefix('trackin')->group(function () {
             Route::get("/student/module/{student_id}/{module_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getModuleAttendanceRate'])
                 ->whereNumber(['student_id', 'module_id']);
 
+            Route::get("/student/modules/byweeks/{student_id}/{timestamp1?}/{timestamp2?}", [AbsenceController::class, 'getAttendanceRateByWeeks'])
+                ->whereNumber(['student_id']);
+
             Route::get(
                 "/student/year_segment/{student_id}/{year_segments?}",
                 [AbsenceController::class, 'getStudentAttendanceRateByYearSegment']
@@ -135,8 +138,17 @@ Route::prefix('trackin')->group(function () {
             )
                 ->whereNumber(['classe_id', 'module_id']);
 
-        Route::get("/student/weeks/{student_id}/{annee_id}/{timestamp1?}/{timestamp2?}", 
-        [AbsenceController::class, 'getStudentAttendanceRateByweeks']);
+            Route::get(
+                "/student/weeks/{student_id}/{annee_id}/{timestamp1?}/{timestamp2?}",
+                [AbsenceController::class, 'getStudentAttendanceRateByweeks']
+            )
+                ->whereNumber(['student_id', 'annee_id']);
+
+            Route::get(
+                "/student/modules/{student_id}/{annee_id}/{timestamp1?}/{timestamp2?}",
+                [AbsenceController::class, 'getStudentAttendanceRateByModules']
+            )
+                ->whereNumber(['student_id', 'annee_id']);
 
             // Route::get("/student/months/{student_id}/{months}/{month_count?}", [AbsenceController::class, 'getStudentAttendanceRateByMonth'])
             // ->whereNumber(['student_id', 'months']);
