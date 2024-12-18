@@ -18,6 +18,7 @@ function compareDebut($a, $b)
     // Compare the times
     return $timeA->timestamp - $timeB->timestamp;
 }
+
 class TimetableResource extends JsonResource
 {
     /**
