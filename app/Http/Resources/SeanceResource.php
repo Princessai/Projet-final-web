@@ -35,10 +35,10 @@ class SeanceResource extends JsonResource
             "salle" =>  $this->salle,
             "module" => new ModuleResource($this->whenLoaded('module')),
 
-            "manager" => $this->whenLoaded('enseignant',function(){
-                return ["name" => $this->enseignant->name, "lastname" => $this->enseignant->lastname];
-            } ),
-            
+            "manager" => $this->whenLoaded('enseignant', function () {
+                return ["id" => $this->enseignant->id, "name" => $this->enseignant->name, "lastname" => $this->enseignant->lastname];
+            }),
+
             "timetable_id" =>  $this->timetable_id,
             "type_seance" => $this->typeSeance,
             "classe" => new ClasseResource($this->whenLoaded('classe')),

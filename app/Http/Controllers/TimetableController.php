@@ -157,7 +157,7 @@ class TimetableController extends Controller
     public function edit(string $id)
     {
         $timetable = apiFindOrFail(Timetable::with(['seances' => [
-            'classe' => ['coordinateur'],
+            'classe' => ['coordinateur','coordinateur.role'],
             'module',
             'salle',
             'typeSeance'

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Models\Classe;
 use App\Enums\roleEnum;
@@ -12,6 +13,8 @@ use App\Services\UserService;
 use App\Services\AnneeService;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\UserRequest;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\UserCollection;
 use Illuminate\Support\Facades\Validator;
 
 class CoordinatorController extends Controller
@@ -24,6 +27,42 @@ class CoordinatorController extends Controller
         //
     }
 
+    public function getAllCoordinators()
+    {
+        $role = Role::with('roleUsers')
+            ->where('label', roleEnum::Coordinateur->value)->first();
+
+
+        // $teachers = Role::with('roleUsers.enseignantModules')->where('label', )->first()->roleUsers;
+
+
+        $response = (new UserCollection($role->roleUsers))
+            ->setRoleLabel(roleEnum::Coordinateur);
+        return apiSuccess(data: $response);
+    }
+
+    public function getClasseCoordinator($classe_id)
+    {
+        $classe = Classe::with([
+
+            'coordinateur' => function ($query) {
+
+                // $query->with('role');
+            }
+
+
+        ]);
+
+        $classe = apiFindOrFail($classe, $classe_id, "no such coordinateur");
+
+
+        $response = new UserResource($classe->coordinateur, roleLabel: roleEnum::Coordinateur->value);
+
+        return apiSuccess(data: $response);
+    }
+
+
+
     /**
      * Store a newly created resource in storage.
      */
@@ -31,15 +70,15 @@ class CoordinatorController extends Controller
     {
 
         $validatedData = $request->validated();
-        
+
         $validator = Validator::make($request->all(), [
             'classes' => ['array'],
-            'classes.*' => ['required','integer'],
+            'classes.*' => ['required', 'integer'],
         ]);
-        
+
         if ($validator->fails()) {
             return  apiError(errors: $validator->errors());
-        } 
+        }
         $UserService = new UserService;
 
         $coordinatorData  = Arr::except($validatedData, ['classes']);
@@ -54,9 +93,9 @@ class CoordinatorController extends Controller
 
         $newCoordinator->generatedPassword = $generatedPassword;
 
-        $classesIds =  $request->input('classes',[]);
+        $classesIds =  $request->input('classes', []);
 
-        Classe::whereIn('id', $classesIds)->update(['coordinateur_id'=>$newCoordinator->id]);
+        Classe::whereIn('id', $classesIds)->update(['coordinateur_id' => $newCoordinator->id]);
 
         $coordinateurClasses = collect([]);
         foreach ($classesIds as $classesId) {
@@ -64,7 +103,7 @@ class CoordinatorController extends Controller
             $classe->id = $classesId;
 
             $classe->coordinateur_id = $newCoordinator->id;
-    
+
             $coordinateurClasses->push($classe);
         }
 
@@ -86,7 +125,6 @@ class CoordinatorController extends Controller
         $response = $UserService->showUser($coordinator, $id);
 
         return apiSuccess(data: $response);
-
     }
 
     /**
@@ -95,56 +133,53 @@ class CoordinatorController extends Controller
     public function update(UserRequest $request, string $id)
     {
         $validatedData = $request->validated();
-      
+
 
         $validator = Validator::make($request->all(), [
             'classes' => ['array'],
             'classes.*' => ['array'],
-            'classes.*.action' => [Rule::requiredIf(fn () => $request->filled('classes')), Rule::enum(crudActionEnum::class)],
-            'classes.*.id'=>[Rule::requiredIf(fn () => $request->filled('classes')), 'integer']
+            'classes.*.action' => [Rule::requiredIf(fn() => $request->filled('classes')), Rule::enum(crudActionEnum::class)],
+            'classes.*.id' => [Rule::requiredIf(fn() => $request->filled('classes')), 'integer']
         ]);
- 
+
         if ($validator->fails()) {
             return  apiError(errors: $validator->errors());
-        } 
+        }
 
-      
+
 
         $coordinator = apiFindOrFail(new User, $id, 'no such coordinator');
 
         $coordinatorData =  Arr::except($validatedData, ['classes']);
 
-        $classes = $request->input('classes',[]);
+        $classes = $request->input('classes', []);
 
-        $addedClasseIds =[];
-        $deletedClasseIds =[];
-       
-        foreach($classes as $classe ){
-            $classeAction= $classe['action'];
-            $classeId= $classe['id'];
-        
-            if($classeAction===crudActionEnum::Create->value){
-                $addedClasseIds[]=$classeId;
+        $addedClasseIds = [];
+        $deletedClasseIds = [];
+
+        foreach ($classes as $classe) {
+            $classeAction = $classe['action'];
+            $classeId = $classe['id'];
+
+            if ($classeAction === crudActionEnum::Create->value) {
+                $addedClasseIds[] = $classeId;
             }
 
-            if($classeAction===crudActionEnum::Delete->value){
-                $deletedClasseIds[]=$classeId;
+            if ($classeAction === crudActionEnum::Delete->value) {
+                $deletedClasseIds[] = $classeId;
             }
-           
         }
-    
-        if(!empty($addedClasseIds)){
-            Classe::whereIn('id', $addedClasseIds)->update(['coordinateur_id'=>$coordinator->id]);  
 
+        if (!empty($addedClasseIds)) {
+            Classe::whereIn('id', $addedClasseIds)->update(['coordinateur_id' => $coordinator->id]);
         }
-        if(!empty($deletedClasseIds)){
-            Classe::whereIn('id', $deletedClasseIds)->update(['coordinateur_id'=>null]);
+        if (!empty($deletedClasseIds)) {
+            Classe::whereIn('id', $deletedClasseIds)->update(['coordinateur_id' => null]);
         }
 
         $coordinator->update($coordinatorData);
 
-        return apiSuccess(message:'coordinator updated successfully !');
-
+        return apiSuccess(message: 'coordinator updated successfully !');
     }
 
     /**

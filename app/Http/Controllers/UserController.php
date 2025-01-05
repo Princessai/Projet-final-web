@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 
 use App\Http\Resources\UserCollection;
 use function PHPUnit\Framework\isNull;
+use Illuminate\Database\Query\Builder;
 use App\Http\Resources\SeanceCollection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
@@ -200,25 +201,25 @@ class UserController extends Controller
 
         $children = User::with(['etudiantsClasses' => function ($query) {
             // $query->with('etudiantsClasses', function ($query) {
-                $query->orderByPivot('id', 'desc')->take(1);
+            $query->orderByPivot('id', 'desc')->take(1);
             // });
-        }])->where(['parent_id'=>$parent_id])->get();
+        }])->where(['parent_id' => $parent_id])->get();
 
 
         // $user = apiFindOrFail($user, $parent_id, "no such user");
 
 
         // if ($user->role->label != roleEnum::Parent->value) {
-           
+
         //     return apiError(message: "the user $parent_id is not parent");
         // }
 
         // $parent = $user;
 
         // $children = $parent->parentEtudiants;
-      
+
         $response = (new Usercollection($children))
-        ->setRoleLabel(roleEnum::Etudiant);
+            ->setRoleLabel(roleEnum::Etudiant);
         return apiSuccess(data: $response);
     }
 
@@ -311,7 +312,16 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $query = User::with('role');
+        $user = apiFindOrFail($query, $id);
+        if($user->role->label==roleEnum::Etudiant->value){
+            $user->load(['etudiantsClasses' => function ($query) {
+
+                $query->orderByPivot('id', 'desc')->take(1);
+            }]);
+        }
+
+        return apiSuccess( new UserResource($user));
     }
 
     /**

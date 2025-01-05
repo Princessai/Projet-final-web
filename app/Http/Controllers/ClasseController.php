@@ -21,6 +21,8 @@ use App\Http\Resources\ClasseResource;
 
 
 use App\Http\Resources\UserCollection;
+use App\Models\User;
+
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 
@@ -137,7 +139,7 @@ class ClasseController extends Controller
     public function show(string $id)
     {
         $currentYearId = app(AnneeService::class)->getCurrentYear()->id;
-        
+
         $classeQuery = Classe::with(['enseignants' => function ($query) use ($currentYearId, $id) {
             $query->select('users.id');
 
@@ -154,7 +156,7 @@ class ClasseController extends Controller
         $classe = apiFindOrFail($classeQuery, $id, 'no such classe');
 
         $response = ['classe' => new ClasseResource($classe)];
-        
+
         return apiSuccess(data: $response);
     }
 
@@ -536,15 +538,23 @@ class ClasseController extends Controller
     public function getClasseTeachers(Request $request, $classe_id)
     {
 
-        // $seanceManager = $classeModuleRandom->enseignants()->whereHas('enseignantClasses', function ($query) use ($classe) {
-        //     $query->where('classes.id', $classe->id);
-        // })->first();
-        // 'enseignantModules' =>
-        // function ($query) use ($classe_id) {
-        //     $query->whereHas('classes', function ($query) use ($classe_id) {
-        //         $query->where('classes.id', $classe_id);
-        //     });
-        // }
+        $requestData = $request->route()->parameters() + $request->query();
+
+        $validator = Validator::make($requestData, [
+            'withOthers' =>  function ($attribute, $value, $fail) {
+                $trimedValue = strtolower(str_replace(' ', '', $value));
+                if (is_bool($trimedValue) || $trimedValue == 'true' || $trimedValue == 'false') return;
+                $fail("The $attribute must be a boolean or a truthy string ('true', 'false').");
+            },
+
+        ]);
+
+        if ($validator->fails()) {
+            return  apiError(errors: $validator->errors());
+        }
+        $withOthers = $request->boolean('withOthers', false);
+
+
 
         $classe = Classe::with([
 
@@ -564,8 +574,35 @@ class ClasseController extends Controller
         $classe = apiFindOrFail($classe, $classe_id, "no such class");
         // return $classe;
 
-        $response = (new Usercollection($classe->enseignants))
-            ->setRoleLabel(roleEnum::Enseignant);
+        $teachersId = $classe->enseignants->pluck('id')->all();
+
+        if ($withOthers) {
+          
+
+            $role = Role::with(['roleUsers' => function ($query) use($teachersId) {
+                $query->whereNotIn('id', $teachersId);
+                $query->with('enseignantModules');
+            }])
+                ->where('label', roleEnum::Enseignant->value)->first();
+
+                $otherTeachers = $role->roleUsers;
+
+          
+        }
+
+        if (!$withOthers) {
+            $response = (new Usercollection($classe->enseignants))
+                ->setRoleLabel(roleEnum::Enseignant);
+        } else {
+
+            $response = ['classeTeachers'=> (new Usercollection($classe->enseignants))
+            ->setRoleLabel(roleEnum::Enseignant), 
+            'otherTeachers' => (new Usercollection($otherTeachers))
+            ->setRoleLabel(roleEnum::Enseignant)
+        ];
+        }
+
+
         return apiSuccess(data: $response);
     }
 

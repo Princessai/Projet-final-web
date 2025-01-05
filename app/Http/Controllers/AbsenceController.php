@@ -23,6 +23,9 @@ use App\Http\Resources\AbsenceCollection;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\YearSegmentAbsenceResource;
 use App\Http\Resources\ClasseAttendanceRateResource;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
 
 include_once(base_path('utilities\seeder\seanceDuration.php'));
 
@@ -83,18 +86,13 @@ class AbsenceController extends Controller
 
         if ($timestamp1 === null && $timestamp2 === null) {
 
-            // $studentAbsences = $student->etudiantAbsences()->where(['annee_id' => $currentYear->id])->get();
-            // $missingHoursCount = $ClasseService->getStudentMissedHours($studentAbsences);
 
 
             $missingHoursCount = (int) $student->missingHoursSum;
 
 
             $classesModules = $studentClasse->modules;
-            // foreach ($classesModules as $classesModule) {
 
-            //     $nbre_heure_effectue += $classesModule->pivot->nbre_heure_effectue;
-            // }
 
             $nbre_heure_effectue =  $ClasseService->getClasseModulesWorkedHours($classesModules);
         }
@@ -102,31 +100,11 @@ class AbsenceController extends Controller
 
         if ($timestamp1 !== null && $timestamp2 !== null) {
 
-            // $studentAbsences = Absence::with(['seance'])->whereBetween();
-
-            // $timestamp1 = Carbon::createFromTimestamp($timestamp1)->toDateTimeString();
-            // $timestamp2 = Carbon::createFromTimestamp($timestamp2)->toDateTimeString();
 
             $seancesClasses = $studentClasse->seances;
-            // $seancesClasses = $studentClasse->seances()->where('heure_debut','>' ,$timestamp1);
 
-            // foreach ($seancesClasses as $seance) {
-            //     $startHour =  Carbon::parse($seance->heure_debut);
-            //     $endHour =  Carbon::parse($seance->heure_fin);
-            //     $duree = seanceDuration($endHour, $startHour);
-            //     $nbre_heure_effectue += $duree;
-
-            //     $studentAbsence = $seance->absences()->where('user_id', $student_id)->first();
-
-            //     if (!is_null($studentAbsence)) {
-            //         //  return apiSuccess(data: $studentAbsence);
-            //         $missingHoursCount += $duree;
-            //     }
-            // }
 
             ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
-
-            // return apiSuccess(data: $missingHoursCount);
         }
 
 
@@ -134,34 +112,12 @@ class AbsenceController extends Controller
 
             $seancesClasses = $studentClasse->seances;
 
-            // return apiSuccess(data: $seancesClasses);
 
-            // foreach ($seancesClasses as $seance) {
-            //     $startHour =  Carbon::parse($seance->heure_debut);
-            //     $endHour =  Carbon::parse($seance->heure_fin);
-            //     $duree = seanceDuration($endHour, $startHour);
-            //     $nbre_heure_effectue += $duree;
-
-            //     $studentAbsence = $seance->absences()->where('user_id', $student_id)->first();
-
-            //     if (!is_null($studentAbsence)) {
-            //         //  return apiSuccess(data: $studentAbsence);
-            //         $missingHoursCount += $duree;
-            //     }
-            // }
 
             ['workedHours' => $nbre_heure_effectue, 'missedHours' => $missingHoursCount] = $ClasseService->getStudentMissedAndWorkedHours($seancesClasses, $student_id);
         }
 
 
-        // return apiSuccess(data: [$nbre_heure_effectue, $seancesClasses ]);
-
-        // if ($nbre_heure_effectue != 0) {
-        //     //  return apiSuccess(data: $studentAbsence);
-        //     $absencePercentage = ($missingHoursCount * 100) / $nbre_heure_effectue;
-        // } else {
-        //     return apiError(message: 'no courses has been done for this interval');
-        // }
 
 
 
@@ -171,7 +127,7 @@ class AbsenceController extends Controller
 
         $attendanceMark = round(($presencePercentage * 20) / 100, 2);
         $attendanceMark = min($maxAttendanceMark, $attendanceMark);
-        $response = ["hours worked" => $nbre_heure_effectue, 'missing hours' => $missingHoursCount, 'presence percentage' => $presencePercentage, 'attendance mark' => $attendanceMark];
+        $response = ["workedHours" => $nbre_heure_effectue, 'missingHours' => $missingHoursCount, 'attendanceRate' => $presencePercentage, 'attendanceMark' => $attendanceMark];
         return apiSuccess(data: $response);
     }
 
@@ -180,15 +136,7 @@ class AbsenceController extends Controller
         $ClasseService = new ClasseService;
         $currentYear = app(AnneeService::class)->getCurrentYear();
 
-        // if ($timestamp1 === null && $timestamp2 === null) {
-        //     // $classe = Classe::with(['etudiants.etudiantAbsences', 'modules']);
 
-        // } else {
-        //     $classe = Classe::with(['etudiants.etudiantAbsences', 'seances']);
-        // }
-
-
-        // $classe = apiFindOrFail($classe, $classe_id, "no such class");
         $classe = $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum(
             classe_id: $classe_id,
             currentYear_id: $currentYear->id,
@@ -198,42 +146,7 @@ class AbsenceController extends Controller
         );
 
 
-        // $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
-        // $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
 
-
-        // if ($timestamp1 === null && $timestamp2 === null) {
-
-        //     $nbre_heure_effectue = $ClasseService->getClasseModulesWorkedHours($classe->modules);
-        // } else if ($timestamp1 !== null && $timestamp2 !== null) {
-
-        //     $classeSeances = $classe->seances()->where('etat', seanceStateEnum::Done->value)->whereBetween('heure_debut', [$timestamp1, $timestamp2])->get();
-        //     $nbre_heure_effectue = $ClasseService->getClasseSeancesWorkedHours($classeSeances);
-        // } else if ($timestamp1 !== null && $timestamp2 === null) {
-
-        //     $classeSeances = $classe->seances()->where('etat', seanceStateEnum::Done->value)->where('heure_debut', '>', $timestamp1)->get();
-        //     $nbre_heure_effectue = $ClasseService->getClasseSeancesWorkedHours($classeSeances);
-        // }
-
-
-        // $classeStudents = $classe->etudiants;
-        // $classeStudentsCount = $classeStudents->count();
-        // $response = [];
-        // $classeStudentsAttendanceRate = 0;
-        // foreach ($classeStudents as $classeStudent) {
-
-        //     // return apiSuccess(data:new ClasseStudentsAbsencesResource($classeStudent, $nbre_heure_effectue));
-        //     $apiResource = new ClasseStudentsAbsencesResource($classeStudent, $nbre_heure_effectue);
-
-
-        //     $attendanceRate = $apiResource->toArray(request())['attendanceRate'];
-        //     //  return apiSuccess( $attendanceRate );
-        //     $classeStudentsAttendanceRate += $attendanceRate;
-
-        //     $response[] =  $apiResource;
-        // }
-
-        // $classeAttendanceRate = round($classeStudentsAttendanceRate / $classeStudentsCount, 2);
 
         $data = ['studentAttendanceRate' => $studentAttendanceRate, 'classeAttendanceRate' => $classeAttendanceRate] = $ClasseService->getClasseAttendanceRates($classe, $timestamp1, $timestamp2);
 
@@ -326,7 +239,7 @@ class AbsenceController extends Controller
 
         $attendanceMark = $StudentService->calcAttendanceMark($attendancePercentage, $maxAttendanceMark);
 
-        $response = ["hours worked" => $workedHours, 'missing hours' => $missingHoursCount, 'presence percentage' => $attendancePercentage, 'attendance mark' => $attendanceMark];
+        $response = ["workedHours" => $workedHours, 'missingHours' => $missingHoursCount, 'attendanceRate' => $attendancePercentage, 'attendanceMark' => $attendanceMark];
         return apiSuccess(data: $response);
     }
 
@@ -337,129 +250,6 @@ class AbsenceController extends Controller
 
         $timestamp1 = ($timestamp1 !== null) ? Carbon::createFromTimestamp($timestamp1)->toDateTimeString() : null;
         $timestamp2 = ($timestamp2 !== null) ? Carbon::createFromTimestamp($timestamp2)->toDateTimeString() : null;
-
-        // $baseQuery =  Classe::withCount(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     $query->where('classe_etudiants.annee_id', $currentYear->id);
-        // }
-        // ])->with(['etudiants' => function ($query) use ($currentYear, $module_id, $timestamp2, $timestamp1) {
-        // $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
-        // $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear, $module_id, $timestamp2, $timestamp1) {
-
-        //     if ($module_id !== null) {
-        //         $query->where('module_id', $module_id);
-        //     }
-        //     if($timestamp1 === null && $timestamp2 === null){
-        //         $query->where('annee_id', $currentYear->id);   
-        //     }
-        //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         $query->where('seance_heure_debut', '>', $timestamp1);
-        //     }
-
-        //     if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-        //     };
-        // }], 'duree');
-        // }]);
-
-        // if ($timestamp1 === null && $timestamp2 === null) {
-
-
-        //     // $classe = Classe::withCount(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     //         $query->where('classe_etudiants.annee_id', $currentYear->id);
-        //     //     }
-        //     // ])
-        //     // ->with(['etudiants' => function ($query) use ($currentYear, $module_id) {
-        //     //     $query->wherePivot('classe_etudiants.annee_id', $currentYear->id);
-        //     //     $query->withSum(['etudiantAbsences as missedHoursSum' => function ($query) use ($currentYear, $module_id) {
-        //     //         $query->where('annee_id', $currentYear->id);
-        //     //         if ($module_id !== null) {
-        //     //             $query->where('module_id', $module_id);
-        //     //         }
-        //     //     }], 'duree');
-        //     // }])
-
-        //     $classe= $baseQuery->withSum(['modules as workedHoursSum' => function ($query) use ($currentYear, $module_id) {
-        //             $query->where('annee_id', $currentYear->id);
-        //             if ($module_id !== null) {
-        //                 $query->where('module_id', $module_id);
-        //             }
-        //         }], 'classe_module.nbre_heure_effectue');
-        // } else {
-
-
-
-        //         // with(['etudiants.etudiantAbsences'=>function($query) use($currentYear,$module_id,$timestamp2,$timestamp1)  {
-
-
-        //         //     if($module_id!==null){
-        //         //         $query->where('module_id',$module_id);
-        //         //     }
-
-        //         //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         //         $query->where('seance_heure_debut', '>', $timestamp1);
-
-        //         //         }
-
-        //         //     if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         //              $query->whereBetween('seance_heure_debut', [$timestamp1, $timestamp2]);
-        //         //     };
-
-
-        //         // }])
-
-
-        //         $classe=$baseQuery->withSum(['seances as workedHoursSum' => function ($query) use ($module_id, $currentYear, $timestamp2, $timestamp1) {
-
-        //             $baseWhereClause = ['etat' => seanceStateEnum::Done->value];
-
-
-
-        //             if ($module_id !== null) {
-        //                 $baseWhereClause['module_id'] = $module_id;
-        //             }
-
-
-        //             $query->where($baseWhereClause);
-
-        //             if ($timestamp1 !== null && $timestamp2 === null) {
-        //                 $query->where('heure_debut', '>', $timestamp1);
-        //             }
-
-        //             if ($timestamp1 !== null && $timestamp2 !== null) {
-        //                 $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-        //             };
-        //         }], 'duree')
-        //         // ->with('seances',function($query)use($module_id,$currentYear,$timestamp2,$timestamp1){
-
-        //         //     $baseWhereClause=['etat'=> seanceStateEnum::Done->value];
-
-
-
-        //         //     if($module_id!==null){
-        //         //         $baseWhereClause['module_id']=$module_id;
-        //         //     }
-
-
-        //         //     $query->where($baseWhereClause);
-
-        //         //     if ($timestamp1 !== null && $timestamp2 === null) {
-        //         //         $query->where('heure_debut', '>', $timestamp1);
-
-        //         //         }
-
-        //         //         if ($timestamp1 !== null && $timestamp2 !== null) {
-        //         //              $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-        //         //         };
-
-        //         // })
-
-        //     ;
-        // }
-
-
-
-        // $classe = apiFindOrFail($classe, $classe_id, "no such class");
-
 
         $classe = $ClasseService->loadWithWorkedHoursAndStudentsMissingHoursSum($classe_id, $currentYear->id, $module_id, $timestamp1, $timestamp2);
 
@@ -684,11 +474,21 @@ class AbsenceController extends Controller
 
 
         $fileName = null;
+        $filePath = null;
 
-        if ($request->filled('receipt')) {
+        if ($request->hasFile('receipt')) {
+
+
+            $uuid = Str::uuid();
             $receipt = $request->file('receipt');
-            $fileName = $receipt->store('receipts');
+            $fileExtension = $receipt->getClientOriginalExtension();
+            $fileName = $uuid . '.' . $fileExtension;
+            $dirName = "receipts";
+            $dirPath = storage_path("app/public/$dirName");
+            $receipt->move($dirPath, $fileName);
+            $filePath = asset("storage/receipts/$fileName");
         }
+
 
 
         $absence =  Absence::with(['etudiant:id', 'seance.classe']);
@@ -718,17 +518,6 @@ class AbsenceController extends Controller
                 ->Where('etat', absenceStateEnum::notJustified->value);
         });
 
-        // return $student;
-
-        // $studentClasse = $absence->etudiant()->etudiantsClasses()->where()->first();
-
-        // $pivotDataBaseQuery = DB::table('classe_module')
-        //     ->where([
-        //         'annee_id' => $currentYear->id,
-        //         'module_id' => $module_id,
-        //         'classe_id' => $studentClasse->id
-        //     ]);
-
 
         $pivotDataBaseQuery =  $ClasseService->getClasseModuleQuery($currentYear->id, $module_id, $studentClasse->id);
 
@@ -748,24 +537,8 @@ class AbsenceController extends Controller
 
         if ($workedHoursPercentage > $minWorkedHoursPercentage) {
 
-            // $studentModuleAbscences= $StudentService->getModuleAbsences($student,$module_id,$currentYear,function($seanceQuery) use($seance_id){
-            //     $seanceQuery->where('seance_id','!=',$seance_id)->Where('etat', absenceStateEnum::notJustified->value);
-            // });
-            // $missedHours =  $ClasseService->getStudentMissedHours($studentModuleAbscences);
-
-            // $missedHours =  $StudentService->getMissedHours(
-            //     student_id: $student->id,
-            //     currentYear_id: $currentYear->id,
-            //     module_id: $module_id,
-            // callback: function ($seanceQuery) use ($seance_id) {
-            //     $seanceQuery->where('seance_id', '!=', $seance_id)
-            //         ->Where('etat', absenceStateEnum::notJustified->value);
-            // }
-            // );
-
             $missedHours = $student->missedHoursSum;
 
-            // return $missedHours;
 
             $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc($missedHours, $workedHours);
 
@@ -780,8 +553,13 @@ class AbsenceController extends Controller
 
 
         $absence->update(['etat' => absenceStateEnum::justified->value, 'receipt' => $fileName, 'coordinateur_id' => $coordinateur_id]);
+        $data = [];
+        if ($fileName) {
+            $data['fileName'] = $fileName;
+            $data['filePath'] = $filePath;
+        }
 
-        return apiSuccess(message: 'absence justified successfully !');
+        return apiSuccess(data: $data, message: 'absence justified successfully !');
     }
 
     public  function  getStudentAttendanceRateByweeks($student_id, $annee_id, $timestamp1 = null, $timestamp2 = null)
@@ -885,16 +663,15 @@ class AbsenceController extends Controller
             foreach ($etudiantsClasse->modules as $module) {
                 $module_id = $module->id;
                 $workedHoursSum = $module->pivot->nbre_heure_effectue;
-                $missedHoursSum = $studentAbsences[$module_id] ? $studentAbsences[$module_id]->missedHoursSum : 0;
+                $missedHoursSum = isset($studentAbsences[$module_id]) ? $studentAbsences[$module_id]->missedHoursSum : 0;
 
                 $attendanceRate = $StudentService->AttendancePercentageCalc($missedHoursSum, $workedHoursSum);
-                
+
                 $response[] = [
                     "module_id" => $module_id,
-                    "label" =>$module->label,
+                    "label" => $module->label,
                     "attendanceRate" => $attendanceRate
                 ];
-
             }
         }
 

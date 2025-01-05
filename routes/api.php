@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SalleController;
 use App\Http\Controllers\ClasseController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ParentController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\CourseHourController;
+use App\Http\Controllers\TypeseanceController;
 use App\Http\Controllers\CoordinatorController;
 
 Route::prefix('trackin')->group(function () {
@@ -160,11 +162,17 @@ Route::prefix('trackin')->group(function () {
             ->whereNumber(['absence_id']);
 
 
-        // toutes les liste
+        // toutes les listes
         Route::prefix('list')->group(function () {
 
 
+            Route::get("/salles", [SalleController::class, 'getSalles']);
+
+            Route::get("/typeseances", [TypeseanceController::class, 'getTypeSeances']);
+
             Route::get("/modules", [ModuleController::class, 'getAllModules']);
+            Route::get("/modules/classe/{classe_id}", [ModuleController::class, 'getClasseModules'])
+            ->whereNumber(['classe_id']);
 
             //classes
             Route::get("/classes", [ClasseController::class, 'getAllClasses']);
@@ -178,6 +186,9 @@ Route::prefix('trackin')->group(function () {
 
             //teachers
             Route::get("/teachers", [UserController::class, 'getAllTeachers']);
+            Route::get("/coordinators", [CoordinatorController::class, 'getAllCoordinators']);
+            Route::get("/coordinators/{classe_id}", [CoordinatorController::class, 'getClasseCoordinator'])
+            ->whereNumber(['classe_id']);
 
             Route::get("teachers/{classe_id}", [ClasseController::class, 'getClasseTeachers'])
                 ->whereNumber('classe_id');

@@ -235,14 +235,17 @@ class ClasseService
 
         $yearSegmentsCopy =  recursiveClone($yearSegments);
 
-        $seances = $classe->seances->where([
-            'annee_id' => $currentYearId,
-            'etat' => seanceStateEnum::Done->value
-        ])->all();
+        $seances = $classe->seances->filter(function ($seance) use($currentYearId) {
+            return $seance->annee_id == $currentYearId && $seance->etat == seanceStateEnum::Done->value;
+        });
+        
+        // ->where([
+        //     'annee_id' => $currentYearId,
+        //     'etat' => seanceStateEnum::Done->value
+        // ])->all();
 
-
-
-
+        // apiSuccess($seances)->send();
+        // die();
 
 
 
@@ -251,7 +254,6 @@ class ClasseService
             $seancesYearSegments = isSeanceInYearSegments($seance, $yearSegmentsCopy);
 
             if ($seancesYearSegments->isEmpty()) continue;
-
 
 
             // $seanceStart = Carbon::parse($seance->heure_debut);

@@ -159,7 +159,7 @@ class CourseHourController extends Controller
         $currentYear = Annee::latest()->first();
 
 
-        $yearSegments = YearSegment::where('annee_id', $currentYear->id)->whereIn('number', $selectedYearSegments)->get();
+         $yearSegments = YearSegment::where('annee_id', $currentYear->id)->whereIn('number', $selectedYearSegments)->get();
         $typeSeances = TypeSeance::all();
         $response = [];
         foreach ($classes as $classe) {

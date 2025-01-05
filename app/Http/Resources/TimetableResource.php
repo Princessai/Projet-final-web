@@ -32,7 +32,6 @@ class TimetableResource extends JsonResource
 
         usort($pauses, 'app\Http\Resources\compareDebut');
 
-        $StudentService = new StudentService;
 
         return [
             'id' => $this->id,
@@ -42,11 +41,7 @@ class TimetableResource extends JsonResource
             'commentaire' => $this->commentaire,
             'classe_id' => $this->classe_id,
             'seances' => SeanceResource::collection($this->whenLoaded('seances')),
-            'attendanceRate'=> $this->when($this->missedHoursSum 
-            && $this->workedHoursSum,function() use ($StudentService){
-                return $StudentService->AttendancePercentageCalc($this->missedHoursSum, $this->workedHoursSum);
-
-            }, null),
+     
         ];
     }
 }
