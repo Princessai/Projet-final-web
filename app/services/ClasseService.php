@@ -238,15 +238,6 @@ class ClasseService
         $seances = $classe->seances->filter(function ($seance) use($currentYearId) {
             return $seance->annee_id == $currentYearId && $seance->etat == seanceStateEnum::Done->value;
         });
-        
-        // ->where([
-        //     'annee_id' => $currentYearId,
-        //     'etat' => seanceStateEnum::Done->value
-        // ])->all();
-
-        // apiSuccess($seances)->send();
-        // die();
-
 
 
         foreach ($seances as $seance) {

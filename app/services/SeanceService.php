@@ -48,12 +48,6 @@ class SeanceService
 
         $ClasseService = new ClasseService;
 
-        // $pivotDataBaseQuery = DB::table('classe_module')
-        //     ->where([
-        //         'annee_id' => $currentYearId,
-        //         'module_id' => $seance->module_id,
-        //         'classe_id' => $seance->classe->id
-        //     ]);
 
         $pivotDataBaseQuery  = $ClasseService->getClasseModuleQuery($currentYearId, $seance->module_id, $seance->classe->id);
         $pivotData = $pivotDataBaseQuery->first();

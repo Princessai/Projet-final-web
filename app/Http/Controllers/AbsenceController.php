@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\TimetableResource;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Annee;
@@ -11,21 +10,26 @@ use App\Models\Droppe;
 use App\Models\Absence;
 use App\Models\YearSegment;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Enums\seanceStateEnum;
 use App\Services\AnneeService;
 use App\Enums\absenceStateEnum;
 use App\Services\ClasseService;
+use App\Services\AbsenceService;
 use App\Services\StudentService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManager;
 use App\Http\Resources\AbsenceResource;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\AbsenceCollection;
+use App\Http\Resources\TimetableResource;
 use Illuminate\Support\Facades\Validator;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Laravel\Facades\Image;
 use App\Http\Resources\YearSegmentAbsenceResource;
 use App\Http\Resources\ClasseAttendanceRateResource;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-
 
 include_once(base_path('utilities\seeder\seanceDuration.php'));
 
@@ -297,29 +301,12 @@ class AbsenceController extends Controller
         $student = apiFindOrFail($student, $student_id);
         $studentAbsences = $student->etudiantAbsences;
 
-        // if ($timestamp1 === null && $timestamp2 === null) {
-        //     $studentAbsences = $baseQuery->where("annee_id", $currentYear->id)->get();
-        // }
-
-        // if ($timestamp1 !== null) {
-
-        //     $studentAbsences = $baseQuery->whereHas('seance', function ($query) use ($timestamp1, $timestamp2) {
-
-        //         if ($timestamp2 === null) {
-
-
-        //             $query->where('heure_debut', '>', $timestamp1);
-        //         }
-
-        //         if ($timestamp2 !== null) {
-
-        //             $query->whereBetween('heure_debut', [$timestamp1, $timestamp2]);
-        //         }
-        //     })->get();
-        // }
-
         $response = new AbsenceCollection($studentAbsences);
-        return apiSuccess(data: $response);
+        return apiSuccess(data: $response, headers: [
+            'Access-Control-Allow-Origin' => '*', // Allow cross-origin requests
+            'Access-Control-Expose-Headers' => 'Content-Disposition', // Expose the header for filename
+            "Content-Disposition" => 'inline'
+        ]);
     }
 
     public function getStudentAttendanceRateByYearSegment(Request  $request, $student_id, $year_segments = null)
@@ -459,7 +446,7 @@ class AbsenceController extends Controller
 
         $validator = Validator::make($request->all(), [
             'receipt' => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
-            'comments' => 'string',
+            'comments' => 'nullable|string',
             'coordinateur_id' => 'integer'
 
         ]);
@@ -470,11 +457,13 @@ class AbsenceController extends Controller
 
         $ClasseService = new ClasseService;
         $StudentService = new StudentService;
+        $AbsenceService = new AbsenceService;
         $currentYear = app(AnneeService::class)->getCurrentYear();
 
 
         $fileName = null;
         $filePath = null;
+        $comments = $request->input('comments', null);
 
         if ($request->hasFile('receipt')) {
 
@@ -483,10 +472,31 @@ class AbsenceController extends Controller
             $receipt = $request->file('receipt');
             $fileExtension = $receipt->getClientOriginalExtension();
             $fileName = $uuid . '.' . $fileExtension;
-            $dirName = "receipts";
-            $dirPath = storage_path("app/public/$dirName");
+
+            ["dirName" => $dirName, 'dirPath' => $dirPath] = $AbsenceService->ReceiptDir();
+
+            // $dirName = "receipts";
+            // $dirPath = storage_path("app/public/$dirName");
+
+
             $receipt->move($dirPath, $fileName);
             $filePath = asset("storage/receipts/$fileName");
+
+            $manager = new ImageManager(new Driver());
+            $thumbImage = $manager->read("$dirPath/$fileName");
+            $thumbImage->scale(height: 300);
+
+            ["dirName" => $thumbDirName, 'dirPath' => $thumbDirPath] = $AbsenceService->ReceiptDirThumb();
+            // $thumbDirName = "receiptsThumb";
+            // $thumbDirPath = storage_path("app/public/$thumbDirName");
+
+            if (!File::exists($thumbDirPath)) {
+                File::makeDirectory($thumbDirPath);
+            }
+
+            $thumbImage->save("$thumbDirPath/$fileName");
+
+            $thumbFilePath = asset("storage/$thumbDirName/$fileName");
         }
 
 
@@ -552,14 +562,22 @@ class AbsenceController extends Controller
         }
 
 
-        $absence->update(['etat' => absenceStateEnum::justified->value, 'receipt' => $fileName, 'coordinateur_id' => $coordinateur_id]);
-        $data = [];
+        $absence->update(['etat' => absenceStateEnum::justified->value, 'receipt' => $fileName, 'comments' => $comments, 'coordinateur_id' => $coordinateur_id]);
+        $data = [
+            'receiptFile' => $filePath,
+            'receiptThumb' => null,
+            'receiptImage' => null
+        ];
+
         if ($fileName) {
-            $data['fileName'] = $fileName;
-            $data['filePath'] = $filePath;
+            $data['receiptImage'] = $fileName;
+            $data['receiptThumb'] = $thumbFilePath;
         }
 
-        return apiSuccess(data: $data, message: 'absence justified successfully !');
+        return apiSuccess(data: $data, message: 'absence justified successfully !', headers: [
+            'Access-Control-Allow-Origin' => '*', // Allow cross-origin requests
+            'Access-Control-Expose-Headers' => 'Content-Disposition', // Expose the header for filename
+        ]);
     }
 
     public  function  getStudentAttendanceRateByweeks($student_id, $annee_id, $timestamp1 = null, $timestamp2 = null)
@@ -676,6 +694,10 @@ class AbsenceController extends Controller
         }
 
 
-        return apiSuccess(data: $response);
+        return apiSuccess(data: $response, headers: [
+            'Access-Control-Allow-Origin' => '*', // Allow cross-origin requests
+            'Access-Control-Expose-Headers' => 'Content-Disposition', // Expose the header for filename
+            "Content-Disposition" => 'inline'
+        ]);
     }
 }

@@ -22,6 +22,8 @@ class Absence extends Model
         "module_id",
         'seance_heure_debut',
         'seance_heure_fin',
+        'receipt',
+        'comments'
 
     ];
 

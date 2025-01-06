@@ -96,7 +96,7 @@ class SeanceController extends Controller
 
             $student_id = $data['id'];
             $isDropped = $data['isDropped'];
-            $attendanceStatus = $data['status'];
+            $attendanceStatus = intval($data['status']);
             $attendanceTabName = null;
 
 
@@ -107,14 +107,6 @@ class SeanceController extends Controller
 
 
                 $StudentService = new StudentService;
-
-                // $student = User::eagerLoadStudentWorkedAndMissedHours(
-                //     module_id: $seance->module_id,
-                //     currentYear_id: $currentYearId,
-                //     callback: function ($query) {
-                //         $query->where('etat', absenceStateEnum::notJustified->value);
-                //     }
-                // );
 
                 $student = User::eagerLoadStudentMissedHours(
                     module_id: $seance->module_id,
@@ -128,85 +120,18 @@ class SeanceController extends Controller
 
 
 
-                // return $student;
-
-                // $missedHours =  $StudentService->getMissedHours(student_id: $student_id, currentYear_id:  $currentYearId, module_id: $seance->module_id, callback: function ($query) {
-                //     $query->where('etat', absenceStateEnum::notJustified->value);
-                // });
-
                 $missedHours = $student->missedHoursSum + $seance->duree;
-                // $workedHours = $student->etudiantsClasses->first()->workedHoursSum;
-                // return   $student->etudiantsClasses;
-                //  return [$missedHours,$workedHours];
                 $unJustifiedpresencePercentage = $StudentService->AttendancePercentageCalc((int) $missedHours, (int) $workedHours);
-
-                // $seance->absences()->create([
-                //     'user_id' => $student_id,
-                //     'module_id' => $seance->module_id,
-                //     'seance_heure_fin' => $seance->heure_fin,
-                //     'seance_heure_debut' => $seance->heure_debut,
-                //     'duree' => $seance->duree,
-                //     'duree_raw' => $seance->duree_raw,
-                //     "seance_id" => $seance->id,
-                //     "annee_id" => $currentYearId
-                // ]);
-
-                  apiSuccess([ 'student' => $student,'unJustifiedpresencePercentage' => $unJustifiedpresencePercentage, 
-                  'missedHours' => $missedHours, 
-                  'workedHours' =>$workedHours , 
-                  'dropped'=>$unJustifiedpresencePercentage <= $minAttendancePercentage])->send();
 
 
                 if ($unJustifiedpresencePercentage <= $minAttendancePercentage) {
-
-                    // $now = now();
-                    // $droppeBaseAttributes = [
-                    //     "module_id" => $seance->module_id,
-                    //     "user_id" => $student_id,
-                    //     "annee_id" =>  $currentYearId,
-                    //     "classe_id" =>  $seance->classe->id,
-
-                    // ];
-
-                    // $droppeBaseQuery = Droppe::where($droppeBaseAttributes);
-
-                    // $beenDropped = $droppeBaseQuery->exists();
-
-                    // if ($beenDropped) {
-                    //     $droppeBaseQuery->update(['updated_at' => $now, 'isDropped' => true,]);
-                    // } else {
-
-
-                    //     $droppeBaseAttributes['isDropped'] = true;
-                    //     $droppeBaseAttributes['created_at'] = $now;
-                    //     $droppeBaseAttributes['updated_at'] = $now;
-
-                    //     Droppe::create($droppeBaseAttributes);
-                    // }
-
                     
                     $StudentService->updateOrInsertDroppedStudents($seance->module_id, $student_id, $currentYearId, $seance->classe->id, $seance->heure_debut);
                     
-                    // Droppe::updateOrInsert(
-                    //     [
-                    //         "module_id" => $seance->module_id,
-                    //         "user_id" => $student_id,
-                    //         "annee_id" =>  $currentYearId,
-                    //         "classe_id" =>  $seance->classe->id,
-
-
-                    //     ],
-                    //     [
-                    //         'isDropped' => true,
-                    //         'updated_at' => $now,
-                    //         'created_at' => $now,
-                    //     ]
-
-                    // );
-
                 }
             }
 
+            // return apiSuccess([$attendanceStatus, attendanceStateEnum::Absent->value, $attendanceStatus === attendanceStateEnum::Absent->value]);
             if ($attendanceStatus === attendanceStateEnum::Absent->value) {
                 $attendanceTabName = 'absences';
             }
