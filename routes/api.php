@@ -222,6 +222,6 @@ Route::prefix('trackin')->group(function () {
 
         $path = $request->input('path');
         // return $path;
-        return response()->download($path, );
+        return response()->download($path, $name);
     });
 });
